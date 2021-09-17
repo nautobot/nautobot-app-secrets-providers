@@ -1,0 +1,11 @@
+---
+nautobot_secrets_providers:
+  project_name: "secrets"
+  nautobot_ver: "1.2.0"
+  local: false
+  python_ver: "3.6"
+  compose_dir: "development"
+  compose_files:
+    - "docker-compose.requirements.yml"
+    - "docker-compose.base.yml"
+    - "docker-compose.dev.yml"
