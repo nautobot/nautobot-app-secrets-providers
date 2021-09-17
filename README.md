@@ -7,7 +7,7 @@ A plugin for [Nautobot](https://github.com/nautobot/nautobot).
 The plugin is available as a Python package in pypi and can be installed with pip
 
 ```shell
-pip install secrets
+pip install nautobot-secrets-providers
 ```
 
 > The plugin is compatible with Nautobot 1.2.0 and higher
@@ -15,7 +15,7 @@ pip install secrets
 To ensure Nautobot Secrets Providers is automatically re-installed during future upgrades, create a file named `local_requirements.txt` (if not already existing) in the Nautobot root directory (alongside `requirements.txt`) and list the `secrets` package:
 
 ```no-highlight
-# echo secrets >> local_requirements.txt
+# echo nautobot-secrets-providers >> local_requirements.txt
 ```
 
 Once installed, the plugin needs to be enabled in your `nautobot_config.py`
@@ -36,6 +36,79 @@ The plugin behavior can be controlled with the following list of settings
 - TODO
 
 ## Usage
+
+## Pre-Development
+
+> Delete this section once we finalize the documentation/readme and open source this project.
+
+### Using HashiCorp Vault
+
+Create an `invoke.yml` with this content:
+
+```yaml
+---
+nautobot_secrets_providers:
+  compose_files:
+    - "docker-compose.requirements.yml"
+```
+
+Start services with Docker
+
+```bash
+invoke start
+```
+
+Set an alias to work with `vault` within the container from the CLI:
+
+```bash
+alias vault="docker exec -it nautobot_secrets_providers_vault_1 vault"
+```
+
+Interact with the Vault vi CLI (exec into the container from localhost):
+
+```bash
+$ vault status
+Key             Value
+---             -----
+Seal Type       shamir
+Initialized     true
+Sealed          false
+Total Shares    1
+Threshold       1
+Version         1.8.2
+Storage Type    inmem
+Cluster Name    vault-cluster-35c5d319
+Cluster ID      2611f99c-a6de-a883-1fcc-bfffdc0217bc
+HA Enabled      false
+```
+
+Use the Python `hvac` library to directly interact with Vault:
+
+> This establishes a client, creates a basic key-value secret (`value=world`) at the path `hello`, and then retrieves the data from the `value` secret from the path `hello`.
+
+```python
+In [1]: import hvac
+
+In [2]: client = hvac.Client(url="http://localhost:8200", token="nautobot")
+
+In [3]: client.secrets.kv.create_or_update_secret(path="hello", secret=dict(value="world"))
+Out[3]:
+{'request_id': 'c4709868-c08f-4cb1-ab8c-605c58b82f3f',
+ 'lease_id': '',
+ 'renewable': False,
+ 'lease_duration': 0,
+ 'data': {'created_time': '2021-09-16T23:21:07.5564132Z',
+  'deletion_time': '',
+  'destroyed': False,
+  'version': 2},
+ 'wrap_info': None,
+ 'warnings': None,
+ 'auth': None}
+
+In [4]: client.secrets.kv.read_secret(path="hello")["data"]["data"]["value"]
+Out[4]: 'world'
+```
+
 
 ### API
 

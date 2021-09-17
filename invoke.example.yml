@@ -1,6 +1,6 @@
 ---
 nautobot_secrets_providers:
-  project_name: "secrets"
+  project_name: "nautobot_secrets_providers"
   nautobot_ver: "1.2.0"
   local: false
   python_ver: "3.6"
