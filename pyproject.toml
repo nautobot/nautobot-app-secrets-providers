@@ -17,8 +17,13 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-# Used for local development
-nautobot = { version = "*", optional = true }
+# Used for local development (Pin this to the lowest supported version of Nautobot)
+# FIXME(jathan): Uncomment the next line and remove this FIXME before public release.
+# nautobot = { version = "1.2.0", optional = true }
+# Temporarily pull Nautobot explicitly from `next` branch for plugin development. 
+# FIXME(jathan): Remove this FIXME and following line before public release.
+nautobot = { git = "https://github.com/nautobot/nautobot.git", branch = "next" }
+
 python = "^3.6"
 # HashiCorp Vault API Client
 hvac = "~0.11.0"
