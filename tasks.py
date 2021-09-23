@@ -38,7 +38,7 @@ namespace = Collection("nautobot_secrets_providers")
 namespace.configure(
     {
         "nautobot_secrets_providers": {
-            "nautobot_ver": "1.1.3",
+            "nautobot_ver": "1.1.3",  # FIXME: Change this to version 1.2.0 after Nautobot v1.2.0 release
             "project_name": "nautobot_secrets_providers",
             "python_ver": "3.6",
             "local": False,
