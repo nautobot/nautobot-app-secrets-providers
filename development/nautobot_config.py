@@ -255,6 +255,13 @@ PLUGINS = ["nautobot_secrets_providers"]
 #     }
 # }
 
+PLUGINS_CONFIG = {
+    "nautobot_secrets_providers": {
+        "vault_url": os.environ.get("VAULT_URL"),
+        "vault_token": os.environ.get("VAULT_TOKEN"),
+    }
+}
+
 # When determining the primary IP address for a device, IPv6 is preferred over IPv4 by default. Set this to True to
 # prefer IPv4 instead.
 PREFER_IPV4 = is_truthy(os.environ.get("PREFER_IPV4", False))

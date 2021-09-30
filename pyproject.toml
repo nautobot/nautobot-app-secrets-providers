@@ -22,7 +22,7 @@ packages = [
 # nautobot = { version = "1.2.0", optional = true }
 # Temporarily pull Nautobot explicitly from `next` branch for plugin development. 
 # FIXME(jathan): Remove this FIXME and following line before public release.
-nautobot = { git = "https://github.com/nautobot/nautobot.git", branch = "next" }
+nautobot = { git = "https://github.com/nautobot/nautobot.git", branch = "gfm-secrets" }
 
 python = "^3.6"
 # HashiCorp Vault API Client

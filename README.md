@@ -52,6 +52,9 @@ nautobot_secrets_providers:
     - "docker-compose.requirements.yml"
 ```
 
+Copy the contents of `development/creds.example.env` over to
+`development/creds.env`, overriding any settings you need to change.
+
 Start services with Docker
 
 ```bash
