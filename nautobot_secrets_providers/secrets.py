@@ -32,11 +32,11 @@ class VaultSecretsProvider(SecretsProvider):
         """
         plugin_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
         if "hashicorp_vault" not in plugin_settings:
-            raise SecretsProvierError(secret, cls, "Hashicorp Vault is not configured!")
+            raise SecretProviderError(secret, cls, "Hashicorp Vault is not configured!")
 
         plugin_settings = plugin_settings["hashicorp_vault"]
         if "url" not in plugin_settings or "token" not in plugin_settings:
-            raise SecretsProvierError(secret, cls, "Hashicorp Vault is not configured!")
+            raise SecretProviderError(secret, cls, "Hashicorp Vault is not configured!")
 
         client = hvac.Client(url=plugin_settings["url"], token=plugin_settings["token"])
         vault = client.secrets.kv.read_secret(path=secret.parameters.get("path"))
