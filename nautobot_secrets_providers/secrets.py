@@ -27,8 +27,7 @@ class VaultSecretsProvider(SecretsProvider):
     @classmethod
     def get_value_for_secret(cls, secret):
         """
-        Return the value defined in the Secret.parameters "constant" key.
-        A more realistic SecretsProvider would make calls to external APIs, etc. to retrieve a secret from storage.
+        Return the value stored under the secret’s key in the secret’s path.
         """
         plugin_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
         if "vault_url" not in plugin_settings or "vault_token" not in plugin_settings:
