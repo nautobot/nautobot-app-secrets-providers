@@ -257,8 +257,10 @@ PLUGINS = ["nautobot_secrets_providers"]
 
 PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
-        "vault_url": os.environ.get("VAULT_URL"),
-        "vault_token": os.environ.get("VAULT_TOKEN"),
+        "hashicorp_vault": {
+            "url": os.environ.get("VAULT_URL"),
+            "token": os.environ.get("VAULT_TOKEN"),
+        },
     }
 }
 

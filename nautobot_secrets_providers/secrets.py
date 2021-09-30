@@ -4,6 +4,7 @@ from django.conf import settings
 
 from nautobot.utilities.forms import BootstrapMixin
 from nautobot.extras.secrets import SecretsProvider
+from nautobot.extras.secrets.exceptions import SecretProviderError
 
 
 class VaultSecretsProvider(SecretsProvider):
@@ -30,9 +31,14 @@ class VaultSecretsProvider(SecretsProvider):
         Return the value stored under the secret’s key in the secret’s path.
         """
         plugin_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
-        if "vault_url" not in plugin_settings or "vault_token" not in plugin_settings:
-            raise ValueError("Hashicorp Vault is not configured!")
-        client = hvac.Client(url=plugin_settings["vault_url"], token=plugin_settings["vault_token"])
+        if "hashicorp_vault" not in plugin_settings:
+            raise SecretsProvierError(secret, cls, "Hashicorp Vault is not configured!")
+
+        plugin_settings = plugin_settings["hashicorp_vault"]
+        if "url" not in plugin_settings or "token" not in plugin_settings:
+            raise SecretsProvierError(secret, cls, "Hashicorp Vault is not configured!")
+
+        client = hvac.Client(url=plugin_settings["url"], token=plugin_settings["token"])
         vault = client.secrets.kv.read_secret(path=secret.parameters.get("path"))
         return vault["data"]["data"][secret.parameters.get("key")]
 
