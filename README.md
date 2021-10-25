@@ -204,7 +204,7 @@ from botocore.exceptions import ClientError
 
 def get_secret():
 
-    secret_name = "prod/github/username"
+    secret_name = "hello"
     region_name = "us-east-2"
 
     # Create a Secrets Manager client
