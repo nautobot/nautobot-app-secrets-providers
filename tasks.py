@@ -81,7 +81,10 @@ def docker_compose(context, command, **kwargs):
         command (str): Command string to append to the "docker-compose ..." command, such as "build", "up", etc.
         **kwargs: Passed through to the context.run() call.
     """
-    build_env = {"NAUTOBOT_VER": context.nautobot_secrets_providers.nautobot_ver, "PYTHON_VER": context.nautobot_secrets_providers.python_ver}
+    build_env = {
+        "NAUTOBOT_VER": context.nautobot_secrets_providers.nautobot_ver,
+        "PYTHON_VER": context.nautobot_secrets_providers.python_ver,
+    }
     compose_command = f'docker-compose --project-name {context.nautobot_secrets_providers.project_name} --project-directory "{context.nautobot_secrets_providers.compose_dir}"'
     for compose_file in context.nautobot_secrets_providers.compose_files:
         compose_file_path = os.path.join(context.nautobot_secrets_providers.compose_dir, compose_file)
@@ -289,7 +292,9 @@ def hadolint(context):
 @task
 def pylint(context):
     """Run pylint code analysis."""
-    command = 'pylint --init-hook "import nautobot; nautobot.setup()" --rcfile pyproject.toml nautobot_secrets_providers'
+    command = (
+        'pylint --init-hook "import nautobot; nautobot.setup()" --rcfile pyproject.toml nautobot_secrets_providers'
+    )
     run_command(context, command)
 
 

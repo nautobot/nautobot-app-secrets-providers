@@ -1,13 +1,13 @@
-import hvac
 from django import forms
 from django.conf import settings
+import hvac
 
 from nautobot.utilities.forms import BootstrapMixin
 from nautobot.extras.secrets import SecretsProvider
 from nautobot.extras.secrets.exceptions import SecretProviderError
 
 
-class VaultSecretsProvider(SecretsProvider):
+class HashicorpVaultSecretsProvider(SecretsProvider):
     """
     A secrets provider for Hashicorp Vault.
     """
@@ -43,4 +43,4 @@ class VaultSecretsProvider(SecretsProvider):
         return vault["data"]["data"][secret.parameters.get("key")]
 
 
-secrets_providers = [VaultSecretsProvider]
+secrets_providers = [HashicorpVaultSecretsProvider]
