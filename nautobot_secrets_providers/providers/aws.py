@@ -1,9 +1,11 @@
 import base64
+import json
 
 import boto3
 from botocore.exceptions import ClientError
 from django import forms
-from django.conf import settings
+
+# from django.conf import settings
 
 from nautobot.utilities.forms import BootstrapMixin
 from nautobot.extras.secrets import SecretsProvider
@@ -22,13 +24,17 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
     name = "AWS Secrets Manager"
 
     class ParametersForm(BootstrapMixin, forms.Form):
-        secret_name = forms.CharField(
+        name = forms.CharField(
             required=True,
             help_text="The name of the AWS Secrets Manager secret",
         )
-        region_name = forms.CharField(
+        region = forms.CharField(
             required=True,
             help_text="The region name of the AWS Secrets Manager secret",
+        )
+        key = forms.CharField(
+            required=True,
+            help_text="The key of the AWS Secrets Manager secret",
         )
 
     @classmethod
@@ -37,8 +43,9 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
         Return the secret value by name and region.
         """
 
-        secret_name = secret.parameters.get("secret_name")
-        region_name = secret.parameters.get("region_name")
+        secret_name = secret.parameters.get("name")
+        secret_key = secret.parameters.get("key")
+        region_name = secret.parameters.get("region")
 
         # Create a Secrets Manager client
         session = boto3.session.Session()
@@ -81,9 +88,11 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
             if "SecretString" in get_secret_value_response:
                 secret_value = get_secret_value_response["SecretString"]
             else:
-                decoded_binary_secret = base64.b64decode(get_secret_value_response["SecretBinary"])
+                # FIXME(jathan): Do we care about this? And why is the variable name different?
+                decoded_binary_secret = base64.b64decode(get_secret_value_response["SecretBinary"])  # noqa
 
-        return secret_value
+        data = json.loads(secret_value)
+        return data.get(secret_key)
 
 
 secrets_providers = [AWSSecretsManagerSecretsProvider]
