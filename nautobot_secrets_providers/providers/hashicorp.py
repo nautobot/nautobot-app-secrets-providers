@@ -7,6 +7,9 @@ from nautobot.extras.secrets import SecretsProvider
 from nautobot.extras.secrets.exceptions import SecretProviderError
 
 
+__all__ = ("HashicorpVaultSecretsProvider",)
+
+
 class HashicorpVaultSecretsProvider(SecretsProvider):
     """
     A secrets provider for Hashicorp Vault.

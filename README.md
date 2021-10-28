@@ -150,7 +150,6 @@ Linux](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install
-
 ```
 
 #### Configure the AWS CLI
@@ -175,7 +174,6 @@ Now configure the CLI:
 Example:
 
 ```no-highlight
-
 $ aws configure
 AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE
 AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
