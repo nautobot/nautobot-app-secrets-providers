@@ -1,4 +1,4 @@
-"""Unit tests for nautobot_secrets_providers Secrets Providers."""
+"""Unit tests for Secrets Providers."""
 
 import boto3
 from django.contrib.auth import get_user_model
@@ -6,6 +6,7 @@ from django.test import Client, TestCase, tag
 from moto import mock_secretsmanager
 
 from nautobot.extras.models import Secret
+from nautobot.extras.secrets.exceptions import SecretProviderError
 from nautobot_secrets_providers.providers import AWSSecretsManagerSecretsProvider
 
 # Use the proper swappable User model
@@ -15,6 +16,7 @@ User = get_user_model()
 @tag("unit")
 class SecretsProviderTestCase(TestCase):
 
+    # Set the provider class here
     provider = None
 
     def setUp(self):
@@ -41,7 +43,7 @@ class AWSSecretsManagerSecretsProviderTestCase(SecretsProviderTestCase):
         self.secret = Secret.objects.create(
             name="hello-aws",
             slug="hello-aws",
-            provider="aws-secrets-manager",
+            provider=self.provider.slug,
             parameters={"name": "hello", "region": "us-east-2", "key": "hello"},
         )
 
@@ -53,3 +55,26 @@ class AWSSecretsManagerSecretsProviderTestCase(SecretsProviderTestCase):
 
         result = self.provider.get_value_for_secret(self.secret)
         self.assertEquals(result, "world")
+
+    @mock_secretsmanager
+    def test_retrieve_does_not_exist(self):
+        """Try and fail to retrieve a secret that doesn't exist."""
+        conn = boto3.client("secretsmanager", region_name="us-east-2")  # noqa
+
+        with self.assertRaises(SecretProviderError) as err:
+            self.provider.get_value_for_secret(self.secret)
+
+        exc = err.exception
+        self.assertIn("ResourceNotFoundException", exc.message)
+
+    @mock_secretsmanager
+    def test_retrieve_does_not_match(self):
+        """Try and fail to retrieve the wrong secret."""
+        conn = boto3.client("secretsmanager", region_name="us-east-2")
+        conn.create_secret(Name="bogus", SecretString='{"hello":"world"}')
+
+        with self.assertRaises(SecretProviderError) as err:
+            self.provider.get_value_for_secret(self.secret)
+
+        exc = err.exception
+        self.assertIn("ResourceNotFoundException", exc.message)
