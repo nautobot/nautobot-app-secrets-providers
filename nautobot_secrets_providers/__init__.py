@@ -28,10 +28,10 @@ class NautobotSecretsProvidersConfig(PluginConfig):
 
     def ready(self):
         from nautobot.extras.secrets import register_secrets_provider
-        from nautobot_secrets_providers.providers import AWSSecretsManagerSecretsProvider, HashicorpVaultSecretsProvider
+        from nautobot_secrets_providers.providers import AWSSecretsManagerSecretsProvider, HashiCorpVaultSecretsProvider
 
         register_secrets_provider(AWSSecretsManagerSecretsProvider)
-        register_secrets_provider(HashicorpVaultSecretsProvider)
+        register_secrets_provider(HashiCorpVaultSecretsProvider)
 
 
 config = NautobotSecretsProvidersConfig  # pylint:disable=invalid-name

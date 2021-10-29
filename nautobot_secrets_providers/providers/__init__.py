@@ -1,4 +1,4 @@
 from .aws import AWSSecretsManagerSecretsProvider
-from .hashicorp import HashicorpVaultSecretsProvider
+from .hashicorp import HashiCorpVaultSecretsProvider
 
-__all__ = (AWSSecretsManagerSecretsProvider, HashicorpVaultSecretsProvider)
+__all__ = (AWSSecretsManagerSecretsProvider, HashiCorpVaultSecretsProvider)
