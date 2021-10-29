@@ -1,0 +1,3 @@
+from nautobot_secrets_providers.providers import AWSSecretsManagerSecretsProvider, HashiCorpVaultSecretsProvider
+
+secrets_providers = [AWSSecretsManagerSecretsProvider, HashiCorpVaultSecretsProvider]
