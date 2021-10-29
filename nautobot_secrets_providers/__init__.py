@@ -26,12 +26,5 @@ class NautobotSecretsProvidersConfig(PluginConfig):
     default_settings = {}
     caching_config = {}
 
-    def ready(self):
-        from nautobot.extras.secrets import register_secrets_provider
-        from nautobot_secrets_providers.providers import AWSSecretsManagerSecretsProvider, HashiCorpVaultSecretsProvider
-
-        register_secrets_provider(AWSSecretsManagerSecretsProvider)
-        register_secrets_provider(HashiCorpVaultSecretsProvider)
-
 
 config = NautobotSecretsProvidersConfig  # pylint:disable=invalid-name

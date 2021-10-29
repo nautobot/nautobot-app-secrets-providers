@@ -6,7 +6,7 @@ from django.test import Client, TestCase, tag
 from moto import mock_secretsmanager
 
 from nautobot.extras.models import Secret
-from nautobot.extras.secrets.exceptions import SecretProviderError
+from nautobot.extras.secrets import exceptions
 from nautobot_secrets_providers.providers import AWSSecretsManagerSecretsProvider
 
 # Use the proper swappable User model
@@ -61,7 +61,7 @@ class AWSSecretsManagerSecretsProviderTestCase(SecretsProviderTestCase):
         """Try and fail to retrieve a secret that doesn't exist."""
         conn = boto3.client("secretsmanager", region_name="us-east-2")  # noqa
 
-        with self.assertRaises(SecretProviderError) as err:
+        with self.assertRaises(exceptions.SecretParametersError) as err:
             self.provider.get_value_for_secret(self.secret)
 
         exc = err.exception
@@ -73,8 +73,20 @@ class AWSSecretsManagerSecretsProviderTestCase(SecretsProviderTestCase):
         conn = boto3.client("secretsmanager", region_name="us-east-2")
         conn.create_secret(Name="bogus", SecretString='{"hello":"world"}')
 
-        with self.assertRaises(SecretProviderError) as err:
+        with self.assertRaises(exceptions.SecretParametersError) as err:
             self.provider.get_value_for_secret(self.secret)
 
         exc = err.exception
         self.assertIn("ResourceNotFoundException", exc.message)
+
+    @mock_secretsmanager
+    def test_retrieve_invalid_key(self):
+        """Try and fail to retrieve the wrong secret."""
+        conn = boto3.client("secretsmanager", region_name="us-east-2")
+        conn.create_secret(Name="hello", SecretString='{"fake":"notreal"}')
+
+        with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
+            self.provider.get_value_for_secret(self.secret)
+
+        exc = err.exception
+        self.assertIn(self.secret.parameters["key"], exc.message)

@@ -44,6 +44,3 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         client = hvac.Client(url=plugin_settings["url"], token=plugin_settings["token"])
         vault = client.secrets.kv.read_secret(path=secret.parameters.get("path"))
         return vault["data"]["data"][secret.parameters.get("key")]
-
-
-secrets_providers = [HashiCorpVaultSecretsProvider]
