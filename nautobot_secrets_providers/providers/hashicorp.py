@@ -1,6 +1,10 @@
 from django import forms
 from django.conf import settings
-import hvac
+
+try:
+    import hvac
+except ImportError:
+    hvac = None
 
 from nautobot.utilities.forms import BootstrapMixin
 from nautobot.extras.secrets import SecretsProvider
@@ -17,6 +21,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
 
     slug = "hashicorp-vault"
     name = "HashiCorp Vault"
+    is_available = hvac is not None
 
     class ParametersForm(BootstrapMixin, forms.Form):
         path = forms.CharField(

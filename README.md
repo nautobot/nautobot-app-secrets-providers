@@ -11,7 +11,7 @@ This plugin currently supports the following popular secrets backends.
 
 ## Installation
 
-The plugin is available as a Python package in PyPi and can be installed with pip:
+The plugin is available as a Python package in PyPI and can be installed with pip:
 
 ```no-highlight
 pip install nautobot-secrets-providers
@@ -25,7 +25,7 @@ To ensure Nautobot Secrets Providers is automatically re-installed during future
 echo nautobot-secrets-providers >> local_requirements.txt
 ```
 
-Once installed, the plugin needs to be enabled in your `nautobot_config.py`
+Once installed, the plugin needs to be enabled in your `nautobot_config.py`:
 
 ```python
 # In your nautobot_config.py
@@ -39,6 +39,10 @@ PLUGINS = ["nautobot_secrets_providers"]
 ```
 
 ## Usage
+
+You must install the dependencies for at least one of the supported secrets providers or a `RuntimeError` will be raised.
+
+Do not enable this plugin until you are able to install the depenedncies, as it will block Nautobot from starting.
 
 ### AWS Secrets Manager
 
@@ -95,7 +99,7 @@ PLUGINS_CONFIG = {
 ```
 
 - `url` - The URL to the HashiCorp Vault instance (e.g. `http://localhost:8200`)
-- `token` - The token for authenticating the client with the HashiCorp Vault instance
+- `token` - The token for authenticating the client with the HashiCorp Vault instance. As with other sensitive service credentials, we recommend that you provide the token value as an environment variable and retrieve it with `{"token": os.getenv("NAUTOBOT_HASHICORP_VAULT_TOKEN")}` rather than hard-coding it in your `nautobot_config.py`.
 
 ## Contributing
 
@@ -110,7 +114,7 @@ The project is following Network to Code software development guideline and is l
 
 ### Development Environment
 
-The development environment can be used in 2 ways. First, with a local poetry environment if you wish to develop outside of Docker with the caveat of using external services provided by Docker for PostgresQL and Redis. Second, all services are spun up using Docker and a local mount so you can develop locally, but Nautobot is spun up within the Docker container.
+The development environment can be used in 2 ways. First, with a local poetry environment if you wish to develop outside of Docker with the caveat of using external services provided by Docker for PostgreSQL and Redis. Second, all services are spun up using Docker and a local mount so you can develop locally, but Nautobot is spun up within the Docker container.
 
 Below is a quick start guide if you're already familiar with the development environment provided, but if you're not familiar, please read the [Getting Started Guide](GETTING_STARTED.md).
 

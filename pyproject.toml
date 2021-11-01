@@ -42,12 +42,12 @@ coverage = "*"
 django-debug-toolbar = "*"
 flake8 = "*"
 invoke = "*"
+moto = "^2.2.11"
 mkdocs = "*"
 pydocstyle = "*"
 pylint = "*"
 pylint-django = "*"
 yamllint = "*"
-moto = "^2.2.11"
 
 [tool.poetry.extras]
 aws = ["boto3"]

@@ -1,11 +1,12 @@
 import base64
 import json
 
-import boto3
+try:
+    import boto3
+except ImportError:
+    boto3 = None
 from botocore.exceptions import ClientError
 from django import forms
-
-# from django.conf import settings
 
 from nautobot.utilities.forms import BootstrapMixin
 from nautobot.extras.secrets import exceptions, SecretsProvider
@@ -21,6 +22,7 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
 
     slug = "aws-secrets-manager"
     name = "AWS Secrets Manager"
+    is_available = boto3 is not None
 
     class ParametersForm(BootstrapMixin, forms.Form):
         name = forms.CharField(
@@ -76,7 +78,7 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
             elif e.response["Error"]["Code"] == "ResourceNotFoundException":
                 # We can't find the resource that you asked for.
                 # Deal with the exception here, and/or rethrow at your discretion.
-                raise exceptions.SecretParametersError(secret, cls, str(e))
+                raise exceptions.SecretValueNotFoundError(secret, cls, str(e))
         else:
             # Decrypts secret using the associated KMS CMK.
             # Depending on whether the secret is a string or binary, one of these fields will be populated.
