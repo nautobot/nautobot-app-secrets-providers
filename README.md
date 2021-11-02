@@ -307,7 +307,7 @@ Now you are ready to use the sample code to retrieve your secret from AWS Secret
 
 ##### Sample Code
 
-Make sure that the `hvac` client is installed:
+Make sure that the `boto3` client is installed:
 
 ```no-highlight
 poetry install --extras aws
