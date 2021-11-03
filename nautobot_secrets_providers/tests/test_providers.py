@@ -50,7 +50,7 @@ class AWSSecretsManagerSecretsProviderTestCase(SecretsProviderTestCase):
     @mock_secretsmanager
     def test_retrieve_success(self):
         """Retrieve a secret successfully."""
-        conn = boto3.client("secretsmanager", region_name="us-east-2")
+        conn = boto3.client("secretsmanager", region_name=self.secret.parameters["region"])
         conn.create_secret(Name="hello", SecretString='{"hello":"world"}')
 
         result = self.provider.get_value_for_secret(self.secret)
@@ -59,9 +59,9 @@ class AWSSecretsManagerSecretsProviderTestCase(SecretsProviderTestCase):
     @mock_secretsmanager
     def test_retrieve_does_not_exist(self):
         """Try and fail to retrieve a secret that doesn't exist."""
-        conn = boto3.client("secretsmanager", region_name="us-east-2")  # noqa
+        conn = boto3.client("secretsmanager", region_name=self.secret.parameters["region"])  # noqa
 
-        with self.assertRaises(exceptions.SecretParametersError) as err:
+        with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
             self.provider.get_value_for_secret(self.secret)
 
         exc = err.exception
@@ -70,10 +70,10 @@ class AWSSecretsManagerSecretsProviderTestCase(SecretsProviderTestCase):
     @mock_secretsmanager
     def test_retrieve_does_not_match(self):
         """Try and fail to retrieve the wrong secret."""
-        conn = boto3.client("secretsmanager", region_name="us-east-2")
+        conn = boto3.client("secretsmanager", region_name=self.secret.parameters["region"])
         conn.create_secret(Name="bogus", SecretString='{"hello":"world"}')
 
-        with self.assertRaises(exceptions.SecretParametersError) as err:
+        with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
             self.provider.get_value_for_secret(self.secret)
 
         exc = err.exception
@@ -82,7 +82,7 @@ class AWSSecretsManagerSecretsProviderTestCase(SecretsProviderTestCase):
     @mock_secretsmanager
     def test_retrieve_invalid_key(self):
         """Try and fail to retrieve the wrong secret."""
-        conn = boto3.client("secretsmanager", region_name="us-east-2")
+        conn = boto3.client("secretsmanager", region_name=self.secret.parameters["region"])
         conn.create_secret(Name="hello", SecretString='{"fake":"notreal"}')
 
         with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
