@@ -30,23 +30,26 @@ nautobot = { git = "https://github.com/nautobot/nautobot.git", branch = "gfm-sec
 # Optional dependencies installed as extras
 # 
 
-# AWS SDK for Python
+# AWS SDK for Python (always keep in sync w/ dev dependency)
 boto3 = { version = "~1.19.5", optional = true }
-# HashiCorp Vault API Client
+# HashiCorp Vault API Client (always keep in sync w/ dev dependency)
 hvac = { version = "~0.11.0", optional = true }
 
 [tool.poetry.dev-dependencies]
 bandit = "*"
 black = "*"
+boto3 = "~1.19.5"
 coverage = "*"
 django-debug-toolbar = "*"
 flake8 = "*"
+hvac = "~0.11.0"
 invoke = "*"
-moto = "^2.2.11"
+moto = "~2.2.11"
 mkdocs = "*"
 pydocstyle = "*"
 pylint = "*"
 pylint-django = "*"
+requests-mock = "~1.9.3"
 yamllint = "*"
 
 [tool.poetry.extras]

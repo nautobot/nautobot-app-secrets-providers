@@ -7,8 +7,7 @@ except ImportError:
     hvac = None
 
 from nautobot.utilities.forms import BootstrapMixin
-from nautobot.extras.secrets import SecretsProvider
-from nautobot.extras.secrets.exceptions import SecretProviderError
+from nautobot.extras.secrets import exceptions, SecretsProvider
 
 
 __all__ = ("HashiCorpVaultSecretsProvider",)
@@ -38,14 +37,25 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         """
         Return the value stored under the secret’s key in the secret’s path.
         """
+        # This is only reqwuired for HashiCorp Vault therefore not defined in
+        # `required_settings` for the plugin config.
         plugin_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
         if "hashicorp_vault" not in plugin_settings:
-            raise SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
+            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
-        plugin_settings = plugin_settings["hashicorp_vault"]
-        if "url" not in plugin_settings or "token" not in plugin_settings:
-            raise SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
+        vault_settings = plugin_settings["hashicorp_vault"]
+        if "url" not in vault_settings or "token" not in vault_settings:
+            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
-        client = hvac.Client(url=plugin_settings["url"], token=plugin_settings["token"])
-        vault = client.secrets.kv.read_secret(path=secret.parameters.get("path"))
-        return vault["data"]["data"][secret.parameters.get("key")]
+        client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"])
+        try:
+            vault = client.secrets.kv.read_secret(path=secret.parameters.get("path"))
+        except hvac.exceptions.InvalidPath as err:
+            raise exceptions.SecretParametersError(secret, cls, str(err)) from err
+
+        # Retrieve the value using the key or complain loudly.
+        try:
+            return vault["data"]["data"][secret.parameters.get("key")]
+        except KeyError as err:
+            msg = f"The secret value could not be retrieved using key {err}"
+            raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err
