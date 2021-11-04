@@ -47,15 +47,24 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         if "url" not in vault_settings or "token" not in vault_settings:
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
+        # Try to get parameters and error out early.
+        try:
+            secret_path = secret.parameters["path"]
+            secret_key = secret.parameters["key"]
+        except KeyError as err:
+            msg = f"The secret parameter could not be retrieved for field {err}"
+            raise exceptions.SecretParametersError(secret, cls, msg) from err
+
+        # Get the client and attempt to retrieve the secret.
         client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"])
         try:
-            vault = client.secrets.kv.read_secret(path=secret.parameters.get("path"))
+            response = client.secrets.kv.read_secret(path=secret_path)
         except hvac.exceptions.InvalidPath as err:
-            raise exceptions.SecretParametersError(secret, cls, str(err)) from err
+            raise exceptions.SecretValueNotFoundError(secret, cls, str(err)) from err
 
         # Retrieve the value using the key or complain loudly.
         try:
-            return vault["data"]["data"][secret.parameters.get("key")]
+            return response["data"]["data"][secret_key]
         except KeyError as err:
             msg = f"The secret value could not be retrieved using key {err}"
             raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err

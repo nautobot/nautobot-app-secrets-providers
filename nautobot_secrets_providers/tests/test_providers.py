@@ -46,14 +46,14 @@ class AWSSecretsManagerSecretsProviderTestCase(SecretsProviderTestCase):
             name="hello-aws",
             slug="hello-aws",
             provider=self.provider.slug,
-            parameters={"name": "hello", "region": "us-east-2", "key": "hello"},
+            parameters={"name": "hello", "region": "us-east-2", "key": "location"},
         )
 
     @mock_secretsmanager
     def test_retrieve_success(self):
         """Retrieve a secret successfully."""
         conn = boto3.client("secretsmanager", region_name=self.secret.parameters["region"])
-        conn.create_secret(Name="hello", SecretString='{"hello":"world"}')
+        conn.create_secret(Name="hello", SecretString='{"location":"world"}')
 
         result = self.provider.get_value_for_secret(self.secret)
         self.assertEquals(result, "world")
@@ -73,7 +73,7 @@ class AWSSecretsManagerSecretsProviderTestCase(SecretsProviderTestCase):
     def test_retrieve_does_not_match(self):
         """Try and fail to retrieve the wrong secret."""
         conn = boto3.client("secretsmanager", region_name=self.secret.parameters["region"])
-        conn.create_secret(Name="bogus", SecretString='{"hello":"world"}')
+        conn.create_secret(Name="bogus", SecretString='{"location":"world"}')
 
         with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
             self.provider.get_value_for_secret(self.secret)
@@ -107,7 +107,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         "lease_duration": 0,
         "data": {
             "data": {
-                "hello": "world",
+                "location": "world",
             },
             "metadata": {
                 "created_time": "2021-10-28T22:43:47.829676011Z",
@@ -129,7 +129,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             name="hello-hashicorp",
             slug="hello-hashicorp",
             provider=self.provider.slug,
-            parameters={"path": "hello", "key": "hello"},
+            parameters={"path": "hello", "key": "location"},
         )
         self.test_path = "http://localhost:8200/v1/secret/data/hello"
 
@@ -139,7 +139,25 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         requests_mocker.register_uri(method="GET", url=self.test_path, json=self.mock_response)
 
         response = self.provider.get_value_for_secret(self.secret)
-        self.assertEquals(self.mock_response["data"]["data"]["hello"], response)
+        self.assertEquals(self.mock_response["data"]["data"]["location"], response)
+
+    @requests_mock.Mocker()
+    def test_retrieve_invalid_parameters(self, requests_mocker):
+        """Try and fail to retrieve a secret with incorrect parameters."""
+        bogus_secret = Secret.objects.create(
+            name="bogus-hashicorp",
+            slug="bogus-hashicorp",
+            provider=AWSSecretsManagerSecretsProvider,  # Wrong provider
+            parameters={"name": "hello", "region": "us-east-2", "key": "hello"}, # Wrong params
+        )
+
+        requests_mocker.register_uri(method="GET", url=self.test_path, json=self.mock_response)
+
+        with self.assertRaises(exceptions.SecretParametersError) as err:
+            self.provider.get_value_for_secret(bogus_secret)
+
+        exc = err.exception
+        self.assertIn("path", exc.message)
 
     @requests_mock.Mocker()
     def test_retrieve_does_not_exist(self, requests_mocker):
@@ -148,7 +166,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         bogus_path = self.test_path.replace("hello", "bogus")
         requests_mocker.register_uri(method="GET", url=bogus_path, status_code=404)
 
-        with self.assertRaises(exceptions.SecretParametersError) as err:
+        with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
             self.provider.get_value_for_secret(self.secret)
 
         exc = err.exception
