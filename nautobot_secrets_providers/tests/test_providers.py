@@ -148,7 +148,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             name="bogus-hashicorp",
             slug="bogus-hashicorp",
             provider=AWSSecretsManagerSecretsProvider,  # Wrong provider
-            parameters={"name": "hello", "region": "us-east-2", "key": "hello"}, # Wrong params
+            parameters={"name": "hello", "region": "us-east-2", "key": "hello"},  # Wrong params
         )
 
         requests_mocker.register_uri(method="GET", url=self.test_path, json=self.mock_response)
