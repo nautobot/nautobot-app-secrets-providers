@@ -37,7 +37,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         """
         Return the value stored under the secret’s key in the secret’s path.
         """
-        # This is only reqwuired for HashiCorp Vault therefore not defined in
+        # This is only required for HashiCorp Vault therefore not defined in
         # `required_settings` for the plugin config.
         plugin_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
         if "hashicorp_vault" not in plugin_settings:
