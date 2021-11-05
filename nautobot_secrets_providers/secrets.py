@@ -1,3 +1,10 @@
+"""
+Secrets Providers published by this module.
+
+The providers are conditionally loaded based on whether their dependent libraries are installed.
+Please see the README for how to install those.
+"""
+
 from nautobot_secrets_providers import providers
 
 

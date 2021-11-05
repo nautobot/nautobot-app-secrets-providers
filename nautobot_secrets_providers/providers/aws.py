@@ -1,3 +1,5 @@
+"""Secrets Provider for AWS Secrets Manager."""
+
 import base64
 import json
 
@@ -16,15 +18,14 @@ __all__ = ("AWSSecretsManagerSecretsProvider",)
 
 
 class AWSSecretsManagerSecretsProvider(SecretsProvider):
-    """
-    A secrets provider for AWS Secrets Manager.
-    """
+    """A secrets provider for AWS Secrets Manager."""
 
     slug = "aws-secrets-manager"
     name = "AWS Secrets Manager"
     is_available = boto3 is not None
 
     class ParametersForm(BootstrapMixin, forms.Form):
+        """Required parameters for AWS Secrets Manager."""
         name = forms.CharField(
             required=True,
             help_text="The name of the AWS Secrets Manager secret",
@@ -40,10 +41,7 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
 
     @classmethod
     def get_value_for_secret(cls, secret):
-        """
-        Return the secret value by name and region.
-        """
-
+        """Return the secret value by name and region."""
         # Extract the parameters from the Secret.
         secret_name = secret.parameters.get("name")
         secret_key = secret.parameters.get("key")
@@ -97,3 +95,4 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
         except KeyError as err:
             msg = f"The secret value could not be retrieved using key {err}"
             raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err
+

@@ -1,3 +1,5 @@
+"""Secrets Provider for HashiCorp Vault."""
+
 from django import forms
 from django.conf import settings
 
@@ -14,15 +16,14 @@ __all__ = ("HashiCorpVaultSecretsProvider",)
 
 
 class HashiCorpVaultSecretsProvider(SecretsProvider):
-    """
-    A secrets provider for HashiCorp Vault.
-    """
+    """A secrets provider for HashiCorp Vault."""
 
     slug = "hashicorp-vault"
     name = "HashiCorp Vault"
     is_available = hvac is not None
 
     class ParametersForm(BootstrapMixin, forms.Form):
+        """Required parameters for HashiCorp Vault."""
         path = forms.CharField(
             required=True,
             help_text="The path to the HashiCorp Vault secret",
@@ -34,9 +35,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
 
     @classmethod
     def get_value_for_secret(cls, secret):
-        """
-        Return the value stored under the secret’s key in the secret’s path.
-        """
+        """Return the value stored under the secret’s key in the secret’s path."""
         # This is only required for HashiCorp Vault therefore not defined in
         # `required_settings` for the plugin config.
         plugin_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
