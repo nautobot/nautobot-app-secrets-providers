@@ -60,13 +60,13 @@ No configuration is needed within Nautobot for this provider to operate. Instead
 
 Boto3 credentials can be configured in multiple ways (eight as of this writing) that are mirrored here:
 
-1. Passing credentials as parameters in the boto.client() method
+1. Passing credentials as parameters in the `boto.client()` method
 2. Passing credentials as parameters when creating a Session object
 3. Environment variables
-4. Shared credential file (~/.aws/credentials)
-5. AWS config file (~/.aws/config)
+4. Shared credential file (`~/.aws/credentials`)
+5. AWS config file (`~/.aws/config`)
 6. Assume Role provider
-7. Boto2 config file (/etc/boto.cfg and ~/.boto)
+7. Boto2 config file (`/etc/boto.cfg` and `~/.boto`)
 8. Instance metadata service on an Amazon EC2 instance that has an IAM role configured.
 
 **The AWS Secrets Manager provider only supports methods 3-8. Methods 1 and 2 ARE NOT SUPPORTED at this time.**
@@ -103,11 +103,11 @@ PLUGINS_CONFIG = {
 
 ## Contributing
 
-Pull requests are welcomed and automatically built and tested against multiple version of Python and multiple version of Nautobot through TravisCI.
+Pull requests are welcomed and automatically built and tested against multiple version of Python and multiple version of Nautobot through GitHub Actions.
 
-The project is packaged with a light development environment based on `docker-compose` to help with the local development of the project and to run the tests within TravisCI.
+The project is packaged with a light development environment based on `docker-compose` to help with the local development of the project and to run the tests within GitHub Actions.
 
-The project is following Network to Code software development guideline and is leveraging:
+The project is following Network to Code software development guidelines and is leveraging:
 
 - Black, Pylint, Bandit and pydocstyle for Python linting and formatting.
 - Django unit test to ensure the plugin is working properly.
