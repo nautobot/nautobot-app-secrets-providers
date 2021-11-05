@@ -26,6 +26,7 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
 
     class ParametersForm(BootstrapMixin, forms.Form):
         """Required parameters for AWS Secrets Manager."""
+
         name = forms.CharField(
             required=True,
             help_text="The name of the AWS Secrets Manager secret",
@@ -95,4 +96,3 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
         except KeyError as err:
             msg = f"The secret value could not be retrieved using key {err}"
             raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err
-

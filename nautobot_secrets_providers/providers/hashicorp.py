@@ -24,6 +24,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
 
     class ParametersForm(BootstrapMixin, forms.Form):
         """Required parameters for HashiCorp Vault."""
+
         path = forms.CharField(
             required=True,
             help_text="The path to the HashiCorp Vault secret",
