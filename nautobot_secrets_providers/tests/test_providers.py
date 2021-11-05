@@ -17,6 +17,7 @@ User = get_user_model()
 
 @tag("unit")
 class SecretsProviderTestCase(TestCase):
+    """Base test case for Secrets Providers."""
 
     # Set the provider class here
     provider = None
@@ -56,12 +57,14 @@ class AWSSecretsManagerSecretsProviderTestCase(SecretsProviderTestCase):
         conn.create_secret(Name="hello", SecretString='{"location":"world"}')
 
         result = self.provider.get_value_for_secret(self.secret)
-        self.assertEquals(result, "world")
+        self.assertEqual(result, "world")
 
     @mock_secretsmanager
     def test_retrieve_does_not_exist(self):
         """Try and fail to retrieve a secret that doesn't exist."""
-        conn = boto3.client("secretsmanager", region_name=self.secret.parameters["region"])  # noqa
+        conn = boto3.client(  # noqa pylint: disable=unused-variable
+            "secretsmanager", region_name=self.secret.parameters["region"]
+        )
 
         with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
             self.provider.get_value_for_secret(self.secret)
@@ -139,7 +142,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         requests_mocker.register_uri(method="GET", url=self.test_path, json=self.mock_response)
 
         response = self.provider.get_value_for_secret(self.secret)
-        self.assertEquals(self.mock_response["data"]["data"]["location"], response)
+        self.assertEqual(self.mock_response["data"]["data"]["location"], response)
 
     @requests_mock.Mocker()
     def test_retrieve_invalid_parameters(self, requests_mocker):
@@ -148,7 +151,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             name="bogus-hashicorp",
             slug="bogus-hashicorp",
             provider=AWSSecretsManagerSecretsProvider,  # Wrong provider
-            parameters={"name": "hello", "region": "us-east-2", "key": "hello"}, # Wrong params
+            parameters={"name": "hello", "region": "us-east-2", "key": "hello"},  # Wrong params
         )
 
         requests_mocker.register_uri(method="GET", url=self.test_path, json=self.mock_response)
