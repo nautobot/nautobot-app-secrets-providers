@@ -36,7 +36,7 @@ PLUGINS_CONFIG = {
     },
 }
 
-SECRET_KEY = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+SECRET_KEY = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"  # nosec
 
 
 # Redis variables
