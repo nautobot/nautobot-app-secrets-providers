@@ -33,7 +33,7 @@ PLUGINS = ["nautobot_secrets_providers"]
 
 # PLUGINS_CONFIG = {
 #   "nautobot_secrets_providers": {
-#      See below for how ot configure Nautobot for each secrets provider!
+#      See below for how to configure Nautobot for each secrets provider!
 #   }
 # }
 ```
@@ -54,7 +54,7 @@ The AWS Secrets Manager provider requires the `boto3` library. This can be easil
 pip install nautobot-secrets-providers[aws]
 ```
 
-#### Configuration
+#### Authentication
 
 No configuration is needed within Nautobot for this provider to operate. Instead you must provide [AWS credentials in one of the methods supported by the `boto3` library](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html). 
 
@@ -72,6 +72,15 @@ Boto3 credentials can be configured in multiple ways (eight as of this writing) 
 **The AWS Secrets Manager provider only supports methods 3-8. Methods 1 and 2 ARE NOT SUPPORTED at this time.**
 
 We highly recommend you defer to using environment variables for your deployment as specified in the credentials documentation linked above.
+
+#### Configuration
+
+This is an example based on our recommended deployment pattern in the section above (item 3) that is using [environment variables](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#environment-variables). You will need to set these in the environment prior to starting Nautobot:
+
+```no-highlight
+export AWS_ACCESS_KEY_ID=foo      # The access key for your AWS account.
+export AWS_SECRET_ACCESS_KEY=bar  # The secret key for your AWS account.
+```
 
 ### HashiCorp Vault
 
