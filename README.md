@@ -11,7 +11,7 @@ This plugin supports the following popular secrets backends:
 | Secrets Backend                                              | Supported Secret Types                                       | Supported Authentication Methods                             |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
-| [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](K/V Version 2)                               | [Token](https://www.vaultproject.io/docs/auth/token)         |
+| [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2) | [Token](https://www.vaultproject.io/docs/auth/token)         |
 
 ## Installation
 
