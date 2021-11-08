@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+    <h1>{% block title %}Secrets Providers Home{% endblock %}</h1>
+{% endblock header %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading"><strong>Enabled Secrets Providers </strong></div>
+                <div class="panel-body">
+                    <ul>
+                    {% for provider in secrets_providers %}
+                        <li>{{ provider.name }}</li>
+                    {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

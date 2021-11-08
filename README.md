@@ -1,23 +1,58 @@
 # Nautobot Secrets Providers
 
-A plugin for [Nautobot](https://github.com/nautobot/nautobot) 1.2.0 or higher that bundles Secrets Providers for integrating with popular secrets backends.
+Nautobot Secrets Providers is a plugin for [Nautobot](https://github.com/nautobot/nautobot) 1.2.0 or higher that bundles Secrets Providers for integrating with popular secrets backends. Nautobot 1.2.0 added support for integrating with retrieving secrets from various secrets providers.
+
+This plugin publishes secrets providers that are not included in the within the Nautobot core software package so that it will be easier to maintain and extend support for various secrets providers without waiting on Nautobot software releases.
 
 ## Supported Secrets Backends
 
-This plugin currently supports the following popular secrets backends.
+This plugin supports the following popular secrets backends:
 
-- [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/)
-- [HashiCorp Vault](https://www.vaultproject.io)
+| Secrets Backend                                              | Supported Secret Types                                       | Supported Authentication Methods                             |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
+| [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](K/V Version 2)                               | [Token](https://www.vaultproject.io/docs/auth/token)         |
 
 ## Installation
 
-The plugin is available as a Python package in PyPI and can be installed with pip:
+> Nautobot Secrets Providers is compatible with Nautobot 1.2.0 and higher
+
+The package is available as a Python package in PyPI and can be installed with `pip`:
 
 ```no-highlight
 pip install nautobot-secrets-providers
 ```
 
-> The plugin is compatible with Nautobot 1.2.0 and higher
+You may quickly install all of the dependent libraries using the following command, however, this is *not recommended for production deployments* as it will install extras that you may not need:
+
+```no-highlight
+pip install nautobot-secrets-providers[all]
+```
+
+### Dependencies
+
+For this plugin to operate you must install at least one of the dependent libraries required by the secrets providers. 
+
+**You must install the dependencies for at least one of the supported secrets providers or a `RuntimeError` will be raised.**
+
+#### AWS Secrets Manager
+
+The AWS Secrets Manager provider requires the `boto3` library. This can be easily installed along with the plugin using the following command:
+
+```no-highlight
+pip install nautobot-secrets-providers[aws]
+```
+
+#### HashiCorp Vault
+
+The HashiCorp Vault provider requires the `hvac` library. This can easily be installed along with the plugin using the following command:
+
+```no-highlight
+pip install nautobot-secrets-providers[hashicorp]
+```
+
+
+### Enabling Secrets Providers
 
 To ensure Nautobot Secrets Providers is automatically re-installed during future upgrades, create a file named `local_requirements.txt` (if not already existing) in the Nautobot root directory (alongside `requirements.txt`) and list the `secrets` package:
 
@@ -40,23 +75,15 @@ PLUGINS = ["nautobot_secrets_providers"]
 
 ## Usage
 
-You must install the dependencies for at least one of the supported secrets providers or a `RuntimeError` will be raised.
+Before you proceed, you must have **at least one** of the dependent libaries installed as detailed above.
 
-Do not enable this plugin until you are able to install the depenedncies, as it will block Nautobot from starting.
+Please do not enable this plugin until you are able to install the dependencies, as it will block Nautobot from starting.
 
 ### AWS Secrets Manager
 
-#### Dependencies
-
-The AWS Secrets Manager provider requires the `boto3` library. This can be easily installed along with the plugin using the following command:
-
-```no-highlight
-pip install nautobot-secrets-providers[aws]
-```
-
 #### Authentication
 
-No configuration is needed within Nautobot for this provider to operate. Instead you must provide [AWS credentials in one of the methods supported by the `boto3` library](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html). 
+No configuration is needed within Nautobot for this provider to operate. Instead you must provide [AWS credentials in one of the methods supported by the `boto3` library](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials). 
 
 Boto3 credentials can be configured in multiple ways (eight as of this writing) that are mirrored here:
 
@@ -84,24 +111,16 @@ export AWS_SECRET_ACCESS_KEY=bar  # The secret key for your AWS account.
 
 ### HashiCorp Vault
 
-#### Dependencies
-
-The HashiCorp Vault provider requires the `hvac` library. This can easily be installed along with the plugin using the following command:
-
-```no-highlight
-pip install nautobot-secrets-providers[hashicorp]
-```
-
 #### Configuration
 
-You must provide the following in `PLUGINS_CONFIG` within your `nautobot_config.py`:
+You must provide a mapping in `PLUGINS_CONFIG` within your `nautobot_config.py`, for example:
 
 ```python
 PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
         "hashicorp_vault": {
-            "url": {vault_url},
-            "token": {vault_token},
+            "url": "http://localhost:8200",
+            "token": os.getenv("NAUTOBOT_HASHICORP_VAULT_TOKEN"),
         }
     },
 }
