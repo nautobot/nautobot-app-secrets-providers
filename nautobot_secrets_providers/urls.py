@@ -8,5 +8,4 @@ app_name = "nautobot_secrets_providers"
 
 urlpatterns = [
     path("", views.SecretsProvidersHomeView.as_view(), name="home"),
-    path("config", views.SecretsProvidersConfigView.as_view(), name="config"),
 ]

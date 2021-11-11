@@ -35,7 +35,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         )
 
     @classmethod
-    def get_value_for_secret(cls, secret):
+    def get_value_for_secret(cls, secret, obj=None, **kwargs):
         """Return the value stored under the secret’s key in the secret’s path."""
         # This is only required for HashiCorp Vault therefore not defined in
         # `required_settings` for the plugin config.
@@ -48,9 +48,10 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
         # Try to get parameters and error out early.
+        parameters = secret.rendered_parameters(obj=obj)
         try:
-            secret_path = secret.parameters["path"]
-            secret_key = secret.parameters["key"]
+            secret_path = parameters["path"]
+            secret_key = parameters["key"]
         except KeyError as err:
             msg = f"The secret parameter could not be retrieved for field {err}"
             raise exceptions.SecretParametersError(secret, cls, msg) from err
