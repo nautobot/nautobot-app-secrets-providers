@@ -13,6 +13,22 @@ This plugin supports the following popular secrets backends:
 | [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
 | [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2) | [Token](https://www.vaultproject.io/docs/auth/token)         |
 
+## Screenshots
+
+[!Screenshot of installed plugins](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot1.png "Plugin landing page")
+
+---
+
+[!Screenshot of plugin home page](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot2.png "Plugin Home page")
+
+---
+
+[!Screenshot of secret using AWS Secrets Manager](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot3.png "Secret using AWS Secrets Manager")
+
+---
+
+[!Screenshot of secret using HashiCorp Vault](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot4.png "Secret using HashiCorp Vault")
+
 ## Installation
 
 > Nautobot Secrets Providers is compatible with Nautobot 1.2.0 and higher
@@ -50,7 +66,6 @@ The HashiCorp Vault provider requires the `hvac` library. This can easily be ins
 ```no-highlight
 pip install nautobot-secrets-providers[hashicorp]
 ```
-
 
 ### Enabling Secrets Providers
 
