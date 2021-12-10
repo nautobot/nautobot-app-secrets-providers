@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load helpers %} 
+
+{% block header %}
+    <h1>{% block title %}Secrets Providers Home{% endblock %}</h1>
+{% endblock header %}
+
+{% block content %}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <strong>Enabled Secrets Providers </strong>
+        </div>
+        <div class="panel-body">
+            <table class="table table-hover table-headings">
+                <thead>
+                    <tr>
+                        <th>Secrets Backend</th>
+                        <th>Supported Secret Types</th>
+                        <th>Supported Authentication Methods</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><a href="https://aws.amazon.com/secrets-manager/" rel="nofollow">AWS Secrets Manager</a></td>
+                        <td><a href="https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html" rel="nofollow">Other: Key/value pairs</a></td>
+                        <td><a href="https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html" rel="nofollow">AWS credentials</a></td>
+                        </tr>
+                    <tr>
+                        <td><a href="https://www.vaultproject.io" rel="nofollow">HashiCorp Vault</a></td>
+                        <td><a href="https://www.vaultproject.io/docs/secrets/kv/kv-v2" rel="nofollow">K/V Version 2</a></td>
+                        <td><a href="https://www.vaultproject.io/docs/auth/token" rel="nofollow">Token</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock content %}

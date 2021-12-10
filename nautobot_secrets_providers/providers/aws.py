@@ -41,12 +41,14 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
         )
 
     @classmethod
-    def get_value_for_secret(cls, secret):
+    def get_value_for_secret(cls, secret, obj=None, **kwargs):
         """Return the secret value by name and region."""
         # Extract the parameters from the Secret.
-        secret_name = secret.parameters.get("name")
-        secret_key = secret.parameters.get("key")
-        region_name = secret.parameters.get("region")
+        parameters = secret.rendered_parameters(obj=obj)
+
+        secret_name = parameters.get("name")
+        secret_key = parameters.get("key")
+        region_name = parameters.get("region")
 
         # Create a Secrets Manager client.
         session = boto3.session.Session()

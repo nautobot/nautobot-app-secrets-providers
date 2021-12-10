@@ -26,5 +26,8 @@ class NautobotSecretsProvidersConfig(PluginConfig):
     default_settings = {}
     caching_config = {}
 
+    # URL reverse lookup names
+    home_view_name = "plugins:nautobot_secrets_providers:home"
+
 
 config = NautobotSecretsProvidersConfig  # pylint:disable=invalid-name
