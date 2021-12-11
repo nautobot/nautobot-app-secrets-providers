@@ -113,7 +113,7 @@ Boto3 credentials can be configured in multiple ways (eight as of this writing) 
 
 **The AWS Secrets Manager provider only supports methods 3-8. Methods 1 and 2 ARE NOT SUPPORTED at this time.**
 
-We highly recommend you defer to using environment variables for your deployment as specified in the credentials documentation linked above.
+We highly recommend you defer to using environment variables for your deployment as specified in the credentials documentation linked above. The values specified in the linked documentation should be [set within your `~.bashrc`](https://nautobot.readthedocs.io/en/latest/installation/nautobot/#update-the-nautobot-bashrc) (or similar profile) on your system.
 
 #### Configuration
 
@@ -123,6 +123,8 @@ This is an example based on our recommended deployment pattern in the section ab
 export AWS_ACCESS_KEY_ID=foo      # The access key for your AWS account.
 export AWS_SECRET_ACCESS_KEY=bar  # The secret key for your AWS account.
 ```
+
+Please refer to the [Nautobot documentation on updating your `.bashrc`](https://nautobot.readthedocs.io/en/latest/installation/nautobot/#update-the-nautobot-bashrc) for how to do this for production Nautobot deployments.
 
 ### HashiCorp Vault
 
