@@ -5,7 +5,7 @@ on:  # yamllint disable-line rule:truthy
   - "pull_request"
 
 env:
-  PLUGIN_NAME: "nautobot-secrets-providers"
+  PLUGIN_NAME: "secrets"
 
 jobs:
   black:
@@ -137,6 +137,8 @@ jobs:
         run: "cp development/creds.example.env development/creds.env"
       - name: "Linting: pylint"
         run: "poetry run invoke pylint"
+      - name: "Display docker images"
+        run: "docker image ls"
   unittest:
     needs:
       - "pylint"
