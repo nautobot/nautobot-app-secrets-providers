@@ -222,6 +222,7 @@ jobs:
     needs:
       - "publish_gh"
       - "publish_pypi"
+    name: "Send notification to the Slack"
     runs-on: "ubuntu-20.04"
     env:
       SLACK_WEBHOOK_URL: "${{ secrets.SLACK_WEBHOOK_URL }}"
@@ -237,7 +238,7 @@ jobs:
         if: "${{ env.SLACK_WEBHOOK_URL != '' }}"
         uses: "slackapi/slack-github-action@v1.16.0"
         with:
-          payload: '{ "type": "mrkdwn", "text": "${{ env.SLACK_MESSAGE }}" }'
+          payload: '{ "type": "mrkdwn", "text": "${{ env.SLACK_MESSAGE }}" }' # yamllint disable-line rule:quoted-strings
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL: "${{ secrets.SLACK_WEBHOOK_URL }}"
           SLACK_WEBHOOK_TYPE: "INCOMING_WEBHOOK"
