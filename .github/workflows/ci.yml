@@ -131,6 +131,8 @@ jobs:
           path: "/tmp"
       - name: "Load the image"
         run: "docker load < /tmp/${{ env.PLUGIN_NAME }}-${{ matrix.nautobot-version }}-py${{ matrix.python-version }}.tar"
+      - name: "Display docker images"
+        run: "docker image ls"
       - name: "Copy credentials"
         run: "cp development/creds.example.env development/creds.env"
       - name: "Linting: pylint"
