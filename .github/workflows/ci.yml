@@ -117,8 +117,8 @@ jobs:
         python-version: ["3.9"]
         nautobot-version: ["1.1.4"]
     env:
-      INVOKE_NAUTOBOT_SECRETS_PROVIDER_PYTHON_VER: "${{ matrix.python-version }}"
-      INVOKE_NAUTOBOT_SECRETS_PROVIDER_NAUTOBOT_VER: "${{ matrix.nautobot-version }}"
+      INVOKE_NAUTOBOT_SECRETS_PROVIDERS_PYTHON_VER: "${{ matrix.python-version }}"
+      INVOKE_NAUTOBOT_SECRETS_PROVIDERS_NAUTOBOT_VER: "${{ matrix.nautobot-version }}"
     steps:
       - name: "Check out repository code"
         uses: "actions/checkout@v2"
@@ -147,8 +147,8 @@ jobs:
         nautobot-version: ["1.1.4"]
     runs-on: "ubuntu-20.04"
     env:
-      INVOKE_NAUTOBOT_SECRETS_PROVIDER_PYTHON_VER: "${{ matrix.python-version }}"
-      INVOKE_NAUTOBOT_SECRETS_PROVIDER_NAUTOBOT_VER: "${{ matrix.nautobot-version }}"
+      INVOKE_NAUTOBOT_SECRETS_PROVIDERS_PYTHON_VER: "${{ matrix.python-version }}"
+      INVOKE_NAUTOBOT_SECRETS_PROVIDERS_NAUTOBOT_VER: "${{ matrix.nautobot-version }}"
     steps:
       - name: "Check out repository code"
         uses: "actions/checkout@v2"
