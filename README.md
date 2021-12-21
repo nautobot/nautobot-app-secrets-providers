@@ -15,19 +15,20 @@ This plugin supports the following popular secrets backends:
 
 ## Screenshots
 
-[!Screenshot of installed plugins](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot1.png "Plugin landing page")
+[!Screenshot of installed plugins](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot01.png "Plugin landing page")
+
 
 ---
 
-[!Screenshot of plugin home page](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot2.png "Plugin Home page")
+[!Screenshot of plugin home page](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot02.png "Plugin Home page")
 
 ---
 
-[!Screenshot of secret using AWS Secrets Manager](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot3.png "Secret using AWS Secrets Manager")
+[!Screenshot of secret using AWS Secrets Manager](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot03.png "Secret using AWS Secrets Manager")
 
 ---
 
-[!Screenshot of secret using HashiCorp Vault](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot4.png "Secret using HashiCorp Vault")
+[!Screenshot of secret using HashiCorp Vault](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot04.png "Secret using HashiCorp Vault")
 
 ## Installation
 
