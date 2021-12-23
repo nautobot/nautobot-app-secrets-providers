@@ -15,19 +15,19 @@ This plugin supports the following popular secrets backends:
 
 ## Screenshots
 
-[!Screenshot of installed plugins](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot1.png "Plugin landing page")
+![Screenshot of installed plugins](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot01.png "Plugin landing page")
 
 ---
 
-[!Screenshot of plugin home page](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot2.png "Plugin Home page")
+![Screenshot of plugin home page](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot02.png "Plugin Home page")
 
 ---
 
-[!Screenshot of secret using AWS Secrets Manager](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot3.png "Secret using AWS Secrets Manager")
+![Screenshot of secret using AWS Secrets Manager](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot03.png "Secret using AWS Secrets Manager")
 
 ---
 
-[!Screenshot of secret using HashiCorp Vault](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot4.png "Secret using HashiCorp Vault")
+![Screenshot of secret using HashiCorp Vault](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot04.png "Secret using HashiCorp Vault")
 
 ## Installation
 
@@ -113,7 +113,7 @@ Boto3 credentials can be configured in multiple ways (eight as of this writing) 
 
 **The AWS Secrets Manager provider only supports methods 3-8. Methods 1 and 2 ARE NOT SUPPORTED at this time.**
 
-We highly recommend you defer to using environment variables for your deployment as specified in the credentials documentation linked above.
+We highly recommend you defer to using environment variables for your deployment as specified in the credentials documentation linked above. The values specified in the linked documentation should be [set within your `~.bashrc`](https://nautobot.readthedocs.io/en/latest/installation/nautobot/#update-the-nautobot-bashrc) (or similar profile) on your system.
 
 #### Configuration
 
@@ -123,6 +123,8 @@ This is an example based on our recommended deployment pattern in the section ab
 export AWS_ACCESS_KEY_ID=foo      # The access key for your AWS account.
 export AWS_SECRET_ACCESS_KEY=bar  # The secret key for your AWS account.
 ```
+
+Please refer to the [Nautobot documentation on updating your `.bashrc`](https://nautobot.readthedocs.io/en/latest/installation/nautobot/#update-the-nautobot-bashrc) for how to do this for production Nautobot deployments.
 
 ### HashiCorp Vault
 

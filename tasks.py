@@ -38,7 +38,7 @@ namespace = Collection("nautobot_secrets_providers")
 namespace.configure(
     {
         "nautobot_secrets_providers": {
-            "nautobot_ver": "1.1.3",  # FIXME: Change this to version 1.2.0 after Nautobot v1.2.0 release
+            "nautobot_ver": "1.2.1",
             "project_name": "nautobot_secrets_providers",
             "python_ver": "3.6",
             "local": False,
@@ -290,6 +290,17 @@ def hadolint(context):
 
 
 @task
+def yamllint(context):
+    """Run yamllint to validate formating adheres to NTC defined YAML standards.
+
+    Args:
+        context (obj): Used to run specific commands
+    """
+    command = "yamllint . --format standard"
+    run_command(context, command)
+
+
+@task
 def pylint(context):
     """Run pylint code analysis."""
     command = (
@@ -368,6 +379,8 @@ def tests(context, failfast=False):
     flake8(context)
     print("Running bandit...")
     bandit(context)
+    print("Running yamllint...")
+    yamllint(context)
     print("Running pydocstyle...")
     pydocstyle(context)
     print("Running pylint...")
