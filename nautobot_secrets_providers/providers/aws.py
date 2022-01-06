@@ -5,9 +5,10 @@ import json
 
 try:
     import boto3
-except ImportError:
+    from botocore.exceptions import ClientError
+except (ImportError, ModuleNotFoundError):
     boto3 = None
-from botocore.exceptions import ClientError
+
 from django import forms
 
 from nautobot.utilities.forms import BootstrapMixin
