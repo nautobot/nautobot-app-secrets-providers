@@ -121,61 +121,67 @@ class ThycoticSecretServerSecretsProvider(SecretsProvider):
         ):
             raise exceptions.SecretProviderError(secret, caller_class, "Thycotic Secret Server is not configured!")
 
-        if ca_bundle_path is not None:
-            # Ensure cerificates file exists if ca_bundle_path is defined
-            if not Path(ca_bundle_path).exists():
-                raise exceptions.SecretProviderError(
-                    secret,
-                    caller_class,
-                    (
-                        "Thycotic Secret Server is not configured properly! "
-                        "Trusted certificates file not found: "
-                        "Environment variable 'REQUESTS_CA_BUNDLE': "
-                        f"{ca_bundle_path}."
-                    ),
-                )
-            from_env = os.getenv("REQUESTS_CA_BUNDLE", "")
-            if from_env != ca_bundle_path:
-                os.environ["REQUESTS_CA_BUNDLE"] = ca_bundle_path
-        # Setup thycotic authorizer
-        # Username | Password | Token | Domain | Authorizer
-        #   def    |   def    |   *   |   -    | PasswordGrantAuthorizer
-        #   def    |   def    |   *   |  def   | DomainPasswordGrantAuthorizer
-        #    -     |    -     |  def  |   *    | AccessTokenAuthorizer
-        #   def    |    -     |  def  |   *    | AccessTokenAuthorizer
-        #    -     |   def    |  def  |   *    | AccessTokenAuthorizer
-        if username is not None and password is not None:
-            if domain is not None:
-                thy_authorizer = DomainPasswordGrantAuthorizer(
-                    base_url=base_url,
-                    domain=domain,
-                    username=username,
-                    password=password,
-                )
+        must_restore_env = False
+        original_env = os.getenv("REQUESTS_CA_BUNDLE", "")
+        try:
+            if ca_bundle_path is not None:
+                # Ensure cerificates file exists if ca_bundle_path is defined
+                if not Path(ca_bundle_path).exists():
+                    raise exceptions.SecretProviderError(
+                        secret,
+                        caller_class,
+                        (
+                            "Thycotic Secret Server is not configured properly! "
+                            "Trusted certificates file not found: "
+                            "Environment variable 'REQUESTS_CA_BUNDLE': "
+                            f"{ca_bundle_path}."
+                        ),
+                    )
+                if original_env != ca_bundle_path:
+                    os.environ["REQUESTS_CA_BUNDLE"] = ca_bundle_path
+                    must_restore_env = True
+            # Setup thycotic authorizer
+            # Username | Password | Token | Domain | Authorizer
+            #   def    |   def    |   *   |   -    | PasswordGrantAuthorizer
+            #   def    |   def    |   *   |  def   | DomainPasswordGrantAuthorizer
+            #    -     |    -     |  def  |   *    | AccessTokenAuthorizer
+            #   def    |    -     |  def  |   *    | AccessTokenAuthorizer
+            #    -     |   def    |  def  |   *    | AccessTokenAuthorizer
+            if username is not None and password is not None:
+                if domain is not None:
+                    thy_authorizer = DomainPasswordGrantAuthorizer(
+                        base_url=base_url,
+                        domain=domain,
+                        username=username,
+                        password=password,
+                    )
+                else:
+                    thy_authorizer = PasswordGrantAuthorizer(
+                        base_url=base_url,
+                        username=username,
+                        password=password,
+                    )
             else:
-                thy_authorizer = PasswordGrantAuthorizer(
-                    base_url=base_url,
-                    username=username,
-                    password=password,
-                )
-        else:
-            thy_authorizer = AccessTokenAuthorizer(token)
+                thy_authorizer = AccessTokenAuthorizer(token)
 
-        # Get the client.
-        if cloud_based:
-            thycotic = SecretServerCloud(tenant=tenant, authorizer=thy_authorizer)
-        else:
-            thycotic = SecretServer(base_url=base_url, authorizer=thy_authorizer)
+            # Get the client.
+            if cloud_based:
+                thycotic = SecretServerCloud(tenant=tenant, authorizer=thy_authorizer)
+            else:
+                thycotic = SecretServer(base_url=base_url, authorizer=thy_authorizer)
 
-        # Attempt to retrieve the secret.
-        try:
-            secret = ServerSecret(**thycotic.get_secret(secret_id))
-        except SecretServerError as err:
-            raise exceptions.SecretValueNotFoundError(secret, caller_class, str(err)) from err
+            # Attempt to retrieve the secret.
+            try:
+                secret = ServerSecret(**thycotic.get_secret(secret_id))
+            except SecretServerError as err:
+                raise exceptions.SecretValueNotFoundError(secret, caller_class, str(err)) from err
 
-        # Attempt to return the selected value.
-        try:
-            return secret.fields[secret_selected_value].value
-        except KeyError as err:
-            msg = f"The secret value could not be retrieved using key {err}"
-            raise exceptions.SecretValueNotFoundError(secret, caller_class, msg) from err
+            # Attempt to return the selected value.
+            try:
+                return secret.fields[secret_selected_value].value
+            except KeyError as err:
+                msg = f"The secret value could not be retrieved using key {err}"
+                raise exceptions.SecretValueNotFoundError(secret, caller_class, msg) from err
+        finally:
+            if must_restore_env:
+                os.environ["REQUESTS_CA_BUNDLE"] = original_env
