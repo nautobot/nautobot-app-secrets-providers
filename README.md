@@ -12,6 +12,7 @@ This plugin supports the following popular secrets backends:
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
 | [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2) | [Token](https://www.vaultproject.io/docs/auth/token)         |
+| [Thycotic Secret Server](https://thycotic.com/)               | [Secret Server Cloud](https://github.com/thycotic/python-tss-sdk#secret-server-cloud)<br/>[Secret Server (on-prem)](https://github.com/thycotic/python-tss-sdk#secret-server)| [Password Authorization](https://github.com/thycotic/python-tss-sdk#password-authorization)<br/>[Domain Authorization](https://github.com/thycotic/python-tss-sdk#domain-authorization)<br/>[Access Token Authorization](https://github.com/thycotic/python-tss-sdk#access-token-authorization)         |
 
 ## Screenshots
 
@@ -65,6 +66,14 @@ The HashiCorp Vault provider requires the `hvac` library. This can easily be ins
 
 ```no-highlight
 pip install nautobot-secrets-providers[hashicorp]
+```
+
+#### Thycotic Secret Server
+
+The Thycotic Secret Server provider requires the `python-tss-sdk` library. This can easily be installed along with the plugin using the following command:
+
+```no-highlight
+pip install nautobot-secrets-providers[thycotic]
 ```
 
 ### Enabling Secrets Providers
@@ -145,6 +154,35 @@ PLUGINS_CONFIG = {
 
 - `url` - The URL to the HashiCorp Vault instance (e.g. `http://localhost:8200`)
 - `token` - The token for authenticating the client with the HashiCorp Vault instance. As with other sensitive service credentials, we recommend that you provide the token value as an environment variable and retrieve it with `{"token": os.getenv("NAUTOBOT_HASHICORP_VAULT_TOKEN")}` rather than hard-coding it in your `nautobot_config.py`.
+
+### Thycotic Secret Server
+
+#### Configuration
+
+```python
+PLUGINS_CONFIG = {
+    "nautobot_secrets_providers": {
+        "thycotic": {  # https://github.com/thycotic/python-tss-sdk
+            "base_url": os.getenv("SECRET_SERVER_BASE_URL"),
+            "ca_bundle_path": os.getenv("REQUESTS_CA_BUNDLE", ""),
+            "cloud_based": is_truthy(os.getenv("SECRET_SERVER_IS_CLOUD_BASED", "False")),
+            "domain": os.getenv("SECRET_SERVER_DOMAIN", ""),
+            "password": os.getenv("SECRET_SERVER_PASSWORD", ""),
+            "tenant": os.getenv("SECRET_SERVER_TENANT", ""),
+            "token": os.getenv("SECRET_SERVER_TOKEN", ""),
+            "username": os.getenv("SECRET_SERVER_USERNAME", ""),
+        },
+    }
+}
+```
+- `base_url` - (required) The Secret Server base_url. _e.g.'https://pw.example.local/SecretServer'_
+- `ca_bundle_path` - (optional) When useing self-signed certificates this variable must be set to a file containing the trusted certificates (in .pem format). _e.g. '/etc/ssl/certs/ca-bundle.trust.crt'_. 
+- `cloud_based` - (optional) Set to "True" if Secret Server Cloud should be used. (Default: "False").
+- `domain` - (optional) Required for 'Domain Authorization'
+- `password` - (optional) Required for 'Secret Server Cloud', 'Password Authorization', 'Domain Authorization'.
+- `tenant` - (optional) Required for 'Domain Authorization'.
+- `token` - (optional) Required for 'Access Token Authorization'.
+- `username` - (optional) Required for 'Secret Server Cloud', 'Password Authorization', 'Domain Authorization'.
 
 ## Contributing
 
