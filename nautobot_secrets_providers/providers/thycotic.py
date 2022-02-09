@@ -20,7 +20,6 @@ try:
 except ImportError:
     thycotic_installed = False
 
-from nautobot.core.settings_funcs import is_truthy
 from nautobot.utilities.forms import BootstrapMixin
 from nautobot.extras.secrets import exceptions, SecretsProvider
 
@@ -114,7 +113,7 @@ class ThycoticSecretServerSecretsProvider(SecretsProvider):
         username=None,
         caller_class=None,
     ):
-        """Query Thycotic Secret Server"""
+        """Query Thycotic Secret Server."""
         # Ensure required parameters are set
         if (token is None and (username is None or password is None)) or (
             cloud_based and (tenant is None or username is None or password is None)

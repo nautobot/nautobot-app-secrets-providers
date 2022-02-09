@@ -44,8 +44,6 @@ hvac = "~0.11.0"  # (always keep in sync w/ optional dependency)
 invoke = "*"
 moto = "~2.2.11"
 mkdocs = "*"
-# Pin this to the lowest supported version of Nautobot
-nautobot = "~1.2.1"
 pydocstyle = "*"
 pylint = "*"
 pylint-django = "*"
