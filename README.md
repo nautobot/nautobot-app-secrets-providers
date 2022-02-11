@@ -30,6 +30,14 @@ This plugin supports the following popular secrets backends:
 
 ![Screenshot of secret using HashiCorp Vault](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot04.png "Secret using HashiCorp Vault")
 
+---
+
+![Screenshot of secret using Thycotic Secret Server by ID](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot05.png "Secret using Thycotic Secret Server by ID")
+
+---
+
+![Screenshot of secret using Thycotic Secret Server by Path](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot06.png "Secret using Thycotic Secret Server by Path")
+
 ## Installation
 
 > Nautobot Secrets Providers is compatible with Nautobot 1.2.0 and higher
@@ -157,12 +165,29 @@ PLUGINS_CONFIG = {
 
 ### Thycotic Secret Server (TSS)
 
-The Thycotic Secret Server plugin uses the `Secret Id` to specifiy the secret that is selected. The `Secret Id` is displayed in the browser's url field if you `Edit` the data in Thycotic Secret Server.
+The Thycotic Secret Server plugin includes two providers
 
-Example:
+- **`Thycotic Secret Server by ID`**
 
-- The url is: _https://pw.example.local/SecretServer/app/#/secret/**1234**/general_
-  The `Secret Id` in the above is **1234**.
+    This provider uses the `Secret Id` to specifiy the secret that is selected. The `Secret Id` is displayed in the browser's url field if you `Edit` the data in Thycotic Secret Server.
+
+    - Example:
+
+        The url is: _https://pw.example.local/SecretServer/app/#/secret/**1234**/general_
+
+        In this example the value for `Secret Id` is **1234**.
+
+- **`Thycotic Secret Server by Path`**
+
+    This provider allows to select the secret by folder-path and secret-name. The path delimiter is a '\\'.
+
+    The `Secret path` is displayed as page header when `Edit` a secret.
+
+    - Example:
+
+        The header is: **NET-Automation > Nautobot > My-Secret**
+
+        In this example the value for `Secret path` is **`\NET-Automation\Nautobot\My-Secret`**.
 
 #### Configuration
 
