@@ -5,7 +5,7 @@
 ### Added
 
 - [#21](https://github.com/nautobot/nautobot-plugin-secrets-providers/issues/21) Add Thycotic Secret Server plugin
-  **Requires Python 3.7 or greater**git
+  **Requires Python 3.7 or greater**
 
 ## v1.0.1 (2022-01-06)
 
