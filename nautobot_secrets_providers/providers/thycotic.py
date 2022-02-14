@@ -73,12 +73,12 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
         is_valid_tenant = "tenant" in thycotic_settings and thycotic_settings["tenant"] != ""
         is_valid_token = "token" in thycotic_settings and thycotic_settings["token"] != ""
         is_valid_username = "username" in thycotic_settings and thycotic_settings["username"] != ""
-        if_valid_ca_bundle_path = "ca_bundle_path" in thycotic_settings and thycotic_settings["ca_bundle_path"] != ""
+        is_valid_ca_bundle_path = "ca_bundle_path" in thycotic_settings and thycotic_settings["ca_bundle_path"] != ""
 
         return cls.query_thycotic_secret_server(
             secret=secret,
             base_url=thycotic_settings["base_url"],
-            ca_bundle_path=thycotic_settings["ca_bundle_path"] if if_valid_ca_bundle_path else None,
+            ca_bundle_path=thycotic_settings["ca_bundle_path"] if is_valid_ca_bundle_path else None,
             cloud_based=thycotic_settings["cloud_based"],
             domain=thycotic_settings["domain"] if is_valid_domain else None,
             password=thycotic_settings["password"] if is_valid_password else None,
@@ -114,7 +114,10 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
         ) or (  # pylint: disable=too-many-boolean-expressions
             cloud_based and (tenant is None or username is None or password is None)
         ):
-            raise exceptions.SecretProviderError(secret, caller_class, "Thycotic Secret Server is not configured!")
+            raise exceptions.SecretProviderError(secret, caller_class, 
+                """Thycotic Secret Server is not configured!
+                See section 'Thycotic Secret Server (TSS)' in `README.md'.
+                """)
 
         must_restore_env = False
         original_env = os.getenv("REQUESTS_CA_BUNDLE", "")
@@ -195,6 +198,7 @@ class ThycoticSecretServerSecretsProviderId(ThycoticSecretServerSecretsProviderB
         """Required parameters for Thycotic Secret Server."""
 
         secret_id = forms.IntegerField(
+            label="Secret ID",
             required=True,
             min_value=1,
             help_text="The secret-id used to select the entry in Thycotic Secret Server.",

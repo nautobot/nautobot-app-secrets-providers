@@ -4,7 +4,7 @@ from .aws import AWSSecretsManagerSecretsProvider
 from .hashicorp import HashiCorpVaultSecretsProvider
 from .thycotic import ThycoticSecretServerSecretsProviderId, ThycoticSecretServerSecretsProviderPath
 
-__all__ = (
+__all__ = (  # type: ignore
     AWSSecretsManagerSecretsProvider,  # pylint: disable=invalid-all-object
     HashiCorpVaultSecretsProvider,  # pylint: disable=invalid-all-object
     ThycoticSecretServerSecretsProviderId,  # pylint: disable=invalid-all-object

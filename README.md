@@ -40,7 +40,7 @@ This plugin supports the following popular secrets backends:
 
 ## Installation
 
-> Nautobot Secrets Providers is compatible with Nautobot 1.2.0 and higher
+> Nautobot Secrets Providers is compatible with Nautobot 1.2.0 and higher on Python 3.7 and higher. Python 3.6 is not supported.
 
 The package is available as a Python package in PyPI and can be installed with `pip`:
 
@@ -169,13 +169,13 @@ The Thycotic Secret Server plugin includes two providers
 
 - **`Thycotic Secret Server by ID`**
 
-    This provider uses the `Secret Id` to specifiy the secret that is selected. The `Secret Id` is displayed in the browser's url field if you `Edit` the data in Thycotic Secret Server.
+    This provider uses the `Secret ID` to specifiy the secret that is selected. The `Secret ID` is displayed in the browser's url field if you `Edit` the data in Thycotic Secret Server.
 
     - Example:
 
         The url is: _https://pw.example.local/SecretServer/app/#/secret/**1234**/general_
 
-        In this example the value for `Secret Id` is **1234**.
+        In this example the value for `Secret ID` is **1234**.
 
 - **`Thycotic Secret Server by Path`**
 
@@ -208,7 +208,7 @@ PLUGINS_CONFIG = {
 }
 ```
 - `base_url` - (required) The Secret Server base_url. _e.g.'https://pw.example.local/SecretServer'_
-- `ca_bundle_path` - (optional) When useing self-signed certificates this variable must be set to a file containing the trusted certificates (in .pem format). _e.g. '/etc/ssl/certs/ca-bundle.trust.crt'_.
+- `ca_bundle_path` - (optional) When using self-signed certificates this variable must be set to a file containing the trusted certificates (in .pem format). _e.g. '/etc/ssl/certs/ca-bundle.trust.crt'_.
 - `cloud_based` - (optional) Set to "True" if Secret Server Cloud should be used. (Default: "False").
 - `domain` - (optional) Required for 'Domain Authorization'
 - `password` - (optional) Required for 'Secret Server Cloud', 'Password Authorization', 'Domain Authorization'.

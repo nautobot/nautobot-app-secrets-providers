@@ -53,11 +53,11 @@ yamllint = "*"
 django-debug = "^0.1.1"
 
 [tool.poetry.extras]
-all = ["boto3", "hvac", "thycotic"]
+all = ["boto3", "hvac", "python-tss-sdk"]
 aws = ["boto3"]
 hashicorp = ["hvac"]
 nautobot = ["nautobot"]
-thycotic = ["thycotic"]
+thycotic = ["python-tss-sdk"]
 
 [tool.black]
 line-length = 120
