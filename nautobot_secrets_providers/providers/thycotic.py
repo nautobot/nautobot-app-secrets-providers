@@ -114,10 +114,13 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
         ) or (  # pylint: disable=too-many-boolean-expressions
             cloud_based and (tenant is None or username is None or password is None)
         ):
-            raise exceptions.SecretProviderError(secret, caller_class, 
+            raise exceptions.SecretProviderError(
+                secret,
+                caller_class,
                 """Thycotic Secret Server is not configured!
                 See section 'Thycotic Secret Server (TSS)' in `README.md'.
-                """)
+                """,
+            )
 
         must_restore_env = False
         original_env = os.getenv("REQUESTS_CA_BUNDLE", "")
