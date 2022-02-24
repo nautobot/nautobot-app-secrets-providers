@@ -17,7 +17,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.7.0,<4.0.0"
+python = "^3.6.2"
 # Pin this to the lowest supported version of Nautobot
 nautobot = "~1.2.1"
 
@@ -30,12 +30,12 @@ boto3 = { version = "~1.19.5", optional = true }
 # HashiCorp Vault API Client (always keep in sync w/ dev dependency)
 hvac = { version = "~0.11.0", optional = true }
 # Thycotic Secret Server (always keep in sync w/ dev dependency)
-python-tss-sdk = {version = ">=1.1.0,<2.0.0", optional = true}
+python-tss-sdk = {version = "~1.1.0", optional = true, python = ">=3.7"}
 
 
 [tool.poetry.dev-dependencies]
 bandit = "*"
-black = "*"
+black = "~21.12b0"
 boto3 = "~1.19.5"  # (always keep in sync w/ optional dependency)
 coverage = "*"
 django-debug-toolbar = "*"
@@ -47,10 +47,9 @@ mkdocs = "*"
 pydocstyle = "*"
 pylint = "*"
 pylint-django = "*"
-python-tss-sdk = ">=1.1.0,<2.0.0"  # (always keep in sync w/ optional dependency)
+python-tss-sdk = {version = "~1.1.0", python = ">=3.7"}
 requests-mock = "~1.9.3"
 yamllint = "*"
-django-debug = "^0.1.1"
 
 [tool.poetry.extras]
 all = ["boto3", "hvac", "python-tss-sdk"]
