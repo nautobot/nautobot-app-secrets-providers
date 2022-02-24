@@ -37,7 +37,7 @@ python-tss-sdk = {version = "~1.1.0", optional = true, python = ">=3.7"}
 bandit = "*"
 black = "~21.12b0"
 boto3 = "~1.19.5"  # (always keep in sync w/ optional dependency)
-coverage = "*"
+coverage = "~6.2"
 django-debug-toolbar = "*"
 flake8 = "*"
 hvac = "~0.11.0"  # (always keep in sync w/ optional dependency)
