@@ -40,7 +40,7 @@ This plugin supports the following popular secrets backends:
 
 ## Installation
 
-> Nautobot Secrets Providers is compatible with Nautobot 1.2.0 and higher on Python 3.7 and higher. Python 3.6 is not supported.
+> Nautobot Secrets Providers is compatible with Nautobot 1.2.0 and higher. Support for Thycotic Secret Server requires Python 3.7 or later.
 
 The package is available as a Python package in PyPI and can be installed with `pip`:
 
