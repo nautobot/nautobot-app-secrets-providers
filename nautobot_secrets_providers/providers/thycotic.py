@@ -47,7 +47,7 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
         # Try to get parameters and error out early.
         parameters = secret.rendered_parameters(obj=obj)
         try:
-            if "secret_id" in parameters.keys():
+            if "secret_id" in parameters:
                 secret_id = parameters["secret_id"]
             else:
                 secret_id = None
