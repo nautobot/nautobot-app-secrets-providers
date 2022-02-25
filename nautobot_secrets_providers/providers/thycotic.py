@@ -141,7 +141,7 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
                 if original_env != ca_bundle_path:
                     os.environ["REQUESTS_CA_BUNDLE"] = ca_bundle_path
                     must_restore_env = True
-            # Setup thycotic authorizer
+            # Setup Thycotic authorizer
             # Username | Password | Token | Domain | Authorizer
             #   def    |   def    |   *   |   -    | PasswordGrantAuthorizer
             #   def    |   def    |   *   |  def   | DomainPasswordGrantAuthorizer
