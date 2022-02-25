@@ -51,7 +51,7 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
                 secret_id = parameters["secret_id"]
             else:
                 secret_id = None
-            if "secret_path" in parameters.keys():
+            if "secret_path" in parameters:
                 secret_path = parameters["secret_path"]
             else:
                 secret_path = None
