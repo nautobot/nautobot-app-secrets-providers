@@ -165,7 +165,7 @@ PLUGINS_CONFIG = {
 
 ### Thycotic Secret Server (TSS)
 
-The Thycotic Secret Server plugin includes two providers
+The Thycotic Secret Server plugin includes two providers:
 
 - **`Thycotic Secret Server by ID`**
 
