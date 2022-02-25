@@ -169,7 +169,7 @@ The Thycotic Secret Server plugin includes two providers
 
 - **`Thycotic Secret Server by ID`**
 
-    This provider uses the `Secret ID` to specifiy the secret that is selected. The `Secret ID` is displayed in the browser's url field if you `Edit` the data in Thycotic Secret Server.
+    This provider uses the `Secret ID` to specifiy the secret that is selected. The `Secret ID` is displayed in the browser's URL field if you `Edit` the data in Thycotic Secret Server.
 
     - Example:
 
