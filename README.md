@@ -195,14 +195,14 @@ The Thycotic Secret Server plugin includes two providers:
 PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
         "thycotic": {  # https://github.com/thycotic/python-tss-sdk
-            "base_url": os.getenv("SECRET_SERVER_BASE_URL"),
-            "ca_bundle_path": os.getenv("REQUESTS_CA_BUNDLE", ""),
+            "base_url": os.getenv("SECRET_SERVER_BASE_URL", None),
+            "ca_bundle_path": os.getenv("REQUESTS_CA_BUNDLE", None),
             "cloud_based": is_truthy(os.getenv("SECRET_SERVER_IS_CLOUD_BASED", "False")),
-            "domain": os.getenv("SECRET_SERVER_DOMAIN", ""),
-            "password": os.getenv("SECRET_SERVER_PASSWORD", ""),
-            "tenant": os.getenv("SECRET_SERVER_TENANT", ""),
-            "token": os.getenv("SECRET_SERVER_TOKEN", ""),
-            "username": os.getenv("SECRET_SERVER_USERNAME", ""),
+            "domain": os.getenv("SECRET_SERVER_DOMAIN", None),
+            "password": os.getenv("SECRET_SERVER_PASSWORD", None),
+            "tenant": os.getenv("SECRET_SERVER_TENANT", None),
+            "token": os.getenv("SECRET_SERVER_TOKEN", None),
+            "username": os.getenv("SECRET_SERVER_USERNAME", None),
         },
     }
 }

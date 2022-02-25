@@ -23,6 +23,7 @@ except ImportError:
 from nautobot.utilities.forms import BootstrapMixin
 from nautobot.extras.secrets import exceptions, SecretsProvider
 
+from .choices import ThycoticSecretChoices
 
 __all__ = (
     "ThycoticSecretServerSecretsProviderId",
@@ -65,29 +66,22 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
             raise exceptions.SecretParametersError(secret, cls, msg)
 
         thycotic_settings = plugin_settings["thycotic"]
-        is_valid_base_url = "base_url" in thycotic_settings and thycotic_settings["base_url"] != ""
-        if not is_valid_base_url:
+        if thycotic_settings["base_url"] is None:
             raise exceptions.SecretProviderError(secret, cls, "Thycotic Secret Server is not configured!")
-        is_valid_domain = "domain" in thycotic_settings and thycotic_settings["domain"] != ""
-        is_valid_password = "password" in thycotic_settings and thycotic_settings["password"] != ""
-        is_valid_tenant = "tenant" in thycotic_settings and thycotic_settings["tenant"] != ""
-        is_valid_token = "token" in thycotic_settings and thycotic_settings["token"] != ""
-        is_valid_username = "username" in thycotic_settings and thycotic_settings["username"] != ""
-        is_valid_ca_bundle_path = "ca_bundle_path" in thycotic_settings and thycotic_settings["ca_bundle_path"] != ""
 
         return cls.query_thycotic_secret_server(
             secret=secret,
             base_url=thycotic_settings["base_url"],
-            ca_bundle_path=thycotic_settings["ca_bundle_path"] if is_valid_ca_bundle_path else None,
+            ca_bundle_path=thycotic_settings["ca_bundle_path"],
             cloud_based=thycotic_settings["cloud_based"],
-            domain=thycotic_settings["domain"] if is_valid_domain else None,
-            password=thycotic_settings["password"] if is_valid_password else None,
+            domain=thycotic_settings["domain"],
+            password=thycotic_settings["password"],
             secret_id=secret_id,
             secret_path=secret_path,
             secret_selected_value=secret_selected_value,
-            tenant=thycotic_settings["tenant"] if is_valid_tenant else None,
-            token=thycotic_settings["token"] if is_valid_token else None,
-            username=thycotic_settings["username"] if is_valid_username else None,
+            tenant=thycotic_settings["tenant"],
+            token=thycotic_settings["token"],
+            username=thycotic_settings["username"],
             caller_class=cls,
         )
 
@@ -109,10 +103,8 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
     ):
         """Query Thycotic Secret Server."""
         # Ensure required parameters are set
-        if (
-            token is None and (username is None or password is None)
-        ) or (  # pylint: disable=too-many-boolean-expressions
-            cloud_based and (tenant is None or username is None or password is None)
+        if any(
+            [token is None and not all([username, password]), cloud_based and not all([tenant, username, password])]
         ):
             raise exceptions.SecretProviderError(
                 secret,
@@ -141,14 +133,14 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
                 if original_env != ca_bundle_path:
                     os.environ["REQUESTS_CA_BUNDLE"] = ca_bundle_path
                     must_restore_env = True
-            # Setup Thycotic authorizer
+            # Setup thycotic authorizer
             # Username | Password | Token | Domain | Authorizer
             #   def    |   def    |   *   |   -    | PasswordGrantAuthorizer
             #   def    |   def    |   *   |  def   | DomainPasswordGrantAuthorizer
             #    -     |    -     |  def  |   *    | AccessTokenAuthorizer
             #   def    |    -     |  def  |   *    | AccessTokenAuthorizer
             #    -     |   def    |  def  |   *    | AccessTokenAuthorizer
-            if username is not None and password is not None:
+            if all([username, password]):
                 if domain is not None:
                     thy_authorizer = DomainPasswordGrantAuthorizer(
                         base_url=base_url,
@@ -209,12 +201,7 @@ class ThycoticSecretServerSecretsProviderId(ThycoticSecretServerSecretsProviderB
         secret_selected_value = forms.ChoiceField(
             label="Return value",
             required=True,
-            choices=(
-                ("password", "Password"),
-                ("username", "Username"),
-                ("url", "URL"),
-                ("notes", "Notes"),
-            ),
+            choices=ThycoticSecretChoices,
             help_text="Select which value to return.",
         )
 
@@ -237,11 +224,6 @@ class ThycoticSecretServerSecretsProviderPath(ThycoticSecretServerSecretsProvide
         secret_selected_value = forms.ChoiceField(
             label="Return value",
             required=True,
-            choices=(
-                ("password", "Password"),
-                ("username", "Username"),
-                ("url", "URL"),
-                ("notes", "Notes"),
-            ),
+            choices=ThycoticSecretChoices,
             help_text="Select which value to return.",
         )
