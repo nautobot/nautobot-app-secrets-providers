@@ -1,6 +1,6 @@
 # Nautobot Secrets Providers Changelog
 
-## v1.1.0 (???)
+## v1.1.0 (2022-03-10)
 
 ### Added
 
