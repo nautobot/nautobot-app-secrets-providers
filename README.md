@@ -12,6 +12,7 @@ This plugin supports the following popular secrets backends:
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
 | [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2) | [Token](https://www.vaultproject.io/docs/auth/token)         |
+| [Thycotic Secret Server](https://thycotic.com/)               | [Secret Server Cloud](https://github.com/thycotic/python-tss-sdk#secret-server-cloud)<br/>[Secret Server (on-prem)](https://github.com/thycotic/python-tss-sdk#secret-server)| [Access Token Authorization](https://github.com/thycotic/python-tss-sdk#access-token-authorization)<br/>[Domain Authorization](https://github.com/thycotic/python-tss-sdk#domain-authorization)<br/>[Password Authorization](https://github.com/thycotic/python-tss-sdk#password-authorization)<br/>         |
 
 ## Screenshots
 
@@ -29,9 +30,17 @@ This plugin supports the following popular secrets backends:
 
 ![Screenshot of secret using HashiCorp Vault](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot04.png "Secret using HashiCorp Vault")
 
+---
+
+![Screenshot of secret using Thycotic Secret Server by ID](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot05.png "Secret using Thycotic Secret Server by ID")
+
+---
+
+![Screenshot of secret using Thycotic Secret Server by Path](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot06.png "Secret using Thycotic Secret Server by Path")
+
 ## Installation
 
-> Nautobot Secrets Providers is compatible with Nautobot 1.2.0 and higher
+> Nautobot Secrets Providers is compatible with Nautobot 1.2.0 and higher. Support for Thycotic Secret Server requires Python 3.7 or later.
 
 The package is available as a Python package in PyPI and can be installed with `pip`:
 
@@ -47,7 +56,7 @@ pip install nautobot-secrets-providers[all]
 
 ### Dependencies
 
-For this plugin to operate you must install at least one of the dependent libraries required by the secrets providers. 
+For this plugin to operate you must install at least one of the dependent libraries required by the secrets providers.
 
 **You must install the dependencies for at least one of the supported secrets providers or a `RuntimeError` will be raised.**
 
@@ -65,6 +74,14 @@ The HashiCorp Vault provider requires the `hvac` library. This can easily be ins
 
 ```no-highlight
 pip install nautobot-secrets-providers[hashicorp]
+```
+
+#### Thycotic Secret Server
+
+The Thycotic Secret Server provider requires the `python-tss-sdk` library. This can easily be installed along with the plugin using the following command:
+
+```no-highlight
+pip install nautobot-secrets-providers[thycotic]
 ```
 
 ### Enabling Secrets Providers
@@ -98,7 +115,7 @@ Please do not enable this plugin until you are able to install the dependencies,
 
 #### Authentication
 
-No configuration is needed within Nautobot for this provider to operate. Instead you must provide [AWS credentials in one of the methods supported by the `boto3` library](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials). 
+No configuration is needed within Nautobot for this provider to operate. Instead you must provide [AWS credentials in one of the methods supported by the `boto3` library](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials).
 
 Boto3 credentials can be configured in multiple ways (eight as of this writing) that are mirrored here:
 
@@ -145,6 +162,59 @@ PLUGINS_CONFIG = {
 
 - `url` - The URL to the HashiCorp Vault instance (e.g. `http://localhost:8200`)
 - `token` - The token for authenticating the client with the HashiCorp Vault instance. As with other sensitive service credentials, we recommend that you provide the token value as an environment variable and retrieve it with `{"token": os.getenv("NAUTOBOT_HASHICORP_VAULT_TOKEN")}` rather than hard-coding it in your `nautobot_config.py`.
+
+### Thycotic Secret Server (TSS)
+
+The Thycotic Secret Server plugin includes two providers:
+
+- **`Thycotic Secret Server by ID`**
+
+    This provider uses the `Secret ID` to specifiy the secret that is selected. The `Secret ID` is displayed in the browser's URL field if you `Edit` the data in Thycotic Secret Server.
+
+    - Example:
+
+        The url is: _https://pw.example.local/SecretServer/app/#/secret/**1234**/general_
+
+        In this example the value for `Secret ID` is **1234**.
+
+- **`Thycotic Secret Server by Path`**
+
+    This provider allows to select the secret by folder-path and secret-name. The path delimiter is a '\\'.
+
+    The `Secret path` is displayed as page header when `Edit` a secret.
+
+    - Example:
+
+        The header is: **NET-Automation > Nautobot > My-Secret**
+
+        In this example the value for `Secret path` is **`\NET-Automation\Nautobot\My-Secret`**.
+
+#### Configuration
+
+```python
+PLUGINS_CONFIG = {
+    "nautobot_secrets_providers": {
+        "thycotic": {  # https://github.com/thycotic/python-tss-sdk
+            "base_url": os.getenv("SECRET_SERVER_BASE_URL", None),
+            "ca_bundle_path": os.getenv("REQUESTS_CA_BUNDLE", None),
+            "cloud_based": is_truthy(os.getenv("SECRET_SERVER_IS_CLOUD_BASED", "False")),
+            "domain": os.getenv("SECRET_SERVER_DOMAIN", None),
+            "password": os.getenv("SECRET_SERVER_PASSWORD", None),
+            "tenant": os.getenv("SECRET_SERVER_TENANT", None),
+            "token": os.getenv("SECRET_SERVER_TOKEN", None),
+            "username": os.getenv("SECRET_SERVER_USERNAME", None),
+        },
+    }
+}
+```
+- `base_url` - (required) The Secret Server base_url. _e.g.'https://pw.example.local/SecretServer'_
+- `ca_bundle_path` - (optional) When using self-signed certificates this variable must be set to a file containing the trusted certificates (in .pem format). _e.g. '/etc/ssl/certs/ca-bundle.trust.crt'_.
+- `cloud_based` - (optional) Set to "True" if Secret Server Cloud should be used. (Default: "False").
+- `domain` - (optional) Required for 'Domain Authorization'
+- `password` - (optional) Required for 'Secret Server Cloud', 'Password Authorization', 'Domain Authorization'.
+- `tenant` - (optional) Required for 'Domain Authorization'.
+- `token` - (optional) Required for 'Access Token Authorization'.
+- `username` - (optional) Required for 'Secret Server Cloud', 'Password Authorization', 'Domain Authorization'.
 
 ## Contributing
 
@@ -196,7 +266,7 @@ nautobot_secrets_providers:
 poetry shell
 poetry install --extras nautobot
 export $(cat development/dev.env | xargs)
-export $(cat development/creds.env | xargs) 
+export $(cat development/creds.env | xargs)
 invoke start && sleep 5
 nautobot-server migrate
 ```
@@ -281,7 +351,7 @@ Project documentation is generated by [mkdocs](https://www.mkdocs.org/) from the
 
 #### AWS Secrets Manager
 
-This assumes you are logged into the AWS Console. 
+This assumes you are logged into the AWS Console.
 
 - Navigate to AWS Console
 - Navigate to AWS Secrets Manager
@@ -362,7 +432,7 @@ Next, save this as `aws_secrets.py`:
 
 ```python
 # Use this code snippet in your app.
-# If you need more information about configurations or implementing the sample code, visit the AWS docs:   
+# If you need more information about configurations or implementing the sample code, visit the AWS docs:
 # https://aws.amazon.com/developers/getting-started/python/
 
 import boto3
@@ -418,8 +488,8 @@ def get_secret():
             secret = get_secret_value_response['SecretString']
         else:
             decoded_binary_secret = base64.b64decode(get_secret_value_response['SecretBinary'])
-            
-    # Your code goes here. 
+
+    # Your code goes here.
 
 # ^ Above was generated by AWS.
 
@@ -452,7 +522,7 @@ poetry install --extras hashicorp
 invoke start
 ```
 
-##### Set an alias to work with `vault` 
+##### Set an alias to work with `vault`
 
 This will allow you to easily run the CLI command from within the container:
 
