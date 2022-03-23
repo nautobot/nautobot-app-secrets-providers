@@ -5,6 +5,7 @@ from django.conf import settings
 
 try:
     import hvac
+    DEFAULT_MOUNT_POINT = hvac.api.secrets_engines.kv_v2.DEFAULT_MOUNT_POINT
 except ImportError:
     hvac = None
 
@@ -33,6 +34,11 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             required=True,
             help_text="The key of the HashiCorp Vault secret",
         )
+        mount_point = forms.CharField(
+            required=False,
+            help_text=f"The path where the secret engine was mounted on (default value: {DEFAULT_MOUNT_POINT})",
+            initial=DEFAULT_MOUNT_POINT
+        )
 
     @classmethod
     def get_value_for_secret(cls, secret, obj=None, **kwargs):
@@ -52,6 +58,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         try:
             secret_path = parameters["path"]
             secret_key = parameters["key"]
+            secret_mount_point = parameters["mount_point"]
         except KeyError as err:
             msg = f"The secret parameter could not be retrieved for field {err}"
             raise exceptions.SecretParametersError(secret, cls, msg) from err
@@ -59,7 +66,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         # Get the client and attempt to retrieve the secret.
         client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"])
         try:
-            response = client.secrets.kv.read_secret(path=secret_path)
+            response = client.secrets.kv.read_secret(path=secret_path, mount_point=secret_mount_point)
         except hvac.exceptions.InvalidPath as err:
             raise exceptions.SecretValueNotFoundError(secret, cls, str(err)) from err
 
