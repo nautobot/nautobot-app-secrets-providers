@@ -5,6 +5,7 @@ from django.conf import settings
 
 try:
     import hvac
+
     DEFAULT_MOUNT_POINT = hvac.api.secrets_engines.kv_v2.DEFAULT_MOUNT_POINT
 except ImportError:
     hvac = None
@@ -37,7 +38,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         mount_point = forms.CharField(
             required=False,
             help_text=f"The path where the secret engine was mounted on (default value: {DEFAULT_MOUNT_POINT})",
-            initial=DEFAULT_MOUNT_POINT
+            initial=DEFAULT_MOUNT_POINT,
         )
 
     @classmethod
