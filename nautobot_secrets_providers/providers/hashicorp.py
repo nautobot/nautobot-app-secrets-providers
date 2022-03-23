@@ -59,7 +59,10 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         try:
             secret_path = parameters["path"]
             secret_key = parameters["key"]
-            secret_mount_point = parameters["mount_point"]
+            if "mount_point" in parameters:
+                secret_mount_point = parameters["mount_point"]
+            else:
+                secret_mount_point = DEFAULT_MOUNT_POINT
         except KeyError as err:
             msg = f"The secret parameter could not be retrieved for field {err}"
             raise exceptions.SecretParametersError(secret, cls, msg) from err
