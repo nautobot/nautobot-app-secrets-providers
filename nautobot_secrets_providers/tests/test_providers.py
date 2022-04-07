@@ -154,7 +154,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
 
     @requests_mock.Mocker()
     def test_retrieve_mount_point_success(self, requests_mocker):
-        """Retrieve a secret successfully."""
+        """Retrieve a secret successfully using a custom `mount_point`."""
         requests_mocker.register_uri(method="GET", url=self.test_mountpoint_path, json=self.mock_response)
 
         response = self.provider.get_value_for_secret(self.secret_mounting_point)

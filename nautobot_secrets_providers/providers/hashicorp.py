@@ -37,7 +37,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         )
         mount_point = forms.CharField(
             required=False,
-            help_text=f"The path where the secret engine was mounted on (default value: {DEFAULT_MOUNT_POINT})",
+            help_text=f"The path where the secret engine was mounted on (Default: <code>{DEFAULT_MOUNT_POINT}</code>)",
             initial=DEFAULT_MOUNT_POINT,
         )
 
@@ -59,10 +59,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         try:
             secret_path = parameters["path"]
             secret_key = parameters["key"]
-            if "mount_point" in parameters:
-                secret_mount_point = parameters["mount_point"]
-            else:
-                secret_mount_point = DEFAULT_MOUNT_POINT
+            secret_mount_point = parameters.get("mount_point", DEFAULT_MOUNT_POINT)
         except KeyError as err:
             msg = f"The secret parameter could not be retrieved for field {err}"
             raise exceptions.SecretParametersError(secret, cls, msg) from err
