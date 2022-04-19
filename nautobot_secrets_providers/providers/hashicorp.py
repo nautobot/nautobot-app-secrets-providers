@@ -51,19 +51,23 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
 
         vault_settings = plugin_settings["hashicorp_vault"]
         if "url" not in vault_settings:
-            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
+            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration: missing a url")
 
-        try:
-            auth_method = vault_settings["auth_method"]
-            if auth_method == "token":
-                token = vault_settings["token"]
-            elif auth_method == "approle":
-                role_id = vault_settings["role_id"]
-                secret_id = vault_settings["secret_id"]
-            else:
-                raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
-        except KeyError:
-            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
+        if "auth_method" not in vault_settings:
+            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration: missing an auth_method")
+
+        if vault_settings["auth_method"] not in ["token", "approle"]:
+            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration: auth_method must "
+                                                              "be either token or approle")
+
+        if vault_settings["auth_method"] == "token":
+            if "token" not in vault_settings:
+                raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration: token is missing")
+
+        if vault_settings["auth_method"] == "approle":
+            if "role_id" not in vault_settings or "secret_id" not in vault_settings:
+                raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration: either role_id or "
+                                                                  "secret_id is missing")
 
         # Try to get parameters and error out early.
         parameters = secret.rendered_parameters(obj=obj)
@@ -76,13 +80,13 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             raise exceptions.SecretParametersError(secret, cls, msg) from err
 
         # Get the client and attempt to retrieve the secret.
-        if auth_method == "token":
+        if vault_settings["auth_method"] == "token":
             client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"])
-        elif auth_method == "approle":
+        elif vault_settings["auth_method"] == "approle":
             client = hvac.Client(url=vault_settings["url"])
             client.auth.approle.login(
-                role_id=role_id,
-                secret_id=secret_id,
+                role_id=vault_settings["role_id"],
+                secret_id=vault_settings["secret_id"],
             )
         try:
             response = client.secrets.kv.read_secret(path=secret_path, mount_point=secret_mount_point)
