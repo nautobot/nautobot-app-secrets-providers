@@ -54,19 +54,6 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         if "url" not in vault_settings or "auth_method" not in vault_settings:
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
-        try:
-            if vault_settings["auth_method"] == "token":
-                if "token" not in vault_settings:
-                    raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration: token is missing")
-
-            if vault_settings["auth_method"] == "approle":
-                if "role_id" not in vault_settings or "secret_id" not in vault_settings:
-                    raise exceptions.SecretProviderError(
-                        secret, cls, "HashiCorp Vault configuration: either role_id or secret_id is missing"
-                    )
-        except KeyError:
-            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
-
         # Try to get parameters and error out early.
         parameters = secret.rendered_parameters(obj=obj)
         try:
@@ -77,15 +64,19 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             msg = f"The secret parameter could not be retrieved for field {err}"
             raise exceptions.SecretParametersError(secret, cls, msg) from err
 
-        # Get the client and attempt to retrieve the secret.
-        if vault_settings["auth_method"] == "token":
-            client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"])
-        elif vault_settings["auth_method"] == "approle":
-            client = hvac.Client(url=vault_settings["url"])
-            client.auth.approle.login(
-                role_id=vault_settings["role_id"],
-                secret_id=vault_settings["secret_id"],
-            )
+        try:
+            # Get the client and attempt to retrieve the secret.
+            if vault_settings["auth_method"] == "token":
+                client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"])
+            elif vault_settings["auth_method"] == "approle":
+                client = hvac.Client(url=vault_settings["url"])
+                client.auth.approle.login(
+                    role_id=vault_settings["role_id"],
+                    secret_id=vault_settings["secret_id"],
+                )
+        except KeyError:
+            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
+
         try:
             response = client.secrets.kv.read_secret(path=secret_path, mount_point=secret_mount_point)
         except hvac.exceptions.InvalidPath as err:
