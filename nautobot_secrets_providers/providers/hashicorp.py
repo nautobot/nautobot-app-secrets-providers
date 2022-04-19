@@ -13,7 +13,6 @@ except ImportError:
 from nautobot.utilities.forms import BootstrapMixin
 from nautobot.extras.secrets import exceptions, SecretsProvider
 
-
 __all__ = ("HashiCorpVaultSecretsProvider",)
 
 
@@ -51,7 +50,19 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
         vault_settings = plugin_settings["hashicorp_vault"]
-        if "url" not in vault_settings or "token" not in vault_settings:
+        if "url" not in vault_settings:
+            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
+
+        try:
+            auth_method = vault_settings["auth_method"]
+            if auth_method == "token":
+                token = vault_settings["token"]
+            elif auth_method == "approle":
+                role_id = vault_settings["role_id"]
+                secret_id = vault_settings["secret_id"]
+            else:
+                raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
+        except KeyError:
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
         # Try to get parameters and error out early.
@@ -65,7 +76,14 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             raise exceptions.SecretParametersError(secret, cls, msg) from err
 
         # Get the client and attempt to retrieve the secret.
-        client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"])
+        if auth_method == "token":
+            client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"])
+        elif auth_method == "approle":
+            client = hvac.Client(url=vault_settings["url"])
+            client.auth.approle.login(
+                role_id=role_id,
+                secret_id=secret_id,
+            )
         try:
             response = client.secrets.kv.read_secret(path=secret_path, mount_point=secret_mount_point)
         except hvac.exceptions.InvalidPath as err:
