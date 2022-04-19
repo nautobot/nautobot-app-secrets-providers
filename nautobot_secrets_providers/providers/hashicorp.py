@@ -50,26 +50,22 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
         vault_settings = plugin_settings["hashicorp_vault"]
-        if "url" not in vault_settings:
-            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration: missing a url")
 
-        if "auth_method" not in vault_settings:
-            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration: missing an auth_method")
+        if "url" not in vault_settings or "auth_method" not in vault_settings:
+            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
-        if vault_settings["auth_method"] not in ["token", "approle"]:
-            raise exceptions.SecretProviderError(
-                secret, cls, "HashiCorp Vault configuration: auth_method must be either token or approle"
-            )
+        try:
+            if vault_settings["auth_method"] == "token":
+                if "token" not in vault_settings:
+                    raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration: token is missing")
 
-        if vault_settings["auth_method"] == "token":
-            if "token" not in vault_settings:
-                raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration: token is missing")
-
-        if vault_settings["auth_method"] == "approle":
-            if "role_id" not in vault_settings or "secret_id" not in vault_settings:
-                raise exceptions.SecretProviderError(
-                    secret, cls, "HashiCorp Vault configuration: either role_id or secret_id is missing"
-                )
+            if vault_settings["auth_method"] == "approle":
+                if "role_id" not in vault_settings or "secret_id" not in vault_settings:
+                    raise exceptions.SecretProviderError(
+                        secret, cls, "HashiCorp Vault configuration: either role_id or secret_id is missing"
+                    )
+        except KeyError:
+            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
         # Try to get parameters and error out early.
         parameters = secret.rendered_parameters(obj=obj)
