@@ -57,8 +57,9 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration: missing an auth_method")
 
         if vault_settings["auth_method"] not in ["token", "approle"]:
-            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration: auth_method must "
-                                                              "be either token or approle")
+            raise exceptions.SecretProviderError(
+                secret, cls, "HashiCorp Vault configuration: auth_method must be either token or approle"
+            )
 
         if vault_settings["auth_method"] == "token":
             if "token" not in vault_settings:
@@ -66,8 +67,9 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
 
         if vault_settings["auth_method"] == "approle":
             if "role_id" not in vault_settings or "secret_id" not in vault_settings:
-                raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration: either role_id or "
-                                                                  "secret_id is missing")
+                raise exceptions.SecretProviderError(
+                    secret, cls, "HashiCorp Vault configuration: either role_id or secret_id is missing"
+                )
 
         # Try to get parameters and error out early.
         parameters = secret.rendered_parameters(obj=obj)
