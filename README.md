@@ -154,14 +154,18 @@ PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
         "hashicorp_vault": {
             "url": "http://localhost:8200",
+            "auth_method": "token",
             "token": os.getenv("NAUTOBOT_HASHICORP_VAULT_TOKEN"),
         }
     },
 }
 ```
 
-- `url` - The URL to the HashiCorp Vault instance (e.g. `http://localhost:8200`)
-- `token` - The token for authenticating the client with the HashiCorp Vault instance. As with other sensitive service credentials, we recommend that you provide the token value as an environment variable and retrieve it with `{"token": os.getenv("NAUTOBOT_HASHICORP_VAULT_TOKEN")}` rather than hard-coding it in your `nautobot_config.py`.
+- `url` - (required) The URL to the HashiCorp Vault instance (e.g. `http://localhost:8200`).
+- `auth_method` - (optional / defaults to "token") The method used to authenticate against the HashiCorp Vault instance.
+- `token` - (optional) Required when `"auth_method": "token"`. The token for authenticating the client with the HashiCorp Vault instance. As with other sensitive service credentials, we recommend that you provide the token value as an environment variable and retrieve it with `{"token": os.getenv("NAUTOBOT_HASHICORP_VAULT_TOKEN")}` rather than hard-coding it in your `nautobot_config.py`.
+- `role_id` - (optional) Required when `"auth_method": "approle"`.
+- `secret_id` - (optional) Required when `"auth_method": "approle"`.
 
 ### Thycotic Secret Server (TSS)
 
