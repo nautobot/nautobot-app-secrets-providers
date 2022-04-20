@@ -74,8 +74,8 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
                     role_id=vault_settings["role_id"],
                     secret_id=vault_settings["secret_id"],
                 )
-        except KeyError:
-            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
+        except KeyError as err:
+            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!") from err
 
         try:
             response = client.secrets.kv.read_secret(path=secret_path, mount_point=secret_mount_point)
