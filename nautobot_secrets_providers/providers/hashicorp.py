@@ -86,6 +86,10 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
                 raise exceptions.SecretProviderError(
                     secret, cls, "HashiCorp Vault configuration is missing a role_id and/or secret_id"
                 ) from err
+            except hvac.exceptions.InvalidRequest as err:
+                raise exceptions.SecretProviderError(
+                    secret, cls, "HashiCorp Vault invalid role_id and/or secret_id"
+                ) from err
         else:
             raise exceptions.SecretProviderError(
                 secret, cls, f'HashiCorp Vault configuration "{auth_method}" is not a valid auth_method'
