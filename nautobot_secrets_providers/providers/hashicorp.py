@@ -84,7 +84,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
                 )
             except KeyError as err:
                 raise exceptions.SecretProviderError(
-                    secret, cls, "HashiCorp Vault configuration is missing a role_id or secret_id"
+                    secret, cls, "HashiCorp Vault configuration is missing a role_id and/or secret_id"
                 ) from err
         else:
             raise exceptions.SecretProviderError(
