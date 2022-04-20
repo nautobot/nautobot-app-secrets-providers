@@ -52,7 +52,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         vault_settings = plugin_settings["hashicorp_vault"]
 
         if "url" not in vault_settings:
-            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
+            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration is missing a url")
 
         # Try to get parameters and error out early.
         parameters = secret.rendered_parameters(obj=obj)
@@ -74,7 +74,9 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             try:
                 client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"])
             except KeyError as err:
-                raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!") from err
+                raise exceptions.SecretProviderError(
+                    secret, cls, "HashiCorp Vault configuration is missing a token"
+                ) from err
         elif auth_method == "approle":
             try:
                 client = hvac.Client(url=vault_settings["url"])
@@ -83,9 +85,13 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
                     secret_id=vault_settings["secret_id"],
                 )
             except KeyError as err:
-                raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!") from err
+                raise exceptions.SecretProviderError(
+                    secret, cls, "HashiCorp Vault configuration is missing a role_id or secret_id"
+                ) from err
         else:
-            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
+            raise exceptions.SecretProviderError(
+                secret, cls, f'HashiCorp Vault configuration "{auth_method}" is not a valid auth_method'
+            )
 
         try:
             response = client.secrets.kv.read_secret(path=secret_path, mount_point=secret_mount_point)
