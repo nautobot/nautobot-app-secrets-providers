@@ -51,7 +51,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
 
         vault_settings = plugin_settings["hashicorp_vault"]
 
-        if "url" not in vault_settings or "auth_method" not in vault_settings:
+        if "url" not in vault_settings:
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
         # Try to get parameters and error out early.
@@ -64,18 +64,28 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             msg = f"The secret parameter could not be retrieved for field {err}"
             raise exceptions.SecretParametersError(secret, cls, msg) from err
 
-        try:
-            # Get the client and attempt to retrieve the secret.
-            if vault_settings["auth_method"] == "token":
+        # default to token authentication
+        auth_method = "token"
+        if "auth_method" in vault_settings:
+            auth_method = vault_settings["auth_method"]
+
+        # Get the client and attempt to retrieve the secret.
+        if auth_method == "token":
+            try:
                 client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"])
-            elif vault_settings["auth_method"] == "approle":
+            except KeyError as err:
+                raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!") from err
+        elif auth_method == "approle":
+            try:
                 client = hvac.Client(url=vault_settings["url"])
                 client.auth.approle.login(
                     role_id=vault_settings["role_id"],
                     secret_id=vault_settings["secret_id"],
                 )
-        except KeyError as err:
-            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!") from err
+            except KeyError as err:
+                raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!") from err
+        else:
+            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
         try:
             response = client.secrets.kv.read_secret(path=secret_path, mount_point=secret_mount_point)
