@@ -65,9 +65,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             raise exceptions.SecretParametersError(secret, cls, msg) from err
 
         # default to token authentication
-        auth_method = "token"
-        if "auth_method" in vault_settings:
-            auth_method = vault_settings["auth_method"]
+        auth_method = vault_settings.get("auth_method", "token")
 
         # Get the client and attempt to retrieve the secret.
         if auth_method == "token":
