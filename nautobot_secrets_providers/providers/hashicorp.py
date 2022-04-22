@@ -75,6 +75,10 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
                 raise exceptions.SecretProviderError(
                     secret, cls, "HashiCorp Vault configuration is missing a token"
                 ) from err
+            except hvac.exceptions.InvalidRequest as err:
+                raise exceptions.SecretProviderError(
+                    secret, cls, "HashiCorp Vault invalid token"
+                ) from err
         elif auth_method == "approle":
             try:
                 client = hvac.Client(url=vault_settings["url"])
