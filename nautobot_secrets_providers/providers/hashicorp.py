@@ -13,7 +13,6 @@ except ImportError:
 from nautobot.utilities.forms import BootstrapMixin
 from nautobot.extras.secrets import exceptions, SecretsProvider
 
-
 __all__ = ("HashiCorpVaultSecretsProvider",)
 
 
@@ -51,8 +50,9 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
         vault_settings = plugin_settings["hashicorp_vault"]
-        if "url" not in vault_settings or "token" not in vault_settings:
-            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
+
+        if "url" not in vault_settings:
+            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration is missing a url")
 
         # Try to get parameters and error out early.
         parameters = secret.rendered_parameters(obj=obj)
@@ -64,8 +64,39 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             msg = f"The secret parameter could not be retrieved for field {err}"
             raise exceptions.SecretParametersError(secret, cls, msg) from err
 
+        # default to token authentication
+        auth_method = vault_settings.get("auth_method", "token")
+
         # Get the client and attempt to retrieve the secret.
-        client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"])
+        if auth_method == "token":
+            try:
+                client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"])
+            except KeyError as err:
+                raise exceptions.SecretProviderError(
+                    secret, cls, "HashiCorp Vault configuration is missing a token"
+                ) from err
+            except hvac.exceptions.InvalidRequest as err:
+                raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault invalid token") from err
+        elif auth_method == "approle":
+            try:
+                client = hvac.Client(url=vault_settings["url"])
+                client.auth.approle.login(
+                    role_id=vault_settings["role_id"],
+                    secret_id=vault_settings["secret_id"],
+                )
+            except KeyError as err:
+                raise exceptions.SecretProviderError(
+                    secret, cls, "HashiCorp Vault configuration is missing a role_id and/or secret_id"
+                ) from err
+            except hvac.exceptions.InvalidRequest as err:
+                raise exceptions.SecretProviderError(
+                    secret, cls, "HashiCorp Vault invalid role_id and/or secret_id"
+                ) from err
+        else:
+            raise exceptions.SecretProviderError(
+                secret, cls, f'HashiCorp Vault configuration "{auth_method}" is not a valid auth_method'
+            )
+
         try:
             response = client.secrets.kv.read_secret(path=secret_path, mount_point=secret_mount_point)
         except hvac.exceptions.InvalidPath as err:
