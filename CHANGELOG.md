@@ -1,5 +1,12 @@
 # Nautobot Secrets Providers Changelog
 
+## v1.2.0 (2022-05-25)
+
+### Added
+
+- [#8](https://github.com/nautobot/nautobot-plugin-secrets-providers/issues/8) Add support for authentication to HashiCorp Vault via AppRole as an alternative to token authentication
+- [#23](https://github.com/nautobot/nautobot-plugin-secrets-providers/issues/23) Add support for non-default HashiCorp Vault mountpoints
+
 ## v1.1.0 (2022-03-10)
 
 ### Added
