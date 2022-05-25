@@ -134,7 +134,15 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             provider=self.provider.slug,
             parameters={"path": "hello", "key": "location"},
         )
+        # The secret with a mounting point we be using.
+        self.secret_mounting_point = Secret.objects.create(
+            name="hello-hashicorp-mntpnt",
+            slug="hello-hashicorp-mntpnt",
+            provider=self.provider.slug,
+            parameters={"path": "hello", "key": "location", "mount_point": "mymount"},
+        )
         self.test_path = "http://localhost:8200/v1/secret/data/hello"
+        self.test_mountpoint_path = "http://localhost:8200/v1/mymount/data/hello"
 
     @requests_mock.Mocker()
     def test_retrieve_success(self, requests_mocker):
@@ -142,6 +150,14 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         requests_mocker.register_uri(method="GET", url=self.test_path, json=self.mock_response)
 
         response = self.provider.get_value_for_secret(self.secret)
+        self.assertEqual(self.mock_response["data"]["data"]["location"], response)
+
+    @requests_mock.Mocker()
+    def test_retrieve_mount_point_success(self, requests_mocker):
+        """Retrieve a secret successfully using a custom `mount_point`."""
+        requests_mocker.register_uri(method="GET", url=self.test_mountpoint_path, json=self.mock_response)
+
+        response = self.provider.get_value_for_secret(self.secret_mounting_point)
         self.assertEqual(self.mock_response["data"]["data"]["location"], response)
 
     @requests_mock.Mocker()
