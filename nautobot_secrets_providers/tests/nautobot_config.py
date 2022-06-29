@@ -23,10 +23,6 @@ DATABASES = {
     }
 }
 
-PLUGINS = [
-    "dummy_plugin",
-]
-
 PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
         "hashicorp_vault": {

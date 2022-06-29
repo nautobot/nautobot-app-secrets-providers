@@ -5,8 +5,6 @@ from django.conf import settings
 
 try:
     import hvac
-
-    DEFAULT_MOUNT_POINT = hvac.api.secrets_engines.kv_v2.DEFAULT_MOUNT_POINT
 except ImportError:
     hvac = None
 
@@ -14,6 +12,10 @@ from nautobot.utilities.forms import BootstrapMixin
 from nautobot.extras.secrets import exceptions, SecretsProvider
 
 __all__ = ("HashiCorpVaultSecretsProvider",)
+
+
+# Default mount point for the HVAC client
+DEFAULT_MOUNT_POINT = "secret"
 
 
 class HashiCorpVaultSecretsProvider(SecretsProvider):
