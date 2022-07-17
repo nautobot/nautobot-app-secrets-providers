@@ -64,10 +64,15 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         # default to token authentication
         auth_method = vault_settings.get("auth_method", "token")
 
+        # According to the docs (https://hvac.readthedocs.io/en/stable/source/hvac_v1.html?highlight=verify#hvac.v1.Client.__init__)
+        # the client verify parameter is either a boolean or a path to a ca certificate file to verify.  This is non-intuitive
+        # so we use a parameter to specify the path to the ca_cert, if not provided we use the default of None
+        ca_cert = vault_settings.get("ca_cert", None)
+
         # Get the client and attempt to retrieve the secret.
         if auth_method == "token":
             try:
-                client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"])
+                client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"], verify=ca_cert)
             except KeyError as err:
                 raise exceptions.SecretProviderError(
                     secret, cls, "HashiCorp Vault configuration is missing a token"
@@ -76,7 +81,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
                 raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault invalid token") from err
         elif auth_method == "approle":
             try:
-                client = hvac.Client(url=vault_settings["url"])
+                client = hvac.Client(url=vault_settings["url"], verify=ca_cert)
                 client.auth.approle.login(
                     role_id=vault_settings["role_id"],
                     secret_id=vault_settings["secret_id"],
@@ -91,7 +96,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
                 ) from err
         elif auth_method == "kubernetes":
             try:
-                client = hvac.Client(url=vault_settings["url"])
+                client = hvac.Client(url=vault_settings["url"], verify=ca_cert)
                 with open("/var/run/secrets/kubernetes.io/serviceaccount/token", "r", encoding="utf-8") as token_file:
                     jwt = token_file.read()
                 client.auth.kubernetes.login(role=vault_settings["role_name"], jwt=jwt)
