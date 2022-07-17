@@ -41,8 +41,8 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         )
 
     @classmethod
-    def get_value_for_secret(cls, secret, obj=None, **kwargs):
-        """Return the value stored under the secret’s key in the secret’s path."""
+    def validate_vault_settings(cls, secret):
+        """Validate the vault settings."""
         # This is only required for HashiCorp Vault therefore not defined in
         # `required_settings` for the plugin config.
         plugin_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
@@ -54,15 +54,12 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         if "url" not in vault_settings:
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration is missing a url")
 
-        # Try to get parameters and error out early.
-        parameters = secret.rendered_parameters(obj=obj)
-        try:
-            secret_path = parameters["path"]
-            secret_key = parameters["key"]
-            secret_mount_point = parameters.get("mount_point", DEFAULT_MOUNT_POINT)
-        except KeyError as err:
-            msg = f"The secret parameter could not be retrieved for field {err}"
-            raise exceptions.SecretParametersError(secret, cls, msg) from err
+        return vault_settings
+
+    @classmethod
+    def get_client(cls, secret):
+        """Authenticate and return a hashicorp client."""
+        vault_settings = cls.validate_vault_settings(secret)
 
         # default to token authentication
         auth_method = vault_settings.get("auth_method", "token")
@@ -95,7 +92,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         elif auth_method == "kubernetes":
             try:
                 client = hvac.Client(url=vault_settings["url"])
-                with open("/var/run/secrets/kubernetes.io/serviceaccount/token", "r") as token_file:
+                with open("/var/run/secrets/kubernetes.io/serviceaccount/token", "r", encoding="utf-8") as token_file:
                     jwt = token_file.read()
                 client.auth.kubernetes.login(role_id=vault_settings["role_id"], jwt=jwt)
             except KeyError as err:
@@ -108,6 +105,23 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             raise exceptions.SecretProviderError(
                 secret, cls, f'HashiCorp Vault configuration "{auth_method}" is not a valid auth_method'
             )
+
+        return client
+
+    @classmethod
+    def get_value_for_secret(cls, secret, obj=None, **kwargs):
+        """Return the value stored under the secret’s key in the secret’s path."""
+        # Try to get parameters and error out early.
+        parameters = secret.rendered_parameters(obj=obj)
+        try:
+            secret_path = parameters["path"]
+            secret_key = parameters["key"]
+            secret_mount_point = parameters.get("mount_point", DEFAULT_MOUNT_POINT)
+        except KeyError as err:
+            msg = f"The secret parameter could not be retrieved for field {err}"
+            raise exceptions.SecretParametersError(secret, cls, msg) from err
+
+        client = cls.get_client(secret)
 
         try:
             response = client.secrets.kv.read_secret(path=secret_path, mount_point=secret_mount_point)
