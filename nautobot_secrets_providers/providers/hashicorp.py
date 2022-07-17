@@ -94,7 +94,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
                 client = hvac.Client(url=vault_settings["url"])
                 with open("/var/run/secrets/kubernetes.io/serviceaccount/token", "r", encoding="utf-8") as token_file:
                     jwt = token_file.read()
-                client.auth.kubernetes.login(role_id=vault_settings["role_id"], jwt=jwt)
+                client.auth.kubernetes.login(role=vault_settings["role_id"], jwt=jwt)
             except KeyError as err:
                 raise exceptions.SecretProviderError(
                     secret, cls, "HashiCorp Vault configuration is missing a role_id"
