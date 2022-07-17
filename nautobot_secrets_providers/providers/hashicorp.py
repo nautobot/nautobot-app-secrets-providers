@@ -92,6 +92,18 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
                 raise exceptions.SecretProviderError(
                     secret, cls, "HashiCorp Vault invalid role_id and/or secret_id"
                 ) from err
+        elif auth_method == "kubernetes":
+            try:
+                client = hvac.Client(url=vault_settings["url"])
+                with open("/var/run/secrets/kubernetes.io/serviceaccount/token", "r") as token_file:
+                    jwt = token_file.read()
+                client.auth.kubernetes.login(role_id=vault_settings["role_id"], jwt=jwt)
+            except KeyError as err:
+                raise exceptions.SecretProviderError(
+                    secret, cls, "HashiCorp Vault configuration is missing a role_id"
+                ) from err
+            except hvac.exceptions.InvalidRequest as err:
+                raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault invalid role_id") from err
         else:
             raise exceptions.SecretProviderError(
                 secret, cls, f'HashiCorp Vault configuration "{auth_method}" is not a valid auth_method'
