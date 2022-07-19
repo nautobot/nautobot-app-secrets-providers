@@ -1,6 +1,7 @@
 """Unit tests for Secrets Providers."""
 
 import boto3
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, tag
 from moto import mock_secretsmanager
@@ -202,3 +203,24 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
 
         exc = err.exception
         self.assertIn(self.secret.parameters["key"], exc.message)
+
+    def test_valid_settings(self):
+        """Test Valid configuration."""
+        returned_settings = self.provider.validate_vault_settings(self.secret)
+        self.assertEqual(returned_settings, settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["hashicorp_vault"])
+
+        with self.settings(
+            PLUGINS_CONFIG={
+                "nautobot_secrets_providers": {
+                    "hashicorp_vault": {
+                        "token": "nautobot",
+                    }
+                }
+            }
+        ):
+            with self.assertRaises(exceptions.SecretProviderError) as err:
+                self.provider.validate_vault_settings(self.secret)
+
+        with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {}}):
+            with self.assertRaises(exceptions.SecretProviderError) as err:
+                self.provider.validate_vault_settings(self.secret)
