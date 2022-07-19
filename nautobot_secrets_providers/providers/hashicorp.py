@@ -15,6 +15,8 @@ from nautobot.extras.secrets import exceptions, SecretsProvider
 
 __all__ = ("HashiCorpVaultSecretsProvider",)
 
+K8S_TOKEN_DEFAULT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+
 
 class HashiCorpVaultSecretsProvider(SecretsProvider):
     """A secrets provider for HashiCorp Vault."""
@@ -63,6 +65,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
 
         # default to token authentication
         auth_method = vault_settings.get("auth_method", "token")
+        k8s_token_path = vault_settings.get("k8s_token_path", K8S_TOKEN_DEFAULT_PATH)
 
         # According to the docs (https://hvac.readthedocs.io/en/stable/source/hvac_v1.html?highlight=verify#hvac.v1.Client.__init__)
         # the client verify parameter is either a boolean or a path to a ca certificate file to verify.  This is non-intuitive
@@ -97,7 +100,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         elif auth_method == "kubernetes":
             try:
                 client = hvac.Client(url=vault_settings["url"], verify=ca_cert)
-                with open("/var/run/secrets/kubernetes.io/serviceaccount/token", "r", encoding="utf-8") as token_file:
+                with open(k8s_token_path, "r", encoding="utf-8") as token_file:
                     jwt = token_file.read()
                 client.auth.kubernetes.login(role=vault_settings["role_name"], jwt=jwt)
             except KeyError as err:
