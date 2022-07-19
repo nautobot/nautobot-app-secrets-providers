@@ -1,9 +1,11 @@
 """Unit tests for Secrets Providers."""
+from unittest.mock import patch, mock_open
 
 import boto3
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, tag
+from hvac import Client as HVACClient, exceptions as hvac_exceptions
 from moto import mock_secretsmanager
 import requests_mock
 
@@ -125,6 +127,23 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         "auth": None,
     }
 
+    mock_kubernetes_auth_response = {
+        "auth": {
+            "client_token": "38fe9691-e623-7238-f618-c94d4e7bc674",
+            "accessor": "78e87a38-84ed-2692-538f-ca8b9f400ab3",
+            "policies": "default",
+            "metadata": {
+                "role": "some_role",
+                "service_account_name": "vault-auth",
+                "service_account_namespace": "default",
+                "service_account_secret_name": "vault-auth-token-pd21c",
+                "service_account_uid": "aa9aa8ff-98d0-11e7-9bb7-0800276d99bf",
+            },
+            "lease_duration": 2764800,
+            "renewable": True,
+        },
+    }
+
     def setUp(self):
         super().setUp()
 
@@ -204,6 +223,52 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         exc = err.exception
         self.assertIn(self.secret.parameters["key"], exc.message)
 
+    @requests_mock.Mocker()
+    @patch("builtins.open", new_callable=mock_open, read_data="data")
+    def test_get_client_k8s(self, requests_mocker, mock_file):
+        """Test Kubernetes Authentication."""
+        vault_url = "http://localhost:8200"
+        k8s_token_path = "/some/file/path"  # nosec B105
+        new_plugins_config = {
+            "nautobot_secrets_providers": {
+                "hashicorp_vault": {
+                    "url": vault_url,
+                    "auth_method": "kubernetes",
+                    "k8s_token_path": k8s_token_path,
+                },
+            },
+        }
+
+        # Test without specifying a role_name
+        with self.settings(PLUGINS_CONFIG=new_plugins_config):
+            with self.assertRaises(exceptions.SecretProviderError):
+                self.provider.get_client(self.secret)
+
+        # Test with various response codes (https://www.vaultproject.io/api-docs#http-status-codes)
+        new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["role_name"] = "some_role"
+        with self.settings(PLUGINS_CONFIG=new_plugins_config):
+            # Test Valid Response
+            requests_mocker.register_uri(
+                method="POST",
+                url=f"{vault_url}/v1/auth/kubernetes/login",
+                status_code=200,
+                json=self.mock_kubernetes_auth_response,
+            )
+            hvac_client = self.provider.get_client(self.secret)
+            self.assertIsInstance(hvac_client, HVACClient)
+
+            # Test Invalid Credentials
+            requests_mocker.register_uri(method="POST", url=f"{vault_url}/v1/auth/kubernetes/login", status_code=403)
+            with self.assertRaises(hvac_exceptions.Forbidden):
+                self.provider.get_client(self.secret)
+
+            # Test Invalid Request
+            requests_mocker.register_uri(method="POST", url=f"{vault_url}/v1/auth/kubernetes/login", status_code=400)
+            with self.assertRaises(exceptions.SecretProviderError):
+                self.provider.get_client(self.secret)
+
+        mock_file.assert_called_with(k8s_token_path, "r", encoding="utf-8")
+
     def test_valid_settings(self):
         """Test Valid configuration."""
         returned_settings = self.provider.validate_vault_settings(self.secret)
@@ -218,9 +283,9 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
                 }
             }
         ):
-            with self.assertRaises(exceptions.SecretProviderError) as err:
+            with self.assertRaises(exceptions.SecretProviderError):
                 self.provider.validate_vault_settings(self.secret)
 
         with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {}}):
-            with self.assertRaises(exceptions.SecretProviderError) as err:
+            with self.assertRaises(exceptions.SecretProviderError):
                 self.provider.validate_vault_settings(self.secret)
