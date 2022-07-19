@@ -15,7 +15,7 @@ from nautobot.extras.secrets import exceptions, SecretsProvider
 
 __all__ = ("HashiCorpVaultSecretsProvider",)
 
-K8S_TOKEN_DEFAULT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+K8S_TOKEN_DEFAULT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"  # nosec B105
 
 
 class HashiCorpVaultSecretsProvider(SecretsProvider):
