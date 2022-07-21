@@ -17,7 +17,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6.2"
+python = "^3.7"
 # Pin this to the lowest supported version of Nautobot
 nautobot = "~1.2.1"
 

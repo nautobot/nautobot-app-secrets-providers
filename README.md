@@ -243,7 +243,7 @@ The [PyInvoke](http://www.pyinvoke.org/) library is used to provide some helper 
 
 * `nautobot_ver`: the version of Nautobot to use as a base for any built docker containers (default: 1.2.0)
 * `project_name`: the default docker compose project name (default: nautobot_secrets_providers)
-* `python_ver`: the version of Python to use as a base for any built docker containers (default: 3.6)
+* `python_ver`: the version of Python to use as a base for any built docker containers (default: 3.7)
 * `local`: a boolean flag indicating if invoke tasks should be run on the host or inside the docker containers (default: False, commands will be run in docker containers)
 * `compose_dir`: the full path to a directory containing the project compose files
 * `compose_files`: a list of compose files applied in order (see [Multiple Compose files](https://docs.docker.com/compose/extends/#multiple-compose-files) for more information)
