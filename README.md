@@ -11,7 +11,7 @@ This plugin supports the following popular secrets backends:
 | Secrets Backend                                              | Supported Secret Types                                       | Supported Authentication Methods                             |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
-| [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2) | [Token](https://www.vaultproject.io/docs/auth/token)<br/>[AppRole](https://www.vaultproject.io/docs/auth/approle)<br/>[Kubernetes](https://www.vaultproject.io/docs/auth/kubernetes)         |
+| [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2) | [Token](https://www.vaultproject.io/docs/auth/token)<br/>[AppRole](https://www.vaultproject.io/docs/auth/approle)<br/>[AWS](https://www.vaultproject.io/docs/auth/aws)<br/>[Kubernetes](https://www.vaultproject.io/docs/auth/kubernetes)         |
 | [Thycotic Secret Server](https://thycotic.com/)               | [Secret Server Cloud](https://github.com/thycotic/python-tss-sdk#secret-server-cloud)<br/>[Secret Server (on-prem)](https://github.com/thycotic/python-tss-sdk#secret-server)| [Access Token Authorization](https://github.com/thycotic/python-tss-sdk#access-token-authorization)<br/>[Domain Authorization](https://github.com/thycotic/python-tss-sdk#domain-authorization)<br/>[Password Authorization](https://github.com/thycotic/python-tss-sdk#password-authorization)<br/>         |
 
 ## Screenshots
@@ -162,13 +162,14 @@ PLUGINS_CONFIG = {
 ```
 
 - `url` - (required) The URL to the HashiCorp Vault instance (e.g. `http://localhost:8200`).
-- `auth_method` - (optional / defaults to "token") The method used to authenticate against the HashiCorp Vault instance. Either `"approle"`, `"kubernetes"` or `"token"`.
+- `auth_method` - (optional / defaults to "token") The method used to authenticate against the HashiCorp Vault instance. Either `"approle"`, `"aws"`, `"kubernetes"` or `"token"`.
 - `ca_cert` - (optional) Path to a PEM formatted CA certificatee to use when verifying the vault connection.  Set to `False` to ignore ssl verification (not recommended) or `True` to use the system certificates.
 - `k8s_token_path` - (optional) Path to the kubernetes service account token file.  Defaults to "/var/run/secrets/kubernetes.io/serviceaccount/token".
 - `token` - (optional) Required when `"auth_method": "token"` or `auth_method` is not supplied. The token for authenticating the client with the HashiCorp Vault instance. As with other sensitive service credentials, we recommend that you provide the token value as an environment variable and retrieve it with `{"token": os.getenv("NAUTOBOT_HASHICORP_VAULT_TOKEN")}` rather than hard-coding it in your `nautobot_config.py`.
 - `role_name` - (optional) Required when `"auth_method": "kubernetes"`.  The Vault Kubernetes role to assume which the pod's service account has access to.
 - `role_id` - (optional) Required when `"auth_method": "approle"`. As with other sensitive service credentials, we recommend that you provide the role_id value as an environment variable and retrieve it with `{"role_id": os.getenv("NAUTOBOT_HASHICORP_VAULT_ROLE_ID")}` rather than hard-coding it in your `nautobot_config.py`.
 - `secret_id` - (optional) Required when `"auth_method": "approle"`.As with other sensitive service credentials, we recommend that you provide the secret_id value as an environment variable and retrieve it with `{"secret_id": os.getenv("NAUTOBOT_HASHICORP_VAULT_SECRET_ID")}` rather than hard-coding it in your `nautobot_config.py`.
+- `login_kwargs` - (optional) Additional optional parameters to pass to the login method for [`approle`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.AppRole.login), [`aws`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.Aws.iam_login) and [`kubernetes`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.Kubernetes.login) authentication methods.
 
 ### Thycotic Secret Server (TSS)
 

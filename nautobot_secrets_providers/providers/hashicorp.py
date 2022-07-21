@@ -4,6 +4,11 @@ from django import forms
 from django.conf import settings
 
 try:
+    import boto3
+except ImportError:
+    boto3 = None
+
+try:
     import hvac
 
     DEFAULT_MOUNT_POINT = hvac.api.secrets_engines.kv_v2.DEFAULT_MOUNT_POINT
@@ -16,6 +21,7 @@ from nautobot.extras.secrets import exceptions, SecretsProvider
 __all__ = ("HashiCorpVaultSecretsProvider",)
 
 K8S_TOKEN_DEFAULT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"  # nosec B105
+AUTH_METHOD_CHOICES = ["approle", "aws", "kubernetes", "token"]
 
 
 class HashiCorpVaultSecretsProvider(SecretsProvider):
@@ -43,7 +49,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         )
 
     @classmethod
-    def validate_vault_settings(cls, secret):
+    def validate_vault_settings(cls, secret=None):
         """Validate the vault settings."""
         # This is only required for HashiCorp Vault therefore not defined in
         # `required_settings` for the plugin config.
@@ -51,21 +57,46 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         if "hashicorp_vault" not in plugin_settings:
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
-        vault_settings = plugin_settings["hashicorp_vault"]
+        vault_settings = plugin_settings.get("hashicorp_vault")
+        auth_method = vault_settings.get("auth_method", "token")
 
         if "url" not in vault_settings:
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration is missing a url")
 
+        if auth_method not in AUTH_METHOD_CHOICES:
+            raise exceptions.SecretProviderError(secret, cls, f"HashiCorp Vault Auth Method {auth_method} is invalid!")
+
+        if auth_method == "aws":
+            if not boto3:
+                raise exceptions.SecretProviderError(
+                    secret, cls, "HashiCorp Vault AWS Auth Method requires the boto3 plugin!"
+                )
+        elif auth_method == "token":
+            if "token" not in vault_settings:
+                raise exceptions.SecretProviderError(
+                    secret, cls, "HashiCorp Vault configuration is missing a token for token authentication!"
+                )
+        elif auth_method == "kubernetes":
+            if "role_name" not in vault_settings:
+                raise exceptions.SecretProviderError(
+                    secret, cls, "HashiCorp Vault configuration is missing a role name for kubernetes authentication!"
+                )
+        elif auth_method == "approle":
+            if "role_id" not in vault_settings or "secret_id" not in vault_settings:
+                raise exceptions.SecretProviderError(
+                    secret, cls, "HashiCorp Vault configuration is missing a role_id and/or secret_id!"
+                )
+
         return vault_settings
 
     @classmethod
-    def get_client(cls, secret):
+    def get_client(cls, secret=None):
         """Authenticate and return a hashicorp client."""
         vault_settings = cls.validate_vault_settings(secret)
-
-        # default to token authentication
         auth_method = vault_settings.get("auth_method", "token")
+
         k8s_token_path = vault_settings.get("k8s_token_path", K8S_TOKEN_DEFAULT_PATH)
+        login_kwargs = vault_settings.get("login_kwargs", {})
 
         # According to the docs (https://hvac.readthedocs.io/en/stable/source/hvac_v1.html?highlight=verify#hvac.v1.Client.__init__)
         # the client verify parameter is either a boolean or a path to a ca certificate file to verify.  This is non-intuitive
@@ -73,46 +104,40 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         ca_cert = vault_settings.get("ca_cert", None)
 
         # Get the client and attempt to retrieve the secret.
-        if auth_method == "token":
-            try:
+        try:
+            if auth_method == "token":
                 client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"], verify=ca_cert)
-            except KeyError as err:
-                raise exceptions.SecretProviderError(
-                    secret, cls, "HashiCorp Vault configuration is missing a token"
-                ) from err
-            except hvac.exceptions.InvalidRequest as err:
-                raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault invalid token") from err
-        elif auth_method == "approle":
-            try:
+            else:
                 client = hvac.Client(url=vault_settings["url"], verify=ca_cert)
-                client.auth.approle.login(
-                    role_id=vault_settings["role_id"],
-                    secret_id=vault_settings["secret_id"],
-                )
-            except KeyError as err:
-                raise exceptions.SecretProviderError(
-                    secret, cls, "HashiCorp Vault configuration is missing a role_id and/or secret_id"
-                ) from err
-            except hvac.exceptions.InvalidRequest as err:
-                raise exceptions.SecretProviderError(
-                    secret, cls, "HashiCorp Vault invalid role_id and/or secret_id"
-                ) from err
-        elif auth_method == "kubernetes":
-            try:
-                client = hvac.Client(url=vault_settings["url"], verify=ca_cert)
-                with open(k8s_token_path, "r", encoding="utf-8") as token_file:
-                    jwt = token_file.read()
-                client.auth.kubernetes.login(role=vault_settings["role_name"], jwt=jwt)
-            except KeyError as err:
-                raise exceptions.SecretProviderError(
-                    secret, cls, "HashiCorp Vault configuration is missing a role_name"
-                ) from err
-            except hvac.exceptions.InvalidRequest as err:
-                raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault invalid role_name") from err
-        else:
+                if auth_method == "approle":
+                    client.auth.approle.login(
+                        role_id=vault_settings["role_id"],
+                        secret_id=vault_settings["secret_id"],
+                        **login_kwargs,
+                    )
+                elif auth_method == "kubernetes":
+                    with open(k8s_token_path, "r", encoding="utf-8") as token_file:
+                        jwt = token_file.read()
+                    client.auth.kubernetes.login(role=vault_settings["role_name"], jwt=jwt, **login_kwargs)
+                elif auth_method == "aws":
+                    session = boto3.Session()
+                    aws_creds = session.get_credentials()
+                    client.auth.aws.iam_login(
+                        access_key=aws_creds.access_key,
+                        secret_key=aws_creds.secret_key,
+                        session_token=aws_creds.token,
+                        region=session.region_name,
+                        role=vault_settings.get("role_name", None),
+                        **login_kwargs,
+                    )
+        except hvac.exceptions.InvalidRequest as err:
             raise exceptions.SecretProviderError(
-                secret, cls, f'HashiCorp Vault configuration "{auth_method}" is not a valid auth_method'
-            )
+                secret, cls, f"HashiCorp Vault Login failed (auth_method: {auth_method}). Error: {err}"
+            ) from err
+        except hvac.exceptions.Forbidden as err:
+            raise exceptions.SecretProviderError(
+                secret, cls, f"HashiCorp Vault Access Denied (auth_method: {auth_method}). Error: {err}"
+            ) from err
 
         return client
 

@@ -1,11 +1,12 @@
 """Unit tests for Secrets Providers."""
+import os
 from unittest.mock import patch, mock_open
 
 import boto3
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, tag
-from hvac import Client as HVACClient, exceptions as hvac_exceptions
+from hvac import Client as HVACClient
 from moto import mock_secretsmanager
 import requests_mock
 
@@ -105,6 +106,14 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
 
     provider = HashiCorpVaultSecretsProvider
 
+    aws_auth_env_vars = {
+        "AWS_ACCESS_KEY_ID": "testing",
+        "AWS_SECRET_ACCESS_KEY": "testing",
+        "AWS_SECURITY_TOKEN": "testing",
+        "AWS_SESSION_TOKEN": "testing",
+        "AWS_DEFAULT_REGION": "us-east-1",
+    }
+
     # Mock API response
     mock_response = {
         "request_id": "4708ebf3-3bce-b30e-0601-b192bf47af17",
@@ -142,6 +151,23 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             "lease_duration": 2764800,
             "renewable": True,
         },
+    }
+
+    mock_aws_auth_response = {
+        "auth": {
+            "renewable": True,
+            "lease_duration": 1800000,
+            "metadata": {
+                "role_tag_max_ttl": "0",
+                "instance_id": "i-de0f1344",
+                "ami_id": "ami-fce36983",
+                "role": "dev-role",
+                "auth_type": "ec2",
+            },
+            "policies": ["default", "dev"],
+            "accessor": "20b89871-e6f2-1160-fb29-31c2f6d4645e",
+            "client_token": "c9368254-3f21-aded-8a6f-7c818e81b17a",
+        }
     }
 
     def setUp(self):
@@ -259,7 +285,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
 
             # Test Invalid Credentials
             requests_mocker.register_uri(method="POST", url=f"{vault_url}/v1/auth/kubernetes/login", status_code=403)
-            with self.assertRaises(hvac_exceptions.Forbidden):
+            with self.assertRaises(exceptions.SecretProviderError):
                 self.provider.get_client(self.secret)
 
             # Test Invalid Request
@@ -270,22 +296,95 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         mock_file.assert_called_with(k8s_token_path, "r", encoding="utf-8")
 
     def test_valid_settings(self):
-        """Test Valid configuration."""
+        """Test configuration validation."""
         returned_settings = self.provider.validate_vault_settings(self.secret)
         self.assertEqual(returned_settings, settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["hashicorp_vault"])
 
-        with self.settings(
-            PLUGINS_CONFIG={
-                "nautobot_secrets_providers": {
-                    "hashicorp_vault": {
-                        "token": "nautobot",
-                    }
-                }
-            }
-        ):
-            with self.assertRaises(exceptions.SecretProviderError):
-                self.provider.validate_vault_settings(self.secret)
-
+        # No nautobot_secrets_providers
         with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {}}):
             with self.assertRaises(exceptions.SecretProviderError):
                 self.provider.validate_vault_settings(self.secret)
+
+        vault_url = "http://localhost:8200"
+        new_plugins_config = {
+            "nautobot_secrets_providers": {
+                "hashicorp_vault": {
+                    "token": "nautobot",
+                }
+            }
+        }
+
+        # No url
+        with self.settings(PLUGINS_CONFIG=new_plugins_config):
+            with self.assertRaises(exceptions.SecretProviderError):
+                self.provider.validate_vault_settings(self.secret)
+
+        # invalid auth_method
+        new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["url"] = vault_url
+        new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["auth_method"] = "invalid"
+        with self.settings(PLUGINS_CONFIG=new_plugins_config):
+            with self.assertRaises(exceptions.SecretProviderError):
+                self.provider.get_client(self.secret)
+
+        # auth_method token but no token provided
+        new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["auth_method"] = "token"
+        del new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["token"]
+        with self.settings(PLUGINS_CONFIG=new_plugins_config):
+            with self.assertRaises(exceptions.SecretProviderError):
+                self.provider.get_client(self.secret)
+
+        # auth_method kubernetes but no role_name
+        new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["auth_method"] = "kubernetes"
+        with self.settings(PLUGINS_CONFIG=new_plugins_config):
+            with self.assertRaises(exceptions.SecretProviderError):
+                self.provider.get_client(self.secret)
+
+        # auth_method approle but no secret_id
+        new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["auth_method"] = "approle"
+        new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["role_id"] = "asdf"
+        with self.settings(PLUGINS_CONFIG=new_plugins_config):
+            with self.assertRaises(exceptions.SecretProviderError):
+                self.provider.get_client(self.secret)
+
+        # auth_method approle but no role_id
+        del new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["role_id"]
+        new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["auth_method"] = "approle"
+        new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["secret_id"] = "asdf"  # nosec B105
+        with self.settings(PLUGINS_CONFIG=new_plugins_config):
+            with self.assertRaises(exceptions.SecretProviderError):
+                self.provider.get_client(self.secret)
+
+    @patch.dict(os.environ, aws_auth_env_vars)
+    @requests_mock.Mocker()
+    def test_get_client_aws(self, requests_mocker):
+        """Test AWS Authentication."""
+        vault_url = "http://localhost:8200"
+        new_plugins_config = {
+            "nautobot_secrets_providers": {
+                "hashicorp_vault": {
+                    "url": vault_url,
+                    "auth_method": "aws",
+                },
+            },
+        }
+
+        with self.settings(PLUGINS_CONFIG=new_plugins_config):
+            # Test Valid Response
+            requests_mocker.register_uri(
+                method="POST",
+                url=f"{vault_url}/v1/auth/aws/login",
+                status_code=200,
+                json=self.mock_kubernetes_auth_response,
+            )
+            hvac_client = self.provider.get_client(self.secret)
+            self.assertIsInstance(hvac_client, HVACClient)
+
+            # Test Invalid Credentials
+            requests_mocker.register_uri(method="POST", url=f"{vault_url}/v1/auth/aws/login", status_code=403)
+            with self.assertRaises(exceptions.SecretProviderError):
+                self.provider.get_client(self.secret)
+
+            # Test Invalid Request
+            requests_mocker.register_uri(method="POST", url=f"{vault_url}/v1/auth/aws/login", status_code=400)
+            with self.assertRaises(exceptions.SecretProviderError):
+                self.provider.get_client(self.secret)
