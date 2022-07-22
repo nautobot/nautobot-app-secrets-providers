@@ -10,6 +10,7 @@ import sys
 from distutils.util import strtobool
 from django.core.exceptions import ImproperlyConfigured
 from nautobot.core import settings
+from nautobot_secrets_providers.connectors import HashiCorpVaultConnector
 
 # Enforce required configuration parameters
 for key in [
@@ -136,7 +137,7 @@ ALLOWED_URL_SCHEMES = (
 
 # Optionally display a persistent banner at the top and/or bottom of every page. HTML is allowed. To display the same
 # content in both banners, define BANNER_TOP and set BANNER_BOTTOM = BANNER_TOP.
-BANNER_TOP = os.environ.get("BANNER_TOP", "")
+# BANNER_TOP = os.environ.get("BANNER_TOP", "")
 BANNER_BOTTOM = os.environ.get("BANNER_BOTTOM", "")
 
 # Text to include on the login page above the login form. HTML is allowed.
@@ -284,6 +285,9 @@ PLUGINS_CONFIG = {
         },
     },
 }
+
+hvac_connector = HashiCorpVaultConnector(PLUGINS_CONFIG["nautobot_secrets_providers"]["hashicorp_vault"])
+BANNER_TOP = hvac_connector.get_kv_value("banner_top", path="nautobot", mount_point="secret")
 
 # When determining the primary IP address for a device, IPv6 is preferred over IPv4 by default. Set this to True to
 # prefer IPv4 instead.
