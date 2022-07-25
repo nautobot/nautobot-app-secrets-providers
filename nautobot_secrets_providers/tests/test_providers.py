@@ -144,7 +144,6 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         )
         self.test_path = "http://localhost:8200/v1/secret/data/hello"
         self.test_mountpoint_path = "http://localhost:8200/v1/mymount/data/hello"
-        os.environ["VAULT_URL"] = "http://localhost:8200"
 
     @requests_mock.Mocker()
     def test_retrieve_success(self, requests_mocker):
