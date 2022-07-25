@@ -5,9 +5,6 @@ import sys
 from nautobot.core.settings import *  # noqa: F403
 from nautobot.core.settings_funcs import is_truthy, parse_redis_connection
 
-BANNER_TOP = "Local"
-METRICS_ENABLED = True
-
 #
 # Misc. settings
 #
@@ -143,8 +140,8 @@ PLUGINS = ["nautobot_secrets_providers"]
 PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
         "hashicorp_vault": {
-            "url": os.environ.get("VAULT_URL", "http://vault:8200"),
-            "token": os.environ.get("VAULT_TOKEN", "nautobot"),
+            "url": os.environ.get("VAULT_URL"),
+            "token": os.environ.get("VAULT_TOKEN"),
         },
         "thycotic": {  # https://github.com/thycotic/python-tss-sdk
             "base_url": os.getenv("SECRET_SERVER_BASE_URL"),
