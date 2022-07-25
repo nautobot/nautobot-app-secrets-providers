@@ -220,7 +220,10 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
 
         with self.assertRaises(exceptions.SecretParametersError) as err:
             self.provider.get_value_for_secret(bogus_secret)
-        self.assertEqual(str(err.exception), "SecretParametersError: Secret \"bogus-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): The secret parameter could not be retrieved for field 'path'")
+        self.assertEqual(
+            str(err.exception),
+            'SecretParametersError: Secret "bogus-hashicorp" (provider "HashiCorpVaultSecretsProvider"): The secret parameter could not be retrieved for field \'path\'',
+        )
 
         exc = err.exception
         self.assertIn("path", exc.message)
@@ -234,7 +237,10 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
 
         with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
             self.provider.get_value_for_secret(self.secret)
-        self.assertEqual(str(err.exception), "SecretValueNotFoundError: Secret \"hello-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): , on get http://localhost:8200/v1/secret/data/bogus")
+        self.assertEqual(
+            str(err.exception),
+            'SecretValueNotFoundError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): , on get http://localhost:8200/v1/secret/data/bogus',
+        )
 
         exc = err.exception
         self.assertIn("bogus", exc.message)
@@ -247,7 +253,10 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
 
         with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
             self.provider.get_value_for_secret(self.secret)
-        self.assertEqual(str(err.exception), "SecretValueNotFoundError: Secret \"hello-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): The secret value could not be retrieved using key 'bogus'")
+        self.assertEqual(
+            str(err.exception),
+            'SecretValueNotFoundError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): The secret value could not be retrieved using key \'bogus\'',
+        )
 
         exc = err.exception
         self.assertIn(self.secret.parameters["key"], exc.message)
@@ -272,7 +281,10 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         with self.settings(PLUGINS_CONFIG=new_plugins_config):
             with self.assertRaises(exceptions.SecretProviderError) as err:
                 self.provider.get_client(self.secret)
-        self.assertEqual(str(err.exception), "SecretProviderError: Secret \"hello-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): HashiCorp Vault configuration is missing a role name for kubernetes authentication!")
+        self.assertEqual(
+            str(err.exception),
+            'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault configuration is missing a role name for kubernetes authentication!',
+        )
 
         # Test with various response codes (https://www.vaultproject.io/api-docs#http-status-codes)
         new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["role_name"] = "some_role"
@@ -291,13 +303,19 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             requests_mocker.register_uri(method="POST", url=f"{vault_url}/v1/auth/kubernetes/login", status_code=403)
             with self.assertRaises(exceptions.SecretProviderError) as err:
                 self.provider.get_client(self.secret)
-            self.assertEqual(str(err.exception), "SecretProviderError: Secret \"hello-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): HashiCorp Vault Access Denied (auth_method: kubernetes). Error: , on post http://localhost:8200/v1/auth/kubernetes/login")
+            self.assertEqual(
+                str(err.exception),
+                'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault Access Denied (auth_method: kubernetes). Error: , on post http://localhost:8200/v1/auth/kubernetes/login',
+            )
 
             # Test Invalid Request
             requests_mocker.register_uri(method="POST", url=f"{vault_url}/v1/auth/kubernetes/login", status_code=400)
             with self.assertRaises(exceptions.SecretProviderError) as err:
                 self.provider.get_client(self.secret)
-            self.assertEqual(str(err.exception), "SecretProviderError: Secret \"hello-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): HashiCorp Vault Login failed (auth_method: kubernetes). Error: , on post http://localhost:8200/v1/auth/kubernetes/login")
+            self.assertEqual(
+                str(err.exception),
+                'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault Login failed (auth_method: kubernetes). Error: , on post http://localhost:8200/v1/auth/kubernetes/login',
+            )
 
         mock_file.assert_called_with(k8s_token_path, "r", encoding="utf-8")
 
@@ -310,7 +328,10 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {}}):
             with self.assertRaises(exceptions.SecretProviderError) as err:
                 self.provider.validate_vault_settings(self.secret)
-        self.assertEqual(str(err.exception), "SecretProviderError: Secret \"hello-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): HashiCorp Vault is not configured!")
+        self.assertEqual(
+            str(err.exception),
+            'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault is not configured!',
+        )
 
         vault_url = "http://localhost:8200"
         new_plugins_config = {
@@ -325,15 +346,21 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         with self.settings(PLUGINS_CONFIG=new_plugins_config):
             with self.assertRaises(exceptions.SecretProviderError) as err:
                 self.provider.validate_vault_settings(self.secret)
-        self.assertEqual(str(err.exception), "SecretProviderError: Secret \"hello-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): HashiCorp Vault configuration is missing a url")
+        self.assertEqual(
+            str(err.exception),
+            'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault configuration is missing a url',
+        )
 
         # invalid auth_method
         new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["url"] = vault_url
         new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["auth_method"] = "invalid"
         with self.settings(PLUGINS_CONFIG=new_plugins_config):
-            with self.assertRaises(exceptions.SecretProviderError)as err:
+            with self.assertRaises(exceptions.SecretProviderError) as err:
                 self.provider.get_client(self.secret)
-        self.assertEqual(str(err.exception), "SecretProviderError: Secret \"hello-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): HashiCorp Vault Auth Method invalid is invalid!")
+        self.assertEqual(
+            str(err.exception),
+            'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault Auth Method invalid is invalid!',
+        )
 
         # auth_method token but no token provided
         new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["auth_method"] = "token"
@@ -341,14 +368,20 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         with self.settings(PLUGINS_CONFIG=new_plugins_config):
             with self.assertRaises(exceptions.SecretProviderError) as err:
                 self.provider.get_client(self.secret)
-        self.assertEqual(str(err.exception), "SecretProviderError: Secret \"hello-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): HashiCorp Vault configuration is missing a token for token authentication!")
+        self.assertEqual(
+            str(err.exception),
+            'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault configuration is missing a token for token authentication!',
+        )
 
         # auth_method kubernetes but no role_name
         new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["auth_method"] = "kubernetes"
         with self.settings(PLUGINS_CONFIG=new_plugins_config):
             with self.assertRaises(exceptions.SecretProviderError) as err:
                 self.provider.get_client(self.secret)
-        self.assertEqual(str(err.exception), "SecretProviderError: Secret \"hello-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): HashiCorp Vault configuration is missing a role name for kubernetes authentication!")
+        self.assertEqual(
+            str(err.exception),
+            'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault configuration is missing a role name for kubernetes authentication!',
+        )
 
         # auth_method approle but no secret_id
         new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["auth_method"] = "approle"
@@ -356,7 +389,10 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         with self.settings(PLUGINS_CONFIG=new_plugins_config):
             with self.assertRaises(exceptions.SecretProviderError) as err:
                 self.provider.get_client(self.secret)
-        self.assertEqual(str(err.exception), "SecretProviderError: Secret \"hello-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): HashiCorp Vault configuration is missing a role_id and/or secret_id!")
+        self.assertEqual(
+            str(err.exception),
+            'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault configuration is missing a role_id and/or secret_id!',
+        )
 
         # auth_method approle but no role_id
         del new_plugins_config["nautobot_secrets_providers"]["hashicorp_vault"]["role_id"]
@@ -365,7 +401,10 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         with self.settings(PLUGINS_CONFIG=new_plugins_config):
             with self.assertRaises(exceptions.SecretProviderError) as err:
                 self.provider.get_client(self.secret)
-        self.assertEqual(str(err.exception), "SecretProviderError: Secret \"hello-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): HashiCorp Vault configuration is missing a role_id and/or secret_id!")
+        self.assertEqual(
+            str(err.exception),
+            'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault configuration is missing a role_id and/or secret_id!',
+        )
 
     @patch.dict(os.environ, aws_auth_env_vars)
     @requests_mock.Mocker()
@@ -396,10 +435,16 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             requests_mocker.register_uri(method="POST", url=f"{vault_url}/v1/auth/aws/login", status_code=403)
             with self.assertRaises(exceptions.SecretProviderError) as err:
                 self.provider.get_client(self.secret)
-            self.assertEqual(str(err.exception), "SecretProviderError: Secret \"hello-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): HashiCorp Vault Access Denied (auth_method: aws). Error: , on post http://localhost:8200/v1/auth/aws/login")
+            self.assertEqual(
+                str(err.exception),
+                'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault Access Denied (auth_method: aws). Error: , on post http://localhost:8200/v1/auth/aws/login',
+            )
 
             # Test Invalid Request
             requests_mocker.register_uri(method="POST", url=f"{vault_url}/v1/auth/aws/login", status_code=400)
             with self.assertRaises(exceptions.SecretProviderError) as err:
                 self.provider.get_client(self.secret)
-            self.assertEqual(str(err.exception), "SecretProviderError: Secret \"hello-hashicorp\" (provider \"HashiCorpVaultSecretsProvider\"): HashiCorp Vault Login failed (auth_method: aws). Error: , on post http://localhost:8200/v1/auth/aws/login")
+            self.assertEqual(
+                str(err.exception),
+                'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault Login failed (auth_method: aws). Error: , on post http://localhost:8200/v1/auth/aws/login',
+            )
