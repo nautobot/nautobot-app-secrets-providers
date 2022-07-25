@@ -57,7 +57,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         if "hashicorp_vault" not in plugin_settings:
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
 
-        vault_settings = plugin_settings.get("hashicorp_vault")
+        vault_settings = plugin_settings.get("hashicorp_vault", {})
         auth_method = vault_settings.get("auth_method", "token")
 
         if "url" not in vault_settings:
@@ -69,7 +69,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         if auth_method == "aws":
             if not boto3:
                 raise exceptions.SecretProviderError(
-                    secret, cls, "HashiCorp Vault AWS Auth Method requires the boto3 plugin!"
+                    secret, cls, "HashiCorp Vault AWS Authentication Method requires the boto3 library!"
                 )
         elif auth_method == "token":
             if "token" not in vault_settings:
