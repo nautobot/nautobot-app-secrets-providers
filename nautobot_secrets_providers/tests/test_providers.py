@@ -1,6 +1,4 @@
 """Unit tests for Secrets Providers."""
-import os
-
 import boto3
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, tag
