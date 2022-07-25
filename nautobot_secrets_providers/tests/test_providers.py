@@ -1,6 +1,5 @@
 """Unit tests for Secrets Providers."""
 import os
-from unittest.mock import patch
 
 import boto3
 from django.contrib.auth import get_user_model
@@ -126,9 +125,6 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         "auth": None,
     }
 
-    mock_vault_env = {"VAULT_URL": "http://localhost:8200", "VAULT_TOKEN": "nautobot"}
-
-    @patch.dict(os.environ, mock_vault_env)
     def setUp(self):
         super().setUp()
 
@@ -148,6 +144,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         )
         self.test_path = "http://localhost:8200/v1/secret/data/hello"
         self.test_mountpoint_path = "http://localhost:8200/v1/mymount/data/hello"
+        os.environ["VAULT_URL"] = "http://localhost:8200"
 
     @requests_mock.Mocker()
     def test_retrieve_success(self, requests_mocker):
