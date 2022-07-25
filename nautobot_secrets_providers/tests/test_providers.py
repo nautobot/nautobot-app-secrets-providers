@@ -1,12 +1,12 @@
 """Unit tests for Secrets Providers."""
 import os
+from unittest.mock import patch
 
 import boto3
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, tag
 from moto import mock_secretsmanager
 import requests_mock
-from unittest.mock import patch
 
 from nautobot.extras.models import Secret
 from nautobot.extras.secrets import exceptions
