@@ -10,8 +10,6 @@ except ImportError:
 
 try:
     import hvac
-
-    DEFAULT_MOUNT_POINT = hvac.api.secrets_engines.kv_v2.DEFAULT_MOUNT_POINT
 except ImportError:
     hvac = None
 
@@ -22,6 +20,10 @@ __all__ = ("HashiCorpVaultSecretsProvider",)
 
 K8S_TOKEN_DEFAULT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"  # nosec B105
 AUTH_METHOD_CHOICES = ["approle", "aws", "kubernetes", "token"]
+
+
+# Default mount point for the HVAC client
+DEFAULT_MOUNT_POINT = "secret"
 
 
 class HashiCorpVaultSecretsProvider(SecretsProvider):

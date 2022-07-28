@@ -327,7 +327,9 @@ def bandit(context):
 @task
 def check_migrations(context):
     """Check for missing migrations."""
-    command = "nautobot-server --config=nautobot/core/tests/nautobot_config.py makemigrations --dry-run --check"
+    command = (
+        "nautobot-server --config=nautobot_secrets_providers/tests/nautobot_config.py makemigrations --dry-run --check"
+    )
 
     run_command(context, command)
 
@@ -338,9 +340,10 @@ def check_migrations(context):
         "label": "specify a directory or module to test instead of running all Nautobot tests",
         "failfast": "fail as soon as a single test fails don't run the entire test suite",
         "buffer": "Discard output from passing tests",
+        "verbose": "Enable verbose test output.",
     }
 )
-def unittest(context, keepdb=False, label="nautobot_secrets_providers", failfast=False, buffer=True):
+def unittest(context, keepdb=False, label="nautobot_secrets_providers", failfast=False, buffer=True, verbose=False):
     """Run Nautobot unit tests."""
     command = f"coverage run --module nautobot.core.cli --config=nautobot_secrets_providers/tests/nautobot_config.py test {label}"
 
@@ -350,6 +353,8 @@ def unittest(context, keepdb=False, label="nautobot_secrets_providers", failfast
         command += " --failfast"
     if buffer:
         command += " --buffer"
+    if verbose:
+        command += " --verbosity 2"
     run_command(context, command)
 
 
