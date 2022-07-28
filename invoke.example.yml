@@ -3,7 +3,7 @@ nautobot_secrets_providers:
   project_name: "nautobot_secrets_providers"
   nautobot_ver: "1.2.0"
   local: false
-  python_ver: "3.6"
+  python_ver: "3.7"
   compose_dir: "development"
   compose_files:
     - "docker-compose.requirements.yml"

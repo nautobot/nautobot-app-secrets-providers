@@ -40,7 +40,7 @@ namespace.configure(
         "nautobot_secrets_providers": {
             "nautobot_ver": "1.2.1",
             "project_name": "nautobot_secrets_providers",
-            "python_ver": "3.6",
+            "python_ver": "3.7",
             "local": False,
             "compose_dir": os.path.join(os.path.dirname(__file__), "development"),
             "compose_files": [
