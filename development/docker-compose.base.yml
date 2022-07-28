@@ -23,8 +23,8 @@ services:
       - "redis"
     <<: *nautobot-build
     <<: *nautobot-base
-  worker:
-    entrypoint: "nautobot-server rqworker"
+  celery_worker:
+    entrypoint: "nautobot-server celery worker -l INFO"
     depends_on:
       - "nautobot"
     healthcheck:
