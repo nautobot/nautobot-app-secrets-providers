@@ -342,7 +342,7 @@ def check_migrations(context):
 )
 def unittest(context, keepdb=False, label="nautobot_secrets_providers", failfast=False, buffer=True):
     """Run Nautobot unit tests."""
-    command = f"coverage run --module nautobot.core.cli test {label}"
+    command = f"coverage run --module nautobot.core.cli --config=nautobot_secrets_providers/tests/nautobot_config.py test {label}"
 
     if keepdb:
         command += " --keepdb"
