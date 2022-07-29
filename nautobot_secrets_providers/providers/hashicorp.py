@@ -23,7 +23,11 @@ AUTH_METHOD_CHOICES = ["approle", "aws", "kubernetes", "token"]
 
 
 # Default mount point for the HVAC client
-DEFAULT_MOUNT_POINT = "secret"
+try:
+    plugins_config = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
+    DEFAULT_MOUNT_POINT = plugins_config["hashicorp_vault"]["default_mount_point"]
+except KeyError:
+    DEFAULT_MOUNT_POINT = "secret"
 
 
 class HashiCorpVaultSecretsProvider(SecretsProvider):
