@@ -1,5 +1,11 @@
 # Nautobot Secrets Providers Changelog
 
+## v1.2.1 (????)
+
+### Added
+
+- [#42](https://github.com/nautobot/nautobot-plugin-secrets-providers/issues/42) Add support for python-tss-sdk version v1.2
+
 ## v1.2.0 (2022-05-25)
 
 ### Added
