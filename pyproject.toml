@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nautobot-secrets-providers"
-version = "1.2.1"
+version = "1.2.0"
 description = "Nautobot Secrets Providers Plugin."
 authors = ["Network to Code, LLC <opensource@networktocode.com>"]
 license = "Apache-2.0"
@@ -39,7 +39,7 @@ black = "*"
 boto3 = "~1.19.5"  # (always keep in sync w/ optional dependency)
 coverage = "~6.2"
 django-debug-toolbar = "*"
-flake8 = "*"
+flake8 = ">=3.9.2"
 hvac = "~0.11.0"  # (always keep in sync w/ optional dependency)
 invoke = "*"
 moto = "~2.2.11"
