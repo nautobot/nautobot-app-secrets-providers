@@ -6,7 +6,7 @@ from django import forms
 from django.conf import settings
 
 try:
-    from thycotic.secrets.server import (
+    from delinea.secrets.server import (
         AccessTokenAuthorizer,
         PasswordGrantAuthorizer,
         DomainPasswordGrantAuthorizer,
@@ -18,7 +18,20 @@ try:
 
     thycotic_installed = True  # pylint: disable=invalid-name
 except ImportError:
-    thycotic_installed = False  # pylint: disable=invalid-name
+    try:
+        from thycotic.secrets.server import (
+            AccessTokenAuthorizer,
+            PasswordGrantAuthorizer,
+            DomainPasswordGrantAuthorizer,
+            SecretServerCloud,
+            SecretServer,
+            ServerSecret,
+            SecretServerError,
+        )
+
+        thycotic_installed = True  # pylint: disable=invalid-name
+    except ImportError:
+        thycotic_installed = False  # pylint: disable=invalid-name
 
 from nautobot.utilities.forms import BootstrapMixin
 from nautobot.extras.secrets import exceptions, SecretsProvider
@@ -124,7 +137,7 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
                         secret,
                         caller_class,
                         (
-                            "Thycotic Secret Server is not configured properly! "
+                            "Delinea/Thycotic Secret Server is not configured properly! "
                             "Trusted certificates file not found: "
                             "Environment variable 'REQUESTS_CA_BUNDLE': "
                             f"{ca_bundle_path}."
@@ -159,16 +172,16 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
 
             # Get the client.
             if cloud_based:
-                thycotic = SecretServerCloud(tenant=tenant, authorizer=thy_authorizer)
+                delinea = SecretServerCloud(tenant=tenant, authorizer=thy_authorizer)
             else:
-                thycotic = SecretServer(base_url=base_url, authorizer=thy_authorizer)
+                delinea = SecretServer(base_url=base_url, authorizer=thy_authorizer)
 
             # Attempt to retrieve the secret.
             try:
                 if secret_id is not None:
-                    secret = ServerSecret(**thycotic.get_secret(secret_id))
+                    secret = ServerSecret(**delinea.get_secret(secret_id))
                 else:
-                    secret = ServerSecret(**thycotic.get_secret_by_path(secret_path))
+                    secret = ServerSecret(**delinea.get_secret_by_path(secret_path))
             except SecretServerError as err:
                 raise exceptions.SecretValueNotFoundError(secret, caller_class, str(err)) from err
 

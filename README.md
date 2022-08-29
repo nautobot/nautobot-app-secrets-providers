@@ -12,7 +12,7 @@ This plugin supports the following popular secrets backends:
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
 | [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2) | [Token](https://www.vaultproject.io/docs/auth/token)<br/>[AppRole](https://www.vaultproject.io/docs/auth/approle)<br/>[AWS](https://www.vaultproject.io/docs/auth/aws)<br/>[Kubernetes](https://www.vaultproject.io/docs/auth/kubernetes)         |
-| [Thycotic Secret Server](https://thycotic.com/)               | [Secret Server Cloud](https://github.com/thycotic/python-tss-sdk#secret-server-cloud)<br/>[Secret Server (on-prem)](https://github.com/thycotic/python-tss-sdk#secret-server)| [Access Token Authorization](https://github.com/thycotic/python-tss-sdk#access-token-authorization)<br/>[Domain Authorization](https://github.com/thycotic/python-tss-sdk#domain-authorization)<br/>[Password Authorization](https://github.com/thycotic/python-tss-sdk#password-authorization)<br/>         |
+| [Delinea/Thycotic Secret Server](https://delinea.com/products/secret-server)               | [Secret Server Cloud](https://github.com/DelineaXPM/python-tss-sdk#secret-server-cloud)<br/>[Secret Server (on-prem)](https://github.com/DelineaXPM/python-tss-sdk#initializing-secretserver)| [Access Token Authorization](https://github.com/DelineaXPM/python-tss-sdk#access-token-authorization)<br/>[Domain Authorization](https://github.com/DelineaXPM/python-tss-sdk#domain-authorization)<br/>[Password Authorization](https://github.com/DelineaXPM/python-tss-sdk#password-authorization)<br/>         |
 
 ## Screenshots
 
@@ -32,11 +32,11 @@ This plugin supports the following popular secrets backends:
 
 ---
 
-![Screenshot of secret using Thycotic Secret Server by ID](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot05.png "Secret using Thycotic Secret Server by ID")
+![Screenshot of secret using Delinea/Thycotic Secret Server by ID](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot05.png "Secret using Thycotic Secret Server by ID")
 
 ---
 
-![Screenshot of secret using Thycotic Secret Server by Path](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot06.png "Secret using Thycotic Secret Server by Path")
+![Screenshot of secret using Delinea/Thycotic Secret Server by Path](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot06.png "Secret using Thycotic Secret Server by Path")
 
 ## Installation
 
@@ -76,9 +76,9 @@ The HashiCorp Vault provider requires the `hvac` library. This can easily be ins
 pip install nautobot-secrets-providers[hashicorp]
 ```
 
-#### Thycotic Secret Server
+#### Delinea/Thycotic Secret Server
 
-The Thycotic Secret Server provider requires the `python-tss-sdk` library. This can easily be installed along with the plugin using the following command:
+The Delinea/Thycotic Secret Server provider requires the `python-tss-sdk` library. This can easily be installed along with the plugin using the following command:
 
 ```no-highlight
 pip install nautobot-secrets-providers[thycotic]
@@ -172,9 +172,9 @@ PLUGINS_CONFIG = {
 - `secret_id` - (optional) Required when `"auth_method": "approle"`.As with other sensitive service credentials, we recommend that you provide the secret_id value as an environment variable and retrieve it with `{"secret_id": os.getenv("NAUTOBOT_HASHICORP_VAULT_SECRET_ID")}` rather than hard-coding it in your `nautobot_config.py`.
 - `login_kwargs` - (optional) Additional optional parameters to pass to the login method for [`approle`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.AppRole.login), [`aws`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.Aws.iam_login) and [`kubernetes`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.Kubernetes.login) authentication methods.
 
-### Thycotic Secret Server (TSS)
+### Delinea/Thycotic Secret Server (TSS)
 
-The Thycotic Secret Server plugin includes two providers:
+The Delinea/Thycotic Secret Server plugin includes two providers:
 
 - **`Thycotic Secret Server by ID`**
 
