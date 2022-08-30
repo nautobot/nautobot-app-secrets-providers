@@ -11,8 +11,8 @@ This plugin supports the following popular secrets backends:
 | Secrets Backend                                              | Supported Secret Types                                       | Supported Authentication Methods                             |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
-| [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2) | [Token](https://www.vaultproject.io/docs/auth/token)         |
-| [Thycotic Secret Server](https://thycotic.com/)               | [Secret Server Cloud](https://github.com/thycotic/python-tss-sdk#secret-server-cloud)<br/>[Secret Server (on-prem)](https://github.com/thycotic/python-tss-sdk#secret-server)| [Access Token Authorization](https://github.com/thycotic/python-tss-sdk#access-token-authorization)<br/>[Domain Authorization](https://github.com/thycotic/python-tss-sdk#domain-authorization)<br/>[Password Authorization](https://github.com/thycotic/python-tss-sdk#password-authorization)<br/>         |
+| [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2) | [Token](https://www.vaultproject.io/docs/auth/token)<br/>[AppRole](https://www.vaultproject.io/docs/auth/approle)<br/>[AWS](https://www.vaultproject.io/docs/auth/aws)<br/>[Kubernetes](https://www.vaultproject.io/docs/auth/kubernetes)         |
+| [Delinea/Thycotic Secret Server](https://delinea.com/products/secret-server)               | [Secret Server Cloud](https://github.com/DelineaXPM/python-tss-sdk#secret-server-cloud)<br/>[Secret Server (on-prem)](https://github.com/DelineaXPM/python-tss-sdk#initializing-secretserver)| [Access Token Authorization](https://github.com/DelineaXPM/python-tss-sdk#access-token-authorization)<br/>[Domain Authorization](https://github.com/DelineaXPM/python-tss-sdk#domain-authorization)<br/>[Password Authorization](https://github.com/DelineaXPM/python-tss-sdk#password-authorization)<br/>         |
 
 ## Screenshots
 
@@ -32,11 +32,11 @@ This plugin supports the following popular secrets backends:
 
 ---
 
-![Screenshot of secret using Thycotic Secret Server by ID](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot05.png "Secret using Thycotic Secret Server by ID")
+![Screenshot of secret using Delinea/Thycotic Secret Server by ID](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot05.png "Secret using Thycotic Secret Server by ID")
 
 ---
 
-![Screenshot of secret using Thycotic Secret Server by Path](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot06.png "Secret using Thycotic Secret Server by Path")
+![Screenshot of secret using Delinea/Thycotic Secret Server by Path](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot06.png "Secret using Thycotic Secret Server by Path")
 
 ## Installation
 
@@ -76,9 +76,9 @@ The HashiCorp Vault provider requires the `hvac` library. This can easily be ins
 pip install nautobot-secrets-providers[hashicorp]
 ```
 
-#### Thycotic Secret Server
+#### Delinea/Thycotic Secret Server
 
-The Thycotic Secret Server provider requires the `python-tss-sdk` library. This can easily be installed along with the plugin using the following command:
+The Delinea/Thycotic Secret Server provider requires the `python-tss-sdk` library. This can easily be installed along with the plugin using the following command:
 
 ```no-highlight
 pip install nautobot-secrets-providers[thycotic]
@@ -162,14 +162,19 @@ PLUGINS_CONFIG = {
 ```
 
 - `url` - (required) The URL to the HashiCorp Vault instance (e.g. `http://localhost:8200`).
-- `auth_method` - (optional / defaults to "token") The method used to authenticate against the HashiCorp Vault instance. Either `"token"` or `"approle"`.
+- `auth_method` - (optional / defaults to "token") The method used to authenticate against the HashiCorp Vault instance. Either `"approle"`, `"aws"`, `"kubernetes"` or `"token"`.  For information on using AWS authentication with vault see the [authentication](#authentication) section above.
+- `ca_cert` - (optional) Path to a PEM formatted CA certificate to use when verifying the Vault connection.  Can alternatively be set to `False` to ignore SSL verification (not recommended) or `True` to use the system certificates.
+- `default_mount_point` - (optional / defaults to "secret") The default mount point of the K/V Version 2 secrets engine within Hashicorp Vault.
+- `k8s_token_path` - (optional) Path to the kubernetes service account token file.  Defaults to "/var/run/secrets/kubernetes.io/serviceaccount/token".
 - `token` - (optional) Required when `"auth_method": "token"` or `auth_method` is not supplied. The token for authenticating the client with the HashiCorp Vault instance. As with other sensitive service credentials, we recommend that you provide the token value as an environment variable and retrieve it with `{"token": os.getenv("NAUTOBOT_HASHICORP_VAULT_TOKEN")}` rather than hard-coding it in your `nautobot_config.py`.
+- `role_name` - (optional) Required when `"auth_method": "kubernetes"`, optional when `"auth_method": "aws"`.  The Vault Kubernetes role or Vault AWS role to assume which the pod's service account has access to.
 - `role_id` - (optional) Required when `"auth_method": "approle"`. As with other sensitive service credentials, we recommend that you provide the role_id value as an environment variable and retrieve it with `{"role_id": os.getenv("NAUTOBOT_HASHICORP_VAULT_ROLE_ID")}` rather than hard-coding it in your `nautobot_config.py`.
 - `secret_id` - (optional) Required when `"auth_method": "approle"`.As with other sensitive service credentials, we recommend that you provide the secret_id value as an environment variable and retrieve it with `{"secret_id": os.getenv("NAUTOBOT_HASHICORP_VAULT_SECRET_ID")}` rather than hard-coding it in your `nautobot_config.py`.
+- `login_kwargs` - (optional) Additional optional parameters to pass to the login method for [`approle`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.AppRole.login), [`aws`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.Aws.iam_login) and [`kubernetes`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.Kubernetes.login) authentication methods.
 
-### Thycotic Secret Server (TSS)
+### Delinea/Thycotic Secret Server (TSS)
 
-The Thycotic Secret Server plugin includes two providers:
+The Delinea/Thycotic Secret Server plugin includes two providers:
 
 - **`Thycotic Secret Server by ID`**
 
@@ -243,7 +248,7 @@ The [PyInvoke](http://www.pyinvoke.org/) library is used to provide some helper 
 
 * `nautobot_ver`: the version of Nautobot to use as a base for any built docker containers (default: 1.2.0)
 * `project_name`: the default docker compose project name (default: nautobot_secrets_providers)
-* `python_ver`: the version of Python to use as a base for any built docker containers (default: 3.6)
+* `python_ver`: the version of Python to use as a base for any built docker containers (default: 3.7)
 * `local`: a boolean flag indicating if invoke tasks should be run on the host or inside the docker containers (default: False, commands will be run in docker containers)
 * `compose_dir`: the full path to a directory containing the project compose files
 * `compose_files`: a list of compose files applied in order (see [Multiple Compose files](https://docs.docker.com/compose/extends/#multiple-compose-files) for more information)
