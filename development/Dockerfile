@@ -1,6 +1,8 @@
 ARG NAUTOBOT_VER="1.2.1"
 ARG PYTHON_VER=3.8
+
 FROM ghcr.io/nautobot/nautobot-dev:${NAUTOBOT_VER}-py${PYTHON_VER}
+ARG NAUTOBOT_VER="1.2.1"
 
 ENV prometheus_multiproc_dir=/prom_cache
 
@@ -23,7 +25,8 @@ WORKDIR /tmp
 COPY poetry.lock pyproject.toml /tmp/
 # --no-root declares not to install the project package since we're wanting to take advantage of caching dependency installation
 # and the project is copied in and installed after this step
-RUN poetry add nautobot=$NAUTOBOT_VER && \
+RUN poetry self update && \
+    poetry add nautobot=$NAUTOBOT_VER && \
     poetry update --lock && \
     poetry install --no-interaction --no-ansi --no-root
 
