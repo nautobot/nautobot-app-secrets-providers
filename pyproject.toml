@@ -28,7 +28,7 @@ nautobot = "~1.2.1"
 # AWS SDK for Python (always keep in sync w/ dev dependency)
 boto3 = { version = "~1.19.5", optional = true }
 # HashiCorp Vault API Client (always keep in sync w/ dev dependency)
-hvac = { version = "~0.11.0", optional = true }
+hvac = { version = ">=0.11.0, <1.1.0", optional = true }
 # Thycotic Secret Server (always keep in sync w/ dev dependency)
 python-tss-sdk = {version = "~1.2.0", optional = true}
 
@@ -40,7 +40,7 @@ boto3 = "~1.19.5"  # (always keep in sync w/ optional dependency)
 coverage = "~6.2"
 django-debug-toolbar = "*"
 flake8 = ">=3.9.2"
-hvac = "~0.11.0"  # (always keep in sync w/ optional dependency)
+hvac = ">=0.11.0, <1.1.0"  # (always keep in sync w/ optional dependency)
 invoke = "*"
 moto = "~2.2.11"
 mkdocs = "*"
