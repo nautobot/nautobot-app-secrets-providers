@@ -874,18 +874,15 @@ six = ">=1.12"
 
 [[package]]
 name = "hvac"
-version = "0.11.2"
+version = "1.0.2"
 description = "HashiCorp Vault API client"
 category = "main"
 optional = false
-python-versions = ">=2.7"
+python-versions = ">=3.6.2,<4.0.0"
 
 [package.dependencies]
-requests = ">=2.21.0"
-six = ">=1.5.0"
-
-[package.extras]
-parser = ["pyhcl (>=0.3.10)"]
+pyhcl = ">=0.4.4,<0.5.0"
+requests = ">=2.27.1,<3.0.0"
 
 [[package]]
 name = "idna"
@@ -1361,6 +1358,14 @@ description = "passive checker of Python programs"
 category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+
+[[package]]
+name = "pyhcl"
+version = "0.4.4"
+description = "HCL configuration parser for python"
+category = "main"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "PyJWT"
@@ -1942,7 +1947,7 @@ thycotic = ["python-tss-sdk"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7"
-content-hash = "f4679d7d48d5699627f9fd007dce677b343d84ef32c282777d392a78078f8404"
+content-hash = "87ead43a2cf693c09d2e67530958398271dd4e3dc7cd77ef7ab0ec83d3ff897a"
 
 [metadata.files]
 amqp = [
@@ -2352,8 +2357,8 @@ graphql-relay = [
     {file = "graphql_relay-2.0.1-py3-none-any.whl", hash = "sha256:ac514cb86db9a43014d7e73511d521137ac12cf0101b2eaa5f0a3da2e10d913d"},
 ]
 hvac = [
-    {file = "hvac-0.11.2-py2.py3-none-any.whl", hash = "sha256:3e8a34804b1e20954a2b4991cc13ed9c09b32e50dadd9d3438224481150f6568"},
-    {file = "hvac-0.11.2.tar.gz", hash = "sha256:f905c59d32d88d3f67571fe5a8a78de4659e04798ad809de439f667247d13626"},
+    {file = "hvac-1.0.2-py3-none-any.whl", hash = "sha256:e8256343de2576b18bc8d49f09a04c728f2a8f3a866825bb413aa4f9ebab1fea"},
+    {file = "hvac-1.0.2.tar.gz", hash = "sha256:e4028c5c0ecc7b7fcf6a54d290f99240e5abcdb9ffe442d1c14f061310d4c61c"},
 ]
 idna = [
     {file = "idna-3.4-py3-none-any.whl", hash = "sha256:90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2"},
@@ -2693,6 +2698,9 @@ pydocstyle = [
 pyflakes = [
     {file = "pyflakes-2.3.1-py2.py3-none-any.whl", hash = "sha256:7893783d01b8a89811dd72d7dfd4d84ff098e5eed95cfa8905b22bbffe52efc3"},
     {file = "pyflakes-2.3.1.tar.gz", hash = "sha256:f5bc8ecabc05bb9d291eb5203d6810b49040f6ff446a756326104746cc00c1db"},
+]
+pyhcl = [
+    {file = "pyhcl-0.4.4.tar.gz", hash = "sha256:2d9b9dcdf1023d812bfed561ba72c99104c5b3f52e558d595130a44ce081b003"},
 ]
 PyJWT = [
     {file = "PyJWT-2.5.0-py3-none-any.whl", hash = "sha256:8d82e7087868e94dd8d7d418e5088ce64f7daab4b36db654cbaedb46f9d1ca80"},
