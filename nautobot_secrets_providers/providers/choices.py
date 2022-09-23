@@ -5,7 +5,7 @@ from nautobot.utilities.choices import ChoiceSet
 class ThycoticSecretChoices(ChoiceSet):
     """Choices for Thycotic Secret Server Result."""
 
-    SECRET_TOKEN = "token" # nosec
+    SECRET_TOKEN = "token"  # nosec
     SECRET_PASSWORD = "password"  # nosec
     SECRET_USERNAME = "username"  # nosec
     SECRET_URL = "url"  # nosec
