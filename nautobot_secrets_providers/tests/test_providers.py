@@ -7,12 +7,16 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, tag
 from hvac import Client as HVACClient
-from moto import mock_secretsmanager
+from moto import mock_secretsmanager, mock_ssm
 import requests_mock
 
 from nautobot.extras.models import Secret
 from nautobot.extras.secrets import exceptions
-from nautobot_secrets_providers.providers import AWSSecretsManagerSecretsProvider, HashiCorpVaultSecretsProvider
+from nautobot_secrets_providers.providers import (
+    AWSSecretsManagerSecretsProvider,
+    HashiCorpVaultSecretsProvider,
+    AWSSystemsManagerParameterStore,
+)
 
 
 # Use the proper swappable User model
@@ -448,3 +452,71 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
                 str(err.exception),
                 'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault Login failed (auth_method: aws). Error: , on post http://localhost:8200/v1/auth/aws/login',
             )
+
+
+class AWSSystemsManagerParameterStoreTestCase(SecretsProviderTestCase):
+    """Tests for AWSSystemsManagerParameterStore."""
+
+    provider = AWSSystemsManagerParameterStore
+
+    def setUp(self):
+        super().setUp()
+        self.secret = Secret.objects.create(
+            name="hello-aws-parameterstore",
+            slug="hello-aws-parameterstore",
+            provider=self.provider.slug,
+            parameters={"name": "hello", "region": "eu-west-3", "key": "location"},
+        )
+
+    @mock_ssm
+    def test_retrieve_success(self):
+        """Retrieve a secret successfully."""
+        conn = boto3.client("ssm", region_name=self.secret.parameters["region"])
+        conn.put_parameter(Name="hello", Type="SecureString", Value='{"location":"world"}')
+        result = self.provider.get_value_for_secret(self.secret)
+        self.assertEqual(result, "world")
+
+    @mock_ssm
+    def test_retrieve_does_not_exist(self):
+        """Try and fail to retrieve a secret that doesn't exist."""
+        conn = boto3.client("ssm", region_name=self.secret.parameters["region"])  # noqa pylint: disable=unused-variable
+
+        with self.assertRaises(exceptions.SecretParametersError) as err:
+            self.provider.get_value_for_secret(self.secret)
+
+        exc = err.exception
+        self.assertIn("ParameterNotFound", exc.message)
+
+    @mock_ssm
+    def test_retrieve_invalid_key(self):
+        """Try and fail to retrieve a secret from an existing parameter but an invalid key."""
+        conn = boto3.client("ssm", region_name=self.secret.parameters["region"])
+        conn.put_parameter(Name="hello", Type="SecureString", Value='{"position":"world"}')
+        # Try to fetch the secret with key as locatio
+        with self.assertRaises(exceptions.SecretParametersError) as err:
+            self.provider.get_value_for_secret(self.secret)
+        exc = err.exception
+        self.assertIn(f"InvalidKeyName '{self.secret.parameters['key']}'", exc.message)
+
+    @mock_ssm
+    def test_retrieve_non_valid_json(self):
+        conn = boto3.client("ssm", region_name=self.secret.parameters["region"])
+        conn.put_parameter(Name="hello", Type="SecureString", Value="Non Valid JSON")
+
+        with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
+            self.provider.get_value_for_secret(self.secret)
+
+        exc = err.exception
+        self.assertIn("InvalidJson", exc.message)
+
+    @mock_ssm
+    def test_retrieve_invalid_version(self):
+        """Try and fail to retrieve a parameter while specifying an invalid version|label."""
+        conn = boto3.client("ssm", region_name=self.secret.parameters["region"])
+        conn.put_parameter(Name="hello", Type="SecureString", Value='{"location":"world"}')
+        # add a non existing version to the Nautobot secret name and try to fetch it
+        self.secret.parameters["name"] += ":2"
+        with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
+            self.provider.get_value_for_secret(self.secret)
+        exc = err.exception
+        self.assertIn("ParameterVersionNotFound", exc.message)
