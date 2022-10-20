@@ -28,6 +28,7 @@ try:
     DEFAULT_MOUNT_POINT = plugins_config["hashicorp_vault"]["default_mount_point"]
 except KeyError:
     DEFAULT_MOUNT_POINT = "secret"
+
 # Default kv version for the HVAC client
 try:
     plugins_config = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
@@ -85,7 +86,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             raise exceptions.SecretProviderError(secret, cls, f"HashiCorp Vault Auth Method {auth_method} is invalid!")
 
         if kv_version not in KV_VERSION_CHOICES:
-            raise exceptions.SecretProviderError(secret, cls, f"HashiCorp Vault kv version {kv_version} is invalid!")
+            raise exceptions.SecretProviderError(secret, cls, f"HashiCorp Vault KV version {kv_version} is invalid!")
 
 
         if auth_method == "aws":
@@ -189,10 +190,11 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
 
         # Retrieve the value using the key or complain loudly.
         try:
-            if secret_kv_version == "v2":
-                return response["data"]["data"][secret_key]
-            else:
+            if secret_kv_version == "v1":
                 return response["data"][secret_key]
+            else:
+                return response["data"]["data"][secret_key]
+                
         except KeyError as err:
             msg = f"The secret value could not be retrieved using key {err}"
             raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err
