@@ -136,6 +136,19 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         "auth": None,
     }
 
+    mock_v1_response = {
+        'request_id': 'f0185257-af7a-f550-2d9a-ada457a70e17', 
+        'lease_id': '', 
+        'renewable': False, 
+        'lease_duration': 0, 
+        'data': {
+            "location": "world",
+            }, 
+        'wrap_info': None, 
+        'warnings': None,
+        'auth': None
+    }
+
     mock_kubernetes_auth_response = {
         "auth": {
             "client_token": "38fe9691-e623-7238-f618-c94d4e7bc674",
