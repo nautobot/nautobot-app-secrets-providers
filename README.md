@@ -60,9 +60,9 @@ For this plugin to operate you must install at least one of the dependent librar
 
 **You must install the dependencies for at least one of the supported secrets providers or a `RuntimeError` will be raised.**
 
-#### AWS Secrets Manager
+#### AWS Secrets Manager, AWS System Manager Parameter Store
 
-The AWS Secrets Manager provider requires the `boto3` library. This can be easily installed along with the plugin using the following command:
+The AWS Secrets Manager and Parameter Store providers require the `boto3` library. This can be easily installed along with the plugin using the following command:
 
 ```no-highlight
 pip install nautobot-secrets-providers[aws]
@@ -111,7 +111,7 @@ Before you proceed, you must have **at least one** of the dependent libaries ins
 
 Please do not enable this plugin until you are able to install the dependencies, as it will block Nautobot from starting.
 
-### AWS Secrets Manager
+### AWS Secrets Manager, AWS System Manager Parameter Store
 
 #### Authentication
 
