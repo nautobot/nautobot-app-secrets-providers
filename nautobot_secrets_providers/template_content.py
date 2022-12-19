@@ -1,8 +1,9 @@
-# template_content.py
+"""Extra tabs for the Secret model."""
 from django.urls import reverse
 
 try:
     from nautobot.apps.ui import TemplateExtension
+
     DETAILED_TABS_AVAILABLE = getattr(TemplateExtension, "detail_tabs")
 except ImportError:
     DETAILED_TABS_AVAILABLE = False  # Nautobot < 1.4.0
@@ -15,10 +16,11 @@ if DETAILED_TABS_AVAILABLE:
     class SecretExtraTabs(TemplateExtension):
         """Template extension to add extra tabs to the object detail tabs."""
 
-        model = 'extras.secret'
+        model = "extras.secret"
 
         def detail_tabs(self):
-            """
+            """Extra tabs to render on a model's detail page.
+
             You may define extra tabs to render on a model's detail page by utilizing this method.
             Each tab is defined as a dict in a list of dicts.
 
@@ -32,7 +34,9 @@ if DETAILED_TABS_AVAILABLE:
             return [
                 {
                     "title": "Check",
-                    "url": reverse("plugins:nautobot_secrets_providers:check_secret_tab", kwargs={"pk": self.context["object"].pk}),
+                    "url": reverse(
+                        "plugins:nautobot_secrets_providers:check_secret_tab", kwargs={"pk": self.context["object"].pk}
+                    ),
                 },
             ]
 

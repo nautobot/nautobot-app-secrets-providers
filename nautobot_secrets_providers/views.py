@@ -1,7 +1,6 @@
 """Plugin UI views for Secrets Providers."""
 
 from django.views.generic import TemplateView
-from django.shortcuts import render
 from nautobot.extras.models import Secret
 from nautobot.extras.secrets.exceptions import SecretError
 
@@ -19,6 +18,7 @@ class SecretsProvidersHomeView(TemplateView):
         ctx["secrets_providers"] = secrets.secrets_providers
         return ctx
 
+
 def _extra_content_helper(secret):
     """Helper function to inject data into template context."""
     try:
@@ -33,34 +33,39 @@ def _extra_content_helper(secret):
         "check_message": check_message,
     }
 
+
 # This is a workaround to stay compatible with Nautobot 1.4.x and >= 1.5.x
-is_secret_check_tab_available = True
+is_secret_check_tab_available = True  # type: ignore
 
 try:
     # For Nautobot >= 1.5.x
-    from nautobot.apps.views import ObjectView
+    from nautobot.apps.views import ObjectView  # type: ignore
 
     class SecretDetailNautobotSecretProvidersTabCheckView(ObjectView):  # type: ignore
         """Plugin tab for Secret Detail."""
+
         queryset = Secret.objects.all()
         template_name = "nautobot_secrets_providers/tab_secret_detail_check.html"
 
         def get_extra_context(self, request, instance):
             """Inject `secrets` into template context."""
             return _extra_content_helper(instance)
+
 except ImportError:
     try:
         # Stay compatible with Nautobot 1.4.x
-        from nautobot.core.views import generic
+        from nautobot.core.views import generic  # type: ignore
 
         class SecretDetailNautobotSecretProvidersTabCheckView(generic.ObjectView):
             """Plugin tab for Secret Detail."""
+
             queryset = Secret.objects.all()
             template_name = "nautobot_secrets_providers/tab_secret_detail_check.html"
 
             def get_extra_context(self, request, instance):
                 """Inject `secrets` into template context."""
                 return _extra_content_helper(instance)
+
     except ImportError:
         # No extra tab available. Check function is disabled.
         is_secret_check_tab_available = False
