@@ -4,6 +4,16 @@ Nautobot Secrets Providers is a plugin for [Nautobot](https://github.com/nautobo
 
 This plugin publishes secrets providers that are not included in the within the Nautobot core software package so that it will be easier to maintain and extend support for various secrets providers without waiting on Nautobot software releases.
 
+With Nautobot version 1.4.0 and above a new **Check** Tab is introduced on Nautobot Secret detail page.
+It allows to check if the secret could be accessed with data defined.
+
+The screenshots shows how the message looks like for a secret that is accessible and inaccessible.
+
+![Screenshot of Secret-Check-tab with accessible secret-provider](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/secret_check_success_message.png "Secret-Check-tab with accessible secret-provider")
+
+![Screenshot of Secret-Check-tab with inaccessible secret-provider](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/secret_check_failed_message.png "Secret-Check-tab with accessible secret-provider")
+
+
 ## Supported Secrets Backends
 
 This plugin supports the following popular secrets backends:

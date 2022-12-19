@@ -1,5 +1,11 @@
 # Nautobot Secrets Providers Changelog
 
+## v1.3.1 (????-??-??)
+
+### Added
+
+- [] Extra tab on secret detail view to check if the secret can be read if Nautobot Version is greater than 1.4.
+
 ## v1.3.0 (2022-08-29)
 
 ### Added
