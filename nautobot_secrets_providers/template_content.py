@@ -1,14 +1,14 @@
 """Extra tabs for the Secret model."""
 from django.urls import reverse
 
+DETAILED_TABS_AVAILABLE = True  # Nautobot >= 1.4.0
 try:
     from nautobot.apps.ui import TemplateExtension
-
-    DETAILED_TABS_AVAILABLE = getattr(TemplateExtension, "detail_tabs")
 except ImportError:
-    DETAILED_TABS_AVAILABLE = False  # Nautobot < 1.4.0
-except AttributeError:
-    DETAILED_TABS_AVAILABLE = False
+    try:
+        from nautobot.extras.plugins import PluginTemplateExtension as TemplateExtension
+    except ImportError:
+        DETAILED_TABS_AVAILABLE = False  # Nautobot < 1.4.0
 
 if DETAILED_TABS_AVAILABLE:
     # Enable Extra Tabs for Nautobot 1.4.0 and above
