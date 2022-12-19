@@ -12,7 +12,7 @@ class SecretsProvidersHomeView(TemplateView):
 
     template_name = "nautobot_secrets_providers/home.html"
 
-    def extra_context(self, **kwargs):
+    def get_context_data(self, **kwargs):
         """Inject `secrets_providers` into template context."""
         ctx = super().get_context_data(**kwargs)
         ctx["secrets_providers"] = secrets.secrets_providers
