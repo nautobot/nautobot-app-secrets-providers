@@ -2,7 +2,7 @@
 from django.urls import path
 
 from nautobot_secrets_providers import views
-from .views import is_secret_check_tab_available
+from .views import IS_SECRET_CHECK_TAB_AVAILABLE
 
 
 app_name = "nautobot_secrets_providers"
@@ -10,7 +10,7 @@ app_name = "nautobot_secrets_providers"
 urlpatterns = [
     path("", views.SecretsProvidersHomeView.as_view(), name="home"),
 ]
-if is_secret_check_tab_available:
+if IS_SECRET_CHECK_TAB_AVAILABLE:
     urlpatterns += [
         path(
             "secret/<uuid:pk>/check/",

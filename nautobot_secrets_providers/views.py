@@ -35,26 +35,26 @@ def _extra_content_helper(secret):
 
 
 # This is a workaround to stay compatible with Nautobot 1.4.x and >= 1.5.x
-is_secret_check_tab_available = True  # type: ignore
+IS_SECRET_CHECK_TAB_AVAILABLE = True
 
 try:
     # For Nautobot >= 1.5.x
-    from nautobot.apps.views import ObjectView  # type: ignore
+    from nautobot.apps.views import ObjectView  # pylint: disable=ungrouped-imports
 
-    class SecretDetailNautobotSecretProvidersTabCheckView(ObjectView):  # type: ignore
+    class SecretDetailNautobotSecretProvidersTabCheckView(ObjectView):  # pylint: disable=too-few-public-methods
         """Plugin tab for Secret Detail."""
 
         queryset = Secret.objects.all()
         template_name = "nautobot_secrets_providers/tab_secret_detail_check.html"
 
-        def get_extra_context(self, request, instance):
+        def get_extra_context(self, request, instance):  # pylint: disable=no-self-use
             """Inject `secrets` into template context."""
             return _extra_content_helper(instance)
 
 except ImportError:
     try:
         # Stay compatible with Nautobot 1.4.x
-        from nautobot.core.views import generic  # type: ignore
+        from nautobot.core.views import generic  # pylint: disable=ungrouped-imports
 
         class SecretDetailNautobotSecretProvidersTabCheckView(generic.ObjectView):
             """Plugin tab for Secret Detail."""
@@ -68,4 +68,4 @@ except ImportError:
 
     except ImportError:
         # No extra tab available. Check function is disabled.
-        is_secret_check_tab_available = False
+        IS_SECRET_CHECK_TAB_AVAILABLE = False
