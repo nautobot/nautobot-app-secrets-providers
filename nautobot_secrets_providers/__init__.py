@@ -15,7 +15,7 @@ class NautobotSecretsProvidersConfig(PluginConfig):
     """Plugin configuration for the nautobot_secrets_providers plugin."""
 
     name = "nautobot_secrets_providers"
-    verbose_name = "Secrets Management"
+    verbose_name = "Secrets Management Extensions"
     version = __version__
     author = "Network to Code, LLC"
     description = "Nautobot App that provides direct integrations with Enterprise secrets management systems. Provides patterns to securely fetch secrets from other Nautobot Apps and Nautobot Jobs."
