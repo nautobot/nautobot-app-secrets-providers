@@ -109,12 +109,14 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         # so we use a parameter to specify the path to the ca_cert, if not provided we use the default of None
         ca_cert = vault_settings.get("ca_cert", None)
 
+        namespace = vault_settings.get("namespace", None)
+
         # Get the client and attempt to retrieve the secret.
         try:
             if auth_method == "token":
-                client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"], verify=ca_cert)
+                client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"], verify=ca_cert, namespace=namespace)
             else:
-                client = hvac.Client(url=vault_settings["url"], verify=ca_cert)
+                client = hvac.Client(url=vault_settings["url"], verify=ca_cert, namespace=namespace)
                 if auth_method == "approle":
                     client.auth.approle.login(
                         role_id=vault_settings["role_id"],
