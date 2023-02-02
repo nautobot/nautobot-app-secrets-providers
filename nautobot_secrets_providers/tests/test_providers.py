@@ -136,7 +136,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         "auth": None,
     }
 
-    mock_v1_response = {
+    mock_kv_v1_response = {
         'request_id': 'f0185257-af7a-f550-2d9a-ada457a70e17', 
         'lease_id': '', 
         'renewable': False, 
@@ -193,6 +193,15 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             provider=self.provider.slug,
             parameters={"path": "hello", "key": "location"},
         )
+        # The secret we be using.
+        self.kv_v1_secret = Secret.objects.create(
+            name="hello-hashicorp",
+            slug="hello-hashicorp",
+            provider=self.provider.slug,
+            kv_version="v1",
+            parameters={"path": "hello", "key": "location"},
+        )
+        
         # The secret with a mounting point we be using.
         self.secret_mounting_point = Secret.objects.create(
             name="hello-hashicorp-mntpnt",
@@ -200,8 +209,21 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             provider=self.provider.slug,
             parameters={"path": "hello", "key": "location", "mount_point": "mymount"},
         )
+
+        # The secret with a mounting point we be using.
+        self.kv_v1_secret_mounting_point = Secret.objects.create(
+            name="hello-hashicorp-mntpnt",
+            slug="hello-hashicorp-mntpnt",
+            kv_version="v1",
+            provider=self.provider.slug,
+            parameters={"path": "hello", "key": "location", "mount_point": "mymount"},
+        )
+
         self.test_path = "http://localhost:8200/v1/secret/data/hello"
         self.test_mountpoint_path = "http://localhost:8200/v1/mymount/data/hello"
+
+        self.kv_v1_test_path = "http://localhost:8200/v1/secret/hello"
+        self.kv_v1_test_mountpoint_path = "http://localhost:8200/v1/mymount/hello"
 
     @requests_mock.Mocker()
     def test_retrieve_success(self, requests_mocker):
@@ -211,6 +233,17 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         response = self.provider.get_value_for_secret(self.secret)
         self.assertEqual(self.mock_response["data"]["data"]["location"], response)
 
+
+
+    @requests_mock.Mocker()
+    def test_retrieve_kv1_success(self, requests_mocker):
+        """Retrieve a secret successfully."""
+        requests_mocker.register_uri(method="GET", url=self.kv_v1_test_path, json=self.mock_kv_v1_response)
+
+        response = self.provider.get_value_for_secret(self.kv_v1_secret)
+        self.assertEqual(self.mock_kv_v1_response["data"]["location"], response)
+
+
     @requests_mock.Mocker()
     def test_retrieve_mount_point_success(self, requests_mocker):
         """Retrieve a secret successfully using a custom `mount_point`."""
@@ -218,6 +251,16 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
 
         response = self.provider.get_value_for_secret(self.secret_mounting_point)
         self.assertEqual(self.mock_response["data"]["data"]["location"], response)
+
+    @requests_mock.Mocker()
+    def test_retrieve_kv_v1_mount_point_success(self, requests_mocker):
+        """Retrieve a secret successfully using a custom `mount_point`."""
+        requests_mocker.register_uri(method="GET", url=self.kv_v1_test_mountpoint_path, json=self.mock_kv_v1_response)
+
+        response = self.provider.get_value_for_secret(self.kv_v1_secret_mounting_point)
+        self.assertEqual(self.mock_response["data"]["location"], response)
+
+
 
     @requests_mock.Mocker()
     def test_retrieve_invalid_parameters(self, requests_mocker):
