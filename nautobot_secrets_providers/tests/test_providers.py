@@ -237,7 +237,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
 
     @requests_mock.Mocker()
     def test_retrieve_kv1_success(self, requests_mocker):
-        """Retrieve a secret successfully."""
+        """Retrieve a secret successfully using the kv v1 engine."""
         requests_mocker.register_uri(method="GET", url=self.kv_v1_test_path, json=self.mock_kv_v1_response)
 
         response = self.provider.get_value_for_secret(self.kv_v1_secret)
@@ -254,11 +254,11 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
 
     @requests_mock.Mocker()
     def test_retrieve_kv_v1_mount_point_success(self, requests_mocker):
-        """Retrieve a secret successfully using a custom `mount_point`."""
+        """Retrieve a secret successfully using the kv v1 engine and a custom `mount_point`."""
         requests_mocker.register_uri(method="GET", url=self.kv_v1_test_mountpoint_path, json=self.mock_kv_v1_response)
 
         response = self.provider.get_value_for_secret(self.kv_v1_secret_mounting_point)
-        self.assertEqual(self.mock_response["data"]["location"], response)
+        self.assertEqual(self.mock_kv_v1_response["data"]["location"], response)
 
 
 
