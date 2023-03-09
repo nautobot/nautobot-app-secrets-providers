@@ -38,7 +38,7 @@ namespace = Collection("nautobot_secrets_providers")
 namespace.configure(
     {
         "nautobot_secrets_providers": {
-            "nautobot_ver": "1.2.1",
+            "nautobot_ver": "1.4.10",
             "project_name": "nautobot_secrets_providers",
             "python_ver": "3.7",
             "local": False,
