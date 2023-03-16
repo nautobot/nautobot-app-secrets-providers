@@ -62,6 +62,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         )
         kv_version = forms.CharField(
             required=False,
+            choices=KV_VERSION_CHOICES,
             help_text=f"The version of the kv engine (either v1 or v2) (Default: <code>{DEFAULT_KV_VERSION}</code>)",
             initial=DEFAULT_KV_VERSION,
         )
