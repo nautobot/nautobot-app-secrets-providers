@@ -22,7 +22,6 @@ class NautobotSecretsProvidersConfig(PluginConfig):
     base_url = "secrets"
     required_settings = []
     min_version = "1.4.0"
-    max_version = "1.9999"
     default_settings = {}
     caching_config = {}
 

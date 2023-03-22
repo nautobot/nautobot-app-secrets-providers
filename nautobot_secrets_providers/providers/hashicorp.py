@@ -13,7 +13,7 @@ try:
 except ImportError:
     hvac = None
 
-from nautobot.utilities.forms import BootstrapMixin
+from nautobot.core.forms import BootstrapMixin
 from nautobot.extras.secrets import exceptions, SecretsProvider
 
 __all__ = ("HashiCorpVaultSecretsProvider",)
