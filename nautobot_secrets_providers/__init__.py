@@ -21,7 +21,7 @@ class NautobotSecretsProvidersConfig(PluginConfig):
     description = "Nautobot App that provides direct integrations with Enterprise secrets management systems. Provides patterns to securely fetch secrets for use by other Nautobot Apps and Nautobot Jobs."
     base_url = "secrets"
     required_settings = []
-    min_version = "1.4.0"
+    min_version = "2.0.0-alpha.1"
     default_settings = {}
     caching_config = {}
 
