@@ -33,7 +33,7 @@ except ImportError:
     except ImportError:
         thycotic_installed = False  # pylint: disable=invalid-name
 
-from nautobot.utilities.forms import BootstrapMixin
+from nautobot.core.forms import BootstrapMixin
 from nautobot.extras.secrets import exceptions, SecretsProvider
 
 from .choices import ThycoticSecretChoices

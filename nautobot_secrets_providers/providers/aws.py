@@ -11,7 +11,7 @@ except (ImportError, ModuleNotFoundError):
 
 from django import forms
 
-from nautobot.utilities.forms import BootstrapMixin
+from nautobot.core.forms import BootstrapMixin
 from nautobot.extras.secrets import exceptions, SecretsProvider
 
 

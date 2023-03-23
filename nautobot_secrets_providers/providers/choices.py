@@ -1,5 +1,5 @@
 """Choices for Thycotic Secret Server Plugin."""
-from nautobot.utilities.choices import ChoiceSet
+from nautobot.core.choices import ChoiceSet
 
 
 class ThycoticSecretChoices(ChoiceSet):
