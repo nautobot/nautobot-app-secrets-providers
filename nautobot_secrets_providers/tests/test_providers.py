@@ -105,7 +105,7 @@ class AWSSecretsManagerSecretsProviderTestCase(SecretsProviderTestCase):
         self.assertIn(self.secret.parameters["key"], exc.message)
 
 
-class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
+class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):  # pylint: disable=too-many-instance-attributes
     """Tests for HashiCorpVaultSecretsProvider."""
 
     provider = HashiCorpVaultSecretsProvider

@@ -16,12 +16,12 @@ except ImportError:
 from nautobot.utilities.forms import BootstrapMixin
 from nautobot.extras.secrets import exceptions, SecretsProvider
 
+from .choices import HashicorpKVVersionChoices
+
 __all__ = ("HashiCorpVaultSecretsProvider",)
 
 K8S_TOKEN_DEFAULT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"  # nosec B105
 AUTH_METHOD_CHOICES = ["approle", "aws", "kubernetes", "token"]
-KV_VERSION_CHOICES = ["v1", "v2"]
-
 # Default mount point for the HVAC client
 try:
     plugins_config = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
@@ -34,7 +34,7 @@ try:
     plugins_config = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
     DEFAULT_KV_VERSION = plugins_config["hashicorp_vault"]["default_kv_version"]
 except KeyError:
-    DEFAULT_KV_VERSION = "v2"
+    DEFAULT_KV_VERSION = HashicorpKVVersionChoices.KV_VERSION_2
 
 
 class HashiCorpVaultSecretsProvider(SecretsProvider):
@@ -60,9 +60,9 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             help_text=f"The path where the secret engine was mounted on (Default: <code>{DEFAULT_MOUNT_POINT}</code>)",
             initial=DEFAULT_MOUNT_POINT,
         )
-        kv_version = forms.CharField(
+        kv_version = forms.ChoiceField(
             required=False,
-            choices=KV_VERSION_CHOICES,
+            choices=HashicorpKVVersionChoices,
             help_text=f"The version of the kv engine (either v1 or v2) (Default: <code>{DEFAULT_KV_VERSION}</code>)",
             initial=DEFAULT_KV_VERSION,
         )
@@ -78,7 +78,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
 
         vault_settings = plugin_settings.get("hashicorp_vault", {})
         auth_method = vault_settings.get("auth_method", "token")
-        kv_version = vault_settings.get("kv_version", "v2")
+        kv_version = vault_settings.get("kv_version", HashicorpKVVersionChoices.KV_VERSION_2)
 
         if "url" not in vault_settings:
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration is missing a url")
@@ -86,7 +86,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         if auth_method not in AUTH_METHOD_CHOICES:
             raise exceptions.SecretProviderError(secret, cls, f"HashiCorp Vault Auth Method {auth_method} is invalid!")
 
-        if kv_version not in KV_VERSION_CHOICES:
+        if kv_version not in HashicorpKVVersionChoices:
             raise exceptions.SecretProviderError(secret, cls, f"HashiCorp Vault KV version {kv_version} is invalid!")
 
         if auth_method == "aws":
@@ -181,7 +181,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         client = cls.get_client(secret)
 
         try:
-            if secret_kv_version == "v1":  # nosec B105
+            if secret_kv_version == HashicorpKVVersionChoices.KV_VERSION_1:
                 response = client.secrets.kv.v1.read_secret(path=secret_path, mount_point=secret_mount_point)
             else:
                 response = client.secrets.kv.v2.read_secret(path=secret_path, mount_point=secret_mount_point)
@@ -190,10 +190,10 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
 
         # Retrieve the value using the key or complain loudly.
         try:
-            if secret_kv_version == "v1":  # nosec B105
+            if secret_kv_version == HashicorpKVVersionChoices.KV_VERSION_1:
                 return response["data"][secret_key]
-            else:
-                return response["data"]["data"][secret_key]
+
+            return response["data"]["data"][secret_key]
 
         except KeyError as err:
             msg = f"The secret value could not be retrieved using key {err}"
