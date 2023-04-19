@@ -14,8 +14,8 @@ from nautobot.extras.models import Secret
 from nautobot.extras.secrets import exceptions
 from nautobot_secrets_providers.providers import (
     AWSSecretsManagerSecretsProvider,
-    HashiCorpVaultSecretsProvider,
     AWSSystemsManagerParameterStore,
+    HashiCorpVaultSecretsProvider,
 )
 
 
@@ -479,7 +479,7 @@ class AWSSystemsManagerParameterStoreTestCase(SecretsProviderTestCase):
     @mock_ssm
     def test_retrieve_does_not_exist(self):
         """Try and fail to retrieve a secret that doesn't exist."""
-        conn = boto3.client("ssm", region_name=self.secret.parameters["region"])  # noqa pylint: disable=unused-variable
+        boto3.client("ssm", region_name=self.secret.parameters["region"])
 
         with self.assertRaises(exceptions.SecretParametersError) as err:
             self.provider.get_value_for_secret(self.secret)
