@@ -11,6 +11,7 @@ This plugin supports the following popular secrets backends:
 | Secrets Backend                                              | Supported Secret Types                                       | Supported Authentication Methods                             |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
+| [AWS Systems Manager Parameter Store](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
 | [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2) | [Token](https://www.vaultproject.io/docs/auth/token)<br/>[AppRole](https://www.vaultproject.io/docs/auth/approle)<br/>[AWS](https://www.vaultproject.io/docs/auth/aws)<br/>[Kubernetes](https://www.vaultproject.io/docs/auth/kubernetes)         |
 | [Delinea/Thycotic Secret Server](https://delinea.com/products/secret-server)               | [Secret Server Cloud](https://github.com/DelineaXPM/python-tss-sdk#secret-server-cloud)<br/>[Secret Server (on-prem)](https://github.com/DelineaXPM/python-tss-sdk#initializing-secretserver)| [Access Token Authorization](https://github.com/DelineaXPM/python-tss-sdk#access-token-authorization)<br/>[Domain Authorization](https://github.com/DelineaXPM/python-tss-sdk#domain-authorization)<br/>[Password Authorization](https://github.com/DelineaXPM/python-tss-sdk#password-authorization)<br/>         |
 
@@ -60,9 +61,9 @@ For this plugin to operate you must install at least one of the dependent librar
 
 **You must install the dependencies for at least one of the supported secrets providers or a `RuntimeError` will be raised.**
 
-#### AWS Secrets Manager
+#### AWS
 
-The AWS Secrets Manager provider requires the `boto3` library. This can be easily installed along with the plugin using the following command:
+AWS Secrets Manager and Systems Manager Parameter Store are supported. Both providers require the `boto3` library. This can be easily installed along with the plugin using the following command:
 
 ```no-highlight
 pip install nautobot-secrets-providers[aws]
@@ -111,7 +112,7 @@ Before you proceed, you must have **at least one** of the dependent libaries ins
 
 Please do not enable this plugin until you are able to install the dependencies, as it will block Nautobot from starting.
 
-### AWS Secrets Manager
+### AWS
 
 #### Authentication
 
@@ -128,7 +129,7 @@ Boto3 credentials can be configured in multiple ways (eight as of this writing) 
 7. Boto2 config file (`/etc/boto.cfg` and `~/.boto`)
 8. Instance metadata service on an Amazon EC2 instance that has an IAM role configured.
 
-**The AWS Secrets Manager provider only supports methods 3-8. Methods 1 and 2 ARE NOT SUPPORTED at this time.**
+**The AWS providers only support methods 3-8. Methods 1 and 2 ARE NOT SUPPORTED at this time.**
 
 We highly recommend you defer to using environment variables for your deployment as specified in the credentials documentation linked above. The values specified in the linked documentation should be [set within your `~.bashrc`](https://nautobot.readthedocs.io/en/latest/installation/nautobot/#update-the-nautobot-bashrc) (or similar profile) on your system.
 
