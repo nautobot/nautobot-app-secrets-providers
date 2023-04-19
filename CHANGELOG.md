@@ -13,6 +13,7 @@
 
 - [#45](https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/45) Change references of Thycotic to Delinea
 - [#47](https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/47) Change version constraint of HVAC module to allow non-major upgrades
+- [#56](https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/56) Change minimum supported Nautobot version to `1.4.0`
 - [#63](https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/63) Update plugin description when installed in Nautobot
 
 ## v1.3.0 (2022-08-29)
