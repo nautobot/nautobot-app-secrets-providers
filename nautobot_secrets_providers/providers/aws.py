@@ -108,7 +108,7 @@ class AWSSystemsManagerParameterStore(SecretsProvider):
     Documentation: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html
     """
 
-    slug = "aws-ssm-parameter-store"
+    slug = "aws-sm-parameter-store"
     name = "AWS Systems Manager Parameter Store"
     is_available = boto3 is not None
 

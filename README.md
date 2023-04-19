@@ -129,7 +129,7 @@ Boto3 credentials can be configured in multiple ways (eight as of this writing) 
 7. Boto2 config file (`/etc/boto.cfg` and `~/.boto`)
 8. Instance metadata service on an Amazon EC2 instance that has an IAM role configured.
 
-**The AWS providers only supports methods 3-8. Methods 1 and 2 ARE NOT SUPPORTED at this time.**
+**The AWS providers only support methods 3-8. Methods 1 and 2 ARE NOT SUPPORTED at this time.**
 
 We highly recommend you defer to using environment variables for your deployment as specified in the credentials documentation linked above. The values specified in the linked documentation should be [set within your `~.bashrc`](https://nautobot.readthedocs.io/en/latest/installation/nautobot/#update-the-nautobot-bashrc) (or similar profile) on your system.
 
