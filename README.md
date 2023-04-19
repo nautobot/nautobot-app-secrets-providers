@@ -63,9 +63,7 @@ For this plugin to operate you must install at least one of the dependent librar
 
 #### AWS
 
-AWS Secrets Manager and System Manager Parameter Store are supported.
-
-The AWS Secrets Manager and Parameter Store providers require the `boto3` library. This can be easily installed along with the plugin using the following command:
+AWS Secrets Manager and Systems Manager Parameter Store are supported. Both providers require the `boto3` library. This can be easily installed along with the plugin using the following command:
 
 ```no-highlight
 pip install nautobot-secrets-providers[aws]

@@ -102,12 +102,14 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
 
 
 class AWSSystemsManagerParameterStore(SecretsProvider):
-    """A secrets provider for AWS Systems Manager Parameter Store."""
+    """
+    A secrets provider for AWS Systems Manager Parameter Store.
+    
+    Documentation: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html
+    """
 
-    # Documentation: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html
-
-    slug = "aws-ssm-manager"
-    name = "AWS Parameter Store"
+    slug = "aws-ssm-parameter-store"
+    name = "AWS Systems Manager Parameter Store"
     is_available = boto3 is not None
 
     class ParametersForm(BootstrapMixin, forms.Form):
