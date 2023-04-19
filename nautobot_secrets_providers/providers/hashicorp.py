@@ -86,7 +86,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         if auth_method not in AUTH_METHOD_CHOICES:
             raise exceptions.SecretProviderError(secret, cls, f"HashiCorp Vault Auth Method {auth_method} is invalid!")
 
-        if kv_version not in HashicorpKVVersionChoices:
+        if kv_version not in HashicorpKVVersionChoices.as_dict():
             raise exceptions.SecretProviderError(secret, cls, f"HashiCorp Vault KV version {kv_version} is invalid!")
 
         if auth_method == "aws":

@@ -18,6 +18,7 @@ from nautobot_secrets_providers.providers import (
     HashiCorpVaultSecretsProvider,
 )
 
+from nautobot_secrets_providers.providers.choices import HashicorpKVVersionChoices
 
 # Use the proper swappable User model
 User = get_user_model()
@@ -105,7 +106,7 @@ class AWSSecretsManagerSecretsProviderTestCase(SecretsProviderTestCase):
         self.assertIn(self.secret.parameters["key"], exc.message)
 
 
-class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):  # pylint: disable=too-many-instance-attributes
+class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
     """Tests for HashiCorpVaultSecretsProvider."""
 
     provider = HashiCorpVaultSecretsProvider
@@ -134,19 +135,6 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):  # pylint:
                 "destroyed": False,
                 "version": 2,
             },
-        },
-        "wrap_info": None,
-        "warnings": None,
-        "auth": None,
-    }
-
-    mock_kv_v1_response = {
-        "request_id": "f0185257-af7a-f550-2d9a-ada457a70e17",
-        "lease_id": "",
-        "renewable": False,
-        "lease_duration": 0,
-        "data": {
-            "location": "world",
         },
         "wrap_info": None,
         "warnings": None,
@@ -197,14 +185,6 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):  # pylint:
             provider=self.provider.slug,
             parameters={"path": "hello", "key": "location"},
         )
-        # The secret we be using.
-        self.kv_v1_secret = Secret.objects.create(
-            name="hello-hashicorp",
-            slug="hello-hashicorp",
-            provider=self.provider.slug,
-            kv_version="v1",
-            parameters={"path": "hello", "key": "location"},
-        )
 
         # The secret with a mounting point we be using.
         self.secret_mounting_point = Secret.objects.create(
@@ -214,20 +194,54 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):  # pylint:
             parameters={"path": "hello", "key": "location", "mount_point": "mymount"},
         )
 
-        # The secret with a mounting point we be using.
-        self.kv_v1_secret_mounting_point = Secret.objects.create(
-            name="hello-hashicorp-mntpnt",
-            slug="hello-hashicorp-mntpnt",
-            kv_version="v1",
-            provider=self.provider.slug,
-            parameters={"path": "hello", "key": "location", "mount_point": "mymount"},
-        )
-
         self.test_path = "http://localhost:8200/v1/secret/data/hello"
         self.test_mountpoint_path = "http://localhost:8200/v1/mymount/data/hello"
 
-        self.kv_v1_test_path = "http://localhost:8200/v1/secret/hello"
-        self.kv_v1_test_mountpoint_path = "http://localhost:8200/v1/mymount/hello"
+    @requests_mock.Mocker()
+    def test_v1(self, requests_mocker):
+        mock_kv_v1_response = {
+            "request_id": "f0185257-af7a-f550-2d9a-ada457a70e17",
+            "lease_id": "",
+            "renewable": False,
+            "lease_duration": 0,
+            "data": {
+                "location": "world",
+            },
+            "wrap_info": None,
+            "warnings": None,
+            "auth": None,
+        }
+        kv_v1_test_path = "http://localhost:8200/v1/secret/hello"
+        kv_v1_test_mountpoint_path = "http://localhost:8200/v1/mymount/hello"
+        kv_v1_secret = Secret.objects.create(
+            name="hello-hashicorp-v1",
+            slug="hello-hashicorp-v1",
+            provider=self.provider.slug,
+            parameters={"path": "hello", "key": "location", "kv_version": HashicorpKVVersionChoices.KV_VERSION_1},
+        )
+        kv_v1_secret_mounting_point = Secret.objects.create(
+            name="hello-hashicorp-mntpnt-v1",
+            slug="hello-hashicorp-mntpnt-v1",
+            provider=self.provider.slug,
+            parameters={
+                "path": "hello",
+                "key": "location",
+                "mount_point": "mymount",
+                "kv_version": HashicorpKVVersionChoices.KV_VERSION_1,
+            },
+        )
+
+        with self.subTest("Test v1 retrieve success"):
+            requests_mocker.register_uri(method="GET", url=kv_v1_test_path, json=mock_kv_v1_response)
+
+            response = self.provider.get_value_for_secret(kv_v1_secret)
+            self.assertEqual(mock_kv_v1_response["data"]["location"], response)
+
+        with self.subTest("Test v1 retrieve success with mount point set"):
+            requests_mocker.register_uri(method="GET", url=kv_v1_test_mountpoint_path, json=mock_kv_v1_response)
+
+            response = self.provider.get_value_for_secret(kv_v1_secret_mounting_point)
+            self.assertEqual(mock_kv_v1_response["data"]["location"], response)
 
     @requests_mock.Mocker()
     def test_retrieve_success(self, requests_mocker):
@@ -238,28 +252,12 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):  # pylint:
         self.assertEqual(self.mock_response["data"]["data"]["location"], response)
 
     @requests_mock.Mocker()
-    def test_retrieve_kv1_success(self, requests_mocker):
-        """Retrieve a secret successfully using the kv v1 engine."""
-        requests_mocker.register_uri(method="GET", url=self.kv_v1_test_path, json=self.mock_kv_v1_response)
-
-        response = self.provider.get_value_for_secret(self.kv_v1_secret)
-        self.assertEqual(self.mock_kv_v1_response["data"]["location"], response)
-
-    @requests_mock.Mocker()
     def test_retrieve_mount_point_success(self, requests_mocker):
         """Retrieve a secret successfully using a custom `mount_point`."""
         requests_mocker.register_uri(method="GET", url=self.test_mountpoint_path, json=self.mock_response)
 
         response = self.provider.get_value_for_secret(self.secret_mounting_point)
         self.assertEqual(self.mock_response["data"]["data"]["location"], response)
-
-    @requests_mock.Mocker()
-    def test_retrieve_kv_v1_mount_point_success(self, requests_mocker):
-        """Retrieve a secret successfully using the kv v1 engine and a custom `mount_point`."""
-        requests_mocker.register_uri(method="GET", url=self.kv_v1_test_mountpoint_path, json=self.mock_kv_v1_response)
-
-        response = self.provider.get_value_for_secret(self.kv_v1_secret_mounting_point)
-        self.assertEqual(self.mock_kv_v1_response["data"]["location"], response)
 
     @requests_mock.Mocker()
     def test_retrieve_invalid_parameters(self, requests_mocker):
