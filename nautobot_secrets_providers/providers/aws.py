@@ -140,14 +140,12 @@ class AWSSystemsManagerParameterStore(SecretsProvider):
         try:
             get_secret_value_response = client.get_parameter(Name=parameters.get("name"), WithDecryption=True)
         except ClientError as err:
-            if err.response["Error"]["Code"] == "InternalServerError":  # pylint: disable=no-else-raise
-                raise exceptions.SecretProviderError(secret, cls, str(err))
-            elif err.response["Error"]["Code"] == "InvalidKeyId":
-                raise exceptions.SecretProviderError(secret, cls, str(err))
-            elif err.response["Error"]["Code"] == "ParameterNotFound":
+            if err.response["Error"]["Code"] == "ParameterNotFound":
                 raise exceptions.SecretParametersError(secret, cls, str(err))
             elif err.response["Error"]["Code"] == "ParameterVersionNotFound":
                 raise exceptions.SecretValueNotFoundError(secret, cls, str(err))
+            else:
+                raise exceptions.SecretProviderError(secret, cls, str(err))
         else:
             try:
                 # Fetch the Value field from the parameter which must be a json field.
