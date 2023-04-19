@@ -185,7 +185,6 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             provider=self.provider.slug,
             parameters={"path": "hello", "key": "location"},
         )
-
         # The secret with a mounting point we be using.
         self.secret_mounting_point = Secret.objects.create(
             name="hello-hashicorp-mntpnt",
@@ -193,7 +192,6 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             provider=self.provider.slug,
             parameters={"path": "hello", "key": "location", "mount_point": "mymount"},
         )
-
         self.test_path = "http://localhost:8200/v1/secret/data/hello"
         self.test_mountpoint_path = "http://localhost:8200/v1/mymount/data/hello"
 

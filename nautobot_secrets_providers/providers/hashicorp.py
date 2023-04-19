@@ -22,6 +22,8 @@ __all__ = ("HashiCorpVaultSecretsProvider",)
 
 K8S_TOKEN_DEFAULT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"  # nosec B105
 AUTH_METHOD_CHOICES = ["approle", "aws", "kubernetes", "token"]
+
+
 # Default mount point for the HVAC client
 try:
     plugins_config = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
@@ -192,9 +194,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         try:
             if secret_kv_version == HashicorpKVVersionChoices.KV_VERSION_1:
                 return response["data"][secret_key]
-
             return response["data"]["data"][secret_key]
-
         except KeyError as err:
             msg = f"The secret value could not be retrieved using key {err}"
             raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err
