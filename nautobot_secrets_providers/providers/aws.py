@@ -104,7 +104,7 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
 class AWSSystemsManagerParameterStore(SecretsProvider):
     """
     A secrets provider for AWS Systems Manager Parameter Store.
-    
+
     Documentation: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html
     """
 
