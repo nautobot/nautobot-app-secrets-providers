@@ -18,6 +18,7 @@ from nautobot_secrets_providers.providers import (
     HashiCorpVaultSecretsProvider,
 )
 
+from nautobot_secrets_providers.providers.choices import HashicorpKVVersionChoices
 
 # Use the proper swappable User model
 User = get_user_model()
@@ -182,17 +183,104 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             name="hello-hashicorp",
             slug="hello-hashicorp",
             provider=self.provider.slug,
-            parameters={"path": "hello", "key": "location"},
+            parameters={
+                "path": "hello",
+                "key": "location",
+                "kv_version": HashicorpKVVersionChoices.KV_VERSION_2,
+            },
         )
         # The secret with a mounting point we be using.
         self.secret_mounting_point = Secret.objects.create(
             name="hello-hashicorp-mntpnt",
             slug="hello-hashicorp-mntpnt",
             provider=self.provider.slug,
-            parameters={"path": "hello", "key": "location", "mount_point": "mymount"},
+            parameters={
+                "path": "hello",
+                "key": "location",
+                "mount_point": "mymount",
+                "kv_version": HashicorpKVVersionChoices.KV_VERSION_2,
+            },
         )
         self.test_path = "http://localhost:8200/v1/secret/data/hello"
         self.test_mountpoint_path = "http://localhost:8200/v1/mymount/data/hello"
+
+    @requests_mock.Mocker()
+    def test_v1(self, requests_mocker):
+        mock_kv_v1_response = {
+            "request_id": "f0185257-af7a-f550-2d9a-ada457a70e17",
+            "lease_id": "",
+            "renewable": False,
+            "lease_duration": 0,
+            "data": {
+                "location": "world",
+            },
+            "wrap_info": None,
+            "warnings": None,
+            "auth": None,
+        }
+        kv_v1_test_path = "http://localhost:8200/v1/secret/hello"
+        kv_v1_test_mountpoint_path = "http://localhost:8200/v1/mymount/hello"
+        kv_v1_secret = Secret.objects.create(
+            name="hello-hashicorp-v1",
+            slug="hello-hashicorp-v1",
+            provider=self.provider.slug,
+            parameters={"path": "hello", "key": "location", "kv_version": HashicorpKVVersionChoices.KV_VERSION_1},
+        )
+        kv_v1_secret_mounting_point = Secret.objects.create(
+            name="hello-hashicorp-mntpnt-v1",
+            slug="hello-hashicorp-mntpnt-v1",
+            provider=self.provider.slug,
+            parameters={
+                "path": "hello",
+                "key": "location",
+                "mount_point": "mymount",
+                "kv_version": HashicorpKVVersionChoices.KV_VERSION_1,
+            },
+        )
+
+        with self.subTest("Test v1 retrieve success"):
+            requests_mocker.register_uri(method="GET", url=kv_v1_test_path, json=mock_kv_v1_response)
+
+            response = self.provider.get_value_for_secret(kv_v1_secret)
+            self.assertEqual(mock_kv_v1_response["data"]["location"], response)
+
+        with self.subTest("Test v1 retrieve success with mount point set"):
+            requests_mocker.register_uri(method="GET", url=kv_v1_test_mountpoint_path, json=mock_kv_v1_response)
+
+            response = self.provider.get_value_for_secret(kv_v1_secret_mounting_point)
+            self.assertEqual(mock_kv_v1_response["data"]["location"], response)
+
+    @requests_mock.Mocker()
+    def test_v2_fallback(self, requests_mocker):
+        """
+        Before https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/53 was merged, the Hashicorp
+        provider would only support KV v2 and did not include a way to specify the KV version.
+        This test ensures that the provider will still work without the kv_version parameter.
+        """
+        kv_v2_fallback_secret = Secret.objects.create(
+            name="hello-hashicorp-v2-fallback",
+            slug="hello-hashicorp-v2-fallback",
+            provider=self.provider.slug,
+            parameters={"path": "hello", "key": "location"},
+        )
+        kv_v2_fallback_secret_mounting_point = Secret.objects.create(
+            name="hello-hashicorp-mntpnt-v2-fallback",
+            slug="hello-hashicorp-mntpnt-v2-fallback",
+            provider=self.provider.slug,
+            parameters={"path": "hello", "key": "location", "mount_point": "mymount"},
+        )
+
+        with self.subTest("Test v2 fallback retrieve success"):
+            requests_mocker.register_uri(method="GET", url=self.test_path, json=self.mock_response)
+
+            response = self.provider.get_value_for_secret(kv_v2_fallback_secret)
+            self.assertEqual(self.mock_response["data"]["data"]["location"], response)
+
+        with self.subTest("Test v2 fallback retrieve success with mount point set"):
+            requests_mocker.register_uri(method="GET", url=self.test_mountpoint_path, json=self.mock_response)
+
+            response = self.provider.get_value_for_secret(kv_v2_fallback_secret_mounting_point)
+            self.assertEqual(self.mock_response["data"]["data"]["location"], response)
 
     @requests_mock.Mocker()
     def test_retrieve_success(self, requests_mocker):

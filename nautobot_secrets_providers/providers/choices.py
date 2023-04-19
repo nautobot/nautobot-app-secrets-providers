@@ -18,3 +18,15 @@ class ThycoticSecretChoices(ChoiceSet):
         (SECRET_URL, "URL"),
         (SECRET_NOTES, "Notes"),
     )
+
+
+class HashicorpKVVersionChoices(ChoiceSet):
+    """Choices for Hashicorp KV Version."""
+
+    KV_VERSION_1 = "v1"
+    KV_VERSION_2 = "v2"
+
+    CHOICES = (
+        (KV_VERSION_1, "V1"),
+        (KV_VERSION_2, "V2"),
+    )
