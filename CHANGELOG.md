@@ -1,5 +1,21 @@
 # Nautobot Secrets Providers Changelog
 
+## v1.4.0 (2023-04-19)
+
+### Added
+
+- [#48](https://github.com/nautobot/nautobot-plugin-secrets-providers/issues/48) Add token as secret type choice for Delinea/Thycotic
+- [#51](https://github.com/nautobot/nautobot-plugin-secrets-providers/issues/51) Add support for AWS Systems Manager Parameter Store
+- [#53](https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/53) Add support for Hashicorp Key/Value v1 response
+- [#66](https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/66) Add support for Vault Enterprise Namespace parameter
+
+### Changed
+
+- [#45](https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/45) Change references of Thycotic to Delinea
+- [#47](https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/47) Change version constraint of HVAC module to allow non-major upgrades
+- [#56](https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/56) Change minimum supported Nautobot version to `1.4.0`
+- [#63](https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/63) Update plugin description when installed in Nautobot
+
 ## v1.3.0 (2022-08-29)
 
 ### Added
