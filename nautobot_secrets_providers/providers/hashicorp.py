@@ -114,7 +114,9 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         # Get the client and attempt to retrieve the secret.
         try:
             if auth_method == "token":
-                client = hvac.Client(url=vault_settings["url"], token=vault_settings["token"], verify=ca_cert, namespace=namespace)
+                client = hvac.Client(
+                    url=vault_settings["url"], token=vault_settings["token"], verify=ca_cert, namespace=namespace
+                )
             else:
                 client = hvac.Client(url=vault_settings["url"], verify=ca_cert, namespace=namespace)
                 if auth_method == "approle":
