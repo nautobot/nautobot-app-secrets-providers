@@ -20,7 +20,7 @@ __all__ = ("HashiCorpVaultSecretsProvider",)
 
 K8S_TOKEN_DEFAULT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"  # nosec B105
 AUTH_METHOD_CHOICES = ["approle", "aws", "kubernetes", "token"]
-KV_VERSION_CHOICES = ["v1","v2"]
+KV_VERSION_CHOICES = ["v1", "v2"]
 
 # Default mount point for the HVAC client
 try:
@@ -66,6 +66,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             help_text=f"The version of the kv engine (either v1 or v2) (Default: <code>{DEFAULT_KV_VERSION}</code>)",
             initial=DEFAULT_KV_VERSION,
         )
+
     @classmethod
     def validate_vault_settings(cls, secret=None):
         """Validate the vault settings."""
@@ -78,7 +79,6 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         vault_settings = plugin_settings.get("hashicorp_vault", {})
         auth_method = vault_settings.get("auth_method", "token")
         kv_version = vault_settings.get("kv_version", "v2")
-        
 
         if "url" not in vault_settings:
             raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault configuration is missing a url")
@@ -88,7 +88,6 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
 
         if kv_version not in KV_VERSION_CHOICES:
             raise exceptions.SecretProviderError(secret, cls, f"HashiCorp Vault KV version {kv_version} is invalid!")
-
 
         if auth_method == "aws":
             if not boto3:
@@ -182,7 +181,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         client = cls.get_client(secret)
 
         try:
-            if secret_kv_version == "v1":
+            if secret_kv_version == "v1":  # nosec B105
                 response = client.secrets.kv.v1.read_secret(path=secret_path, mount_point=secret_mount_point)
             else:
                 response = client.secrets.kv.v2.read_secret(path=secret_path, mount_point=secret_mount_point)
@@ -191,11 +190,11 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
 
         # Retrieve the value using the key or complain loudly.
         try:
-            if secret_kv_version == "v1":
+            if secret_kv_version == "v1":  # nosec B105
                 return response["data"][secret_key]
             else:
                 return response["data"]["data"][secret_key]
-                
+
         except KeyError as err:
             msg = f"The secret value could not be retrieved using key {err}"
             raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err

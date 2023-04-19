@@ -141,16 +141,16 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
     }
 
     mock_kv_v1_response = {
-        'request_id': 'f0185257-af7a-f550-2d9a-ada457a70e17', 
-        'lease_id': '', 
-        'renewable': False, 
-        'lease_duration': 0, 
-        'data': {
+        "request_id": "f0185257-af7a-f550-2d9a-ada457a70e17",
+        "lease_id": "",
+        "renewable": False,
+        "lease_duration": 0,
+        "data": {
             "location": "world",
-            }, 
-        'wrap_info': None, 
-        'warnings': None,
-        'auth': None
+        },
+        "wrap_info": None,
+        "warnings": None,
+        "auth": None,
     }
 
     mock_kubernetes_auth_response = {
@@ -205,7 +205,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             kv_version="v1",
             parameters={"path": "hello", "key": "location"},
         )
-        
+
         # The secret with a mounting point we be using.
         self.secret_mounting_point = Secret.objects.create(
             name="hello-hashicorp-mntpnt",
@@ -237,8 +237,6 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         response = self.provider.get_value_for_secret(self.secret)
         self.assertEqual(self.mock_response["data"]["data"]["location"], response)
 
-
-
     @requests_mock.Mocker()
     def test_retrieve_kv1_success(self, requests_mocker):
         """Retrieve a secret successfully using the kv v1 engine."""
@@ -246,7 +244,6 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
 
         response = self.provider.get_value_for_secret(self.kv_v1_secret)
         self.assertEqual(self.mock_kv_v1_response["data"]["location"], response)
-
 
     @requests_mock.Mocker()
     def test_retrieve_mount_point_success(self, requests_mocker):
@@ -263,8 +260,6 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
 
         response = self.provider.get_value_for_secret(self.kv_v1_secret_mounting_point)
         self.assertEqual(self.mock_kv_v1_response["data"]["location"], response)
-
-
 
     @requests_mock.Mocker()
     def test_retrieve_invalid_parameters(self, requests_mocker):
