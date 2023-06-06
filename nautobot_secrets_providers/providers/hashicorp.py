@@ -155,7 +155,6 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
                         access_key=aws_creds.access_key,
                         secret_key=aws_creds.secret_key,
                         session_token=aws_creds.token,
-                        region=session.region_name,
                         role=vault_settings.get("role_name", None),
                         **login_kwargs,
                     )
