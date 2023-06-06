@@ -152,7 +152,8 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
                     session = boto3.Session()
                     aws_creds = session.get_credentials()
                     aws_region = session.region_name
-                    if session.region_name is None: aws_region = 'us-east-1'
+                    if session.region_name is None:
+                        aws_region = "us-east-1"
                     client.auth.aws.iam_login(
                         access_key=aws_creds.access_key,
                         secret_key=aws_creds.secret_key,
