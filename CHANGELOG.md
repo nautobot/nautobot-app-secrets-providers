@@ -1,5 +1,11 @@
 # Nautobot Secrets Providers Changelog
 
+## v1.4.1 (2023-06-07)
+
+### Fixed
+
+- [#91](https://github.com/nautobot/nautobot-plugin-secrets-providers/issues/91) Fixed Hashicorp Vault Authentication with AWS Credentials when region is not set.
+
 ## v1.4.0 (2023-04-19)
 
 ### Added
