@@ -23,10 +23,10 @@ nautobot = "^1.4.0"
 
 #
 # Optional dependencies installed as extras
-# 
+#
 
 # AWS SDK for Python (always keep in sync w/ dev dependency)
-boto3 = { version = "~1.19.5", optional = true }
+boto3 = { version = ">=1.19.0", optional = true }
 # HashiCorp Vault API Client (always keep in sync w/ dev dependency)
 hvac = { version = ">=0.11.0, <1.1.0", optional = true }
 # Thycotic Secret Server (always keep in sync w/ dev dependency)
@@ -36,7 +36,7 @@ python-tss-sdk = {version = "~1.2.0", optional = true}
 [tool.poetry.dev-dependencies]
 bandit = "*"
 black = "*"
-boto3 = "~1.19.5"  # (always keep in sync w/ optional dependency)
+boto3 = ">=1.19.0"  # (always keep in sync w/ optional dependency)
 coverage = "~6.2"
 django-debug-toolbar = "*"
 flake8 = ">=3.9.2"
