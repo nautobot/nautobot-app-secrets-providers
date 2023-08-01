@@ -398,6 +398,7 @@ def check_migrations(context):
         "label": "specify a directory or module to test instead of running all Nautobot tests",
         "failfast": "fail as soon as a single test fails don't run the entire test suite",
         "buffer": "Discard output from passing tests",
+        "verbose": "Enable verbose test output.",
     }
 )
 def unittest(context, keepdb=False, label="nautobot_secrets_providers", failfast=False, buffer=True, verbose=False):
