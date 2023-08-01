@@ -43,7 +43,6 @@ flake8 = ">=3.9.2"
 hvac = ">=0.11.0, <1.1.0"  # (always keep in sync w/ optional dependency)
 invoke = "*"
 moto = "~2.2.11"
-mkdocs = "*"
 pydocstyle = "*"
 pylint = "*"
 pylint-django = "*"
