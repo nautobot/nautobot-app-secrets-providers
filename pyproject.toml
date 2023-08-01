@@ -24,7 +24,6 @@ importlib-metadata = "4.13.0"
 #
 # Optional dependencies installed as extras
 # 
-
 # AWS SDK for Python (always keep in sync w/ dev dependency)
 boto3 = { version = "~1.19.5", optional = true }
 # HashiCorp Vault API Client (always keep in sync w/ dev dependency)
@@ -60,6 +59,7 @@ mkdocs-version-annotations = "1.0.0"
 # Automatic documentation from sources, for MkDocs
 mkdocstrings = "0.19"
 mkdocstrings-python = "0.7.1"
+pyOpenSSL = "23.2.0"
 
 [tool.poetry.extras]
 all = ["boto3", "hvac", "python-tss-sdk"]

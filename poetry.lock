@@ -1124,6 +1124,24 @@ markdown = ">=3.2"
 pyyaml = "*"
 
 [[package]]
+name = "pyopenssl"
+version = "23.2.0"
+description = "Python wrapper module around the OpenSSL library"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "pyOpenSSL-23.2.0-py3-none-any.whl", hash = "sha256:24f0dc5227396b3e831f4c7f602b950a5e9833d292c8e4a2e06b709292806ae2"},
+    {file = "pyOpenSSL-23.2.0.tar.gz", hash = "sha256:276f931f55a452e7dea69c7173e984eb2a4407ce413c918aa34b55f82f9b8bac"},
+]
+
+[package.dependencies]
+cryptography = ">=38.0.0,<40.0.0 || >40.0.0,<40.0.1 || >40.0.1,<42"
+
+[package.extras]
+docs = ["sphinx (!=5.2.0,!=5.2.0.post0)", "sphinx-rtd-theme"]
+test = ["flaky", "pretend", "pytest (>=3.0.1)"]
+
+[[package]]
 name = "python-dateutil"
 version = "2.8.2"
 description = "Extensions to the standard Python datetime module"
@@ -1637,4 +1655,4 @@ thycotic = ["python-tss-sdk"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7"
-content-hash = "ebcd1c8ced4a29a2ae1380932022b56972fc3297657b35fd2b7b6a2b08159e35"
+content-hash = "c7c07d25847c7fa2b8aa6415d3f07870cc5d2633b4c770058e30e1e9d9130b2d"
