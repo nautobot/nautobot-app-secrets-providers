@@ -1,9 +1,10 @@
 ---
 name: "Rebake Cookie"
-on:  # yamllint disable
+on:
   schedule:
-    # every Saturday at 4:00
-    - cron: "0 4 * * 6"
+    # every day at 4:00
+    - cron: "0 4 * * *"
+  workflow_dispatch: {}
 jobs:
   rebake:
     runs-on: "ubuntu-22.04"
