@@ -4,7 +4,6 @@
     "full_name": "Network to Code, LLC",
     "email": "info@networktocode.com",
     "github_org": "nautobot",
-    "base_name": "secrets_providers",
     "plugin_name": "nautobot_secrets_providers",
     "verbose_name": "Nautobot's Secrets Providers Plugin",
     "plugin_slug": "nautobot-secrets-providers",
@@ -21,7 +20,6 @@
     "open_source_license": "Apache-2.0",
     "docs_base_url": "https://docs.nautobot.com",
     "docs_app_url": "https://docs.nautobot.com/projects/secrets-providers/en/latest",
-    "_template_directory": "nautobot-plugin",
     "_drift_manager": {
       "template": "https://github.com/networktocode-llc/cookiecutter-ntc.git",
       "template_dir": "nautobot-plugin",
