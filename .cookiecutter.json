@@ -1,0 +1,33 @@
+{
+  "cookiecutter": {
+    "codeowner_github_usernames": "@smith-ntc",
+    "full_name": "Network to Code, LLC",
+    "email": "info@networktocode.com",
+    "github_org": "nautobot",
+    "base_name": "secrets_providers",
+    "plugin_name": "nautobot_secrets_providers",
+    "verbose_name": "Nautobot's Secrets Providers Plugin",
+    "plugin_slug": "nautobot-secrets-providers",
+    "project_slug": "nautobot-plugin-secrets-providers",
+    "repo_url": "https://github.com/nautobot/nautobot-plugin-secrets-providers",
+    "base_url": "secrets-providers",
+    "min_nautobot_version": "1.4.0",
+    "max_nautobot_version": "1.9999",
+    "nautobot_version": "latest",
+    "camel_name": "NautobotSecretsProviders",
+    "project_short_description": "Nautobot's Secrets Providers Plugin",
+    "version": "0.1.0",
+    "model_class_name": "None",
+    "open_source_license": "Apache-2.0",
+    "docs_base_url": "https://docs.nautobot.com",
+    "docs_app_url": "https://docs.nautobot.com/projects/secrets-providers/en/latest",
+    "_template_directory": "nautobot-plugin",
+    "_drift_manager": {
+      "template": "https://github.com/networktocode-llc/cookiecutter-ntc.git",
+      "template_dir": "nautobot-plugin",
+      "template_ref": "nautobot-plugin-v1.0",
+      "cookie_dir": "",
+      "branch_prefix": "drift-manager"
+    }
+  }
+}

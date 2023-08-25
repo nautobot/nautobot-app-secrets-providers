@@ -1,4 +1,4 @@
-"""Secrets Provider for AWS Secrets Manager."""
+"""Secrets Provider for AWS Secrets Manager and Parameter Store."""
 
 import base64
 import json
@@ -15,7 +15,7 @@ from nautobot.core.forms import BootstrapMixin
 from nautobot.extras.secrets import exceptions, SecretsProvider
 
 
-__all__ = ("AWSSecretsManagerSecretsProvider",)
+__all__ = ("AWSSecretsManagerSecretsProvider", "AWSSystemsManagerParameterStore")
 
 
 class AWSSecretsManagerSecretsProvider(SecretsProvider):
@@ -99,3 +99,64 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
         except KeyError as err:
             msg = f"The secret value could not be retrieved using key {err}"
             raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err
+
+
+class AWSSystemsManagerParameterStore(SecretsProvider):
+    """
+    A secrets provider for AWS Systems Manager Parameter Store.
+
+    Documentation: https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html
+    """
+
+    slug = "aws-sm-parameter-store"
+    name = "AWS Systems Manager Parameter Store"
+    is_available = boto3 is not None
+
+    class ParametersForm(BootstrapMixin, forms.Form):
+        """Required parameters for AWS Parameter Store."""
+
+        name = forms.CharField(
+            required=True,
+            help_text="The name of the AWS Parameter Store secret",
+        )
+        region = forms.CharField(
+            required=True,
+            help_text="The region name of the AWS Parameter Store secret",
+        )
+        key = forms.CharField(
+            required=True,
+            help_text="The key name to retrieve from AWS Parameter Store",
+        )
+
+    @classmethod
+    def get_value_for_secret(cls, secret, obj=None, **kwargs):
+        """Return the parameter value by name and region."""
+        # Extract the parameters from the Nautobot secret.
+        parameters = secret.rendered_parameters(obj=obj)
+
+        # Create a SSM client.
+        session = boto3.session.Session()
+        client = session.client(service_name="ssm", region_name=parameters.get("region"))
+        try:
+            get_secret_value_response = client.get_parameter(Name=parameters.get("name"), WithDecryption=True)
+        except ClientError as err:
+            if err.response["Error"]["Code"] == "ParameterNotFound":
+                raise exceptions.SecretParametersError(secret, cls, str(err))
+
+            if err.response["Error"]["Code"] == "ParameterVersionNotFound":
+                raise exceptions.SecretValueNotFoundError(secret, cls, str(err))
+
+            raise exceptions.SecretProviderError(secret, cls, str(err))
+        else:
+            try:
+                # Fetch the Value field from the parameter which must be a json field.
+                data = json.loads(get_secret_value_response["Parameter"]["Value"])
+            except ValueError as err:
+                msg = "InvalidJson"
+                raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err
+        try:
+            # Return the value of the secret key configured in the nautobot secret.
+            return data[parameters.get("key")]
+        except KeyError as err:
+            msg = f"InvalidKeyName {err}"
+            raise exceptions.SecretParametersError(secret, cls, msg) from err
