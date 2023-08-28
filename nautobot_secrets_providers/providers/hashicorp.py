@@ -46,6 +46,8 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
     name = "HashiCorp Vault"
     is_available = hvac is not None
 
+    # TBD: Remove after pylint-nautobot bump
+    # pylint: disable-next=nb-incorrect-base-class
     class ParametersForm(BootstrapMixin, forms.Form):
         """Required parameters for HashiCorp Vault."""
 

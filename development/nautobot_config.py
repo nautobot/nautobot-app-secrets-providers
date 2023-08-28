@@ -1,10 +1,22 @@
 """Nautobot development configuration file."""
-# pylint: disable=invalid-envvar-default
 import os
 import sys
 
-from nautobot.core.settings import *  # noqa: F403
-from nautobot.core.settings_funcs import is_truthy, parse_redis_connection
+from django.core.exceptions import ImproperlyConfigured
+from nautobot.core.settings import *  # noqa: F403  # pylint: disable=wildcard-import,unused-wildcard-import
+from nautobot.core.settings_funcs import parse_redis_connection, is_truthy
+
+
+# Enforce required configuration parameters
+for key in [
+    "NAUTOBOT_ALLOWED_HOSTS",
+    "NAUTOBOT_SECRET_KEY",
+    "POSTGRES_DB",
+    "POSTGRES_PASSWORD",
+    "POSTGRES_USER",
+]:
+    if not os.environ.get(key):
+        raise ImproperlyConfigured(f"Required environment variable {key} is missing.")
 
 #
 # Misc. settings
@@ -45,23 +57,20 @@ if DATABASES["default"]["ENGINE"] == "django.db.backends.mysql":
 # Debug
 #
 
-DEBUG = is_truthy(os.getenv("NAUTOBOT_DEBUG", True))
+DEBUG = is_truthy(os.getenv("NAUTOBOT_DEBUG", False))
+TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"
 
-# Django Debug Toolbar
-DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": lambda _request: DEBUG and not TESTING}
-
-if DEBUG and "debug_toolbar" not in INSTALLED_APPS:  # noqa: F405
-    INSTALLED_APPS.append("debug_toolbar")  # noqa: F405
-if DEBUG and "debug_toolbar.middleware.DebugToolbarMiddleware" not in MIDDLEWARE:  # noqa: F405
-    MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")  # noqa: F405
+if DEBUG and not TESTING:
+    if "debug_toolbar" not in INSTALLED_APPS:  # noqa: F405
+        INSTALLED_APPS.append("debug_toolbar")  # noqa: F405
+    if "debug_toolbar.middleware.DebugToolbarMiddleware" not in MIDDLEWARE:  # noqa: F405
+        MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")  # noqa: F405
 
 #
 # Logging
 #
 
 LOG_LEVEL = "DEBUG" if DEBUG else "INFO"
-
-TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"
 
 # Verbose logging during normal development operation, but quiet logging during unit test execution
 if not TESTING:

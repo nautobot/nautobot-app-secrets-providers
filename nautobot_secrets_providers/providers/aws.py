@@ -25,6 +25,8 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
     name = "AWS Secrets Manager"
     is_available = boto3 is not None
 
+    # TBD: Remove after pylint-nautobot bump
+    # pylint: disable-next=nb-incorrect-base-class
     class ParametersForm(BootstrapMixin, forms.Form):
         """Required parameters for AWS Secrets Manager."""
 
@@ -112,6 +114,8 @@ class AWSSystemsManagerParameterStore(SecretsProvider):
     name = "AWS Systems Manager Parameter Store"
     is_available = boto3 is not None
 
+    # TBD: Remove after pylint-nautobot bump
+    # pylint: disable-next=nb-incorrect-base-class
     class ParametersForm(BootstrapMixin, forms.Form):
         """Required parameters for AWS Parameter Store."""
 
