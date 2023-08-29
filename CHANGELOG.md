@@ -1,5 +1,10 @@
 # Nautobot Secrets Providers Changelog
 
+## v2.0.0 (TBD)
+
+- [#106](https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/106) Updated `nautobot` to `2.0`.
+- [#106](https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/106) Removed `slug` field from `Secret` model. Can be replaced with `name` field or [natural keys](https://docs.nautobot.com/projects/core/en/next/development/apps/migration/model-updates/global/#replace-the-usage-of-slugs-with-composite-keys).
+
 ## v1.4.0 (2023-04-19)
 
 ### Added
