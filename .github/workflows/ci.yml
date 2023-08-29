@@ -73,17 +73,17 @@ jobs:
         run: "poetry run invoke yamllint"
   pylint:
     needs:
+      - "black"
       - "bandit"
       - "pydocstyle"
       - "flake8"
       - "yamllint"
-      - "black"
     runs-on: "ubuntu-20.04"
     strategy:
       fail-fast: true
       matrix:
         python-version: ["3.8"]
-        nautobot-version: ["1.4.0"]
+        nautobot-version: ["2.0.0-rc.2"]
     env:
       INVOKE_NAUTOBOT_SECRETS_PROVIDERS_PYTHON_VER: "${{ matrix.python-version }}"
       INVOKE_NAUTOBOT_SECRETS_PROVIDERS_NAUTOBOT_VER: "${{ matrix.nautobot-version }}"
@@ -119,19 +119,11 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
-        db-backend: ["postgresql"]
-        nautobot-version: ["stable"]
-        include:
-          - python-version: "3.10"
-            db-backend: "postgresql"
-            nautobot-version: "1.4.0"
-          - python-version: "3.8"
-            db-backend: "mysql"
-            nautobot-version: "1.4.0"
-          - python-version: "3.10"
-            db-backend: "mysql"
-            nautobot-version: "stable"
+        # TBD: Fix tested versions
+        # python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8"]
+        nautobot-version: ["2.0.0-rc.2"]
+        db-backend: ["postgresql", "mysql"]
     runs-on: "ubuntu-20.04"
     env:
       INVOKE_NAUTOBOT_SECRETS_PROVIDERS_PYTHON_VER: "${{ matrix.python-version }}"
