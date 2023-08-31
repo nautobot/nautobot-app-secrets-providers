@@ -6,7 +6,6 @@ from django.core.exceptions import ImproperlyConfigured
 from nautobot.core.settings import *  # noqa: F403  # pylint: disable=wildcard-import,unused-wildcard-import
 from nautobot.core.settings_funcs import parse_redis_connection, is_truthy
 
-
 # Enforce required configuration parameters
 for key in [
     "NAUTOBOT_ALLOWED_HOSTS",

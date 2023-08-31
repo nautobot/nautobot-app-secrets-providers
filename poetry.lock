@@ -2267,6 +2267,20 @@ files = [
 six = ">=1.5"
 
 [[package]]
+name = "python-dotenv"
+version = "0.21.1"
+description = "Read key-value pairs from a .env file and set them as environment variables"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "python-dotenv-0.21.1.tar.gz", hash = "sha256:1c93de8f636cde3ce377292818d0e440b6e45a82f215c3744979151fa8151c49"},
+    {file = "python_dotenv-0.21.1-py3-none-any.whl", hash = "sha256:41e12e0318bebc859fcc4d97d4db8d20ad21721a6aa5047dd59f090391cb549a"},
+]
+
+[package.extras]
+cli = ["click (>=5.0)"]
+
+[[package]]
 name = "python-tss-sdk"
 version = "1.2.0"
 description = "The Delinea Secret Server Python SDK"
@@ -3065,4 +3079,4 @@ thycotic = ["python-tss-sdk"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.12"
-content-hash = "82f78dcf7123e424be6dc782ebc7124a59a3cd18f169d7006cd1de0ae332ea2c"
+content-hash = "fbd0e3897ff8108211236ea9231c6774ea08b9581c0ebfd913feedd807a02e8b"
