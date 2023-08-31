@@ -54,7 +54,6 @@ class AWSSecretsManagerSecretsProviderTestCase(SecretsProviderTestCase):
         # The secret we be using.
         self.secret = Secret.objects.create(
             name="hello-aws",
-            slug="hello-aws",
             provider=self.provider.slug,
             parameters={"name": "hello", "region": "us-east-2", "key": "location"},
         )
@@ -181,7 +180,6 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         # The secret we be using.
         self.secret = Secret.objects.create(
             name="hello-hashicorp",
-            slug="hello-hashicorp",
             provider=self.provider.slug,
             parameters={
                 "path": "hello",
@@ -192,7 +190,6 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         # The secret with a mounting point we be using.
         self.secret_mounting_point = Secret.objects.create(
             name="hello-hashicorp-mntpnt",
-            slug="hello-hashicorp-mntpnt",
             provider=self.provider.slug,
             parameters={
                 "path": "hello",
@@ -222,13 +219,11 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         kv_v1_test_mountpoint_path = "http://localhost:8200/v1/mymount/hello"
         kv_v1_secret = Secret.objects.create(
             name="hello-hashicorp-v1",
-            slug="hello-hashicorp-v1",
             provider=self.provider.slug,
             parameters={"path": "hello", "key": "location", "kv_version": HashicorpKVVersionChoices.KV_VERSION_1},
         )
         kv_v1_secret_mounting_point = Secret.objects.create(
             name="hello-hashicorp-mntpnt-v1",
-            slug="hello-hashicorp-mntpnt-v1",
             provider=self.provider.slug,
             parameters={
                 "path": "hello",
@@ -259,13 +254,11 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         """
         kv_v2_fallback_secret = Secret.objects.create(
             name="hello-hashicorp-v2-fallback",
-            slug="hello-hashicorp-v2-fallback",
             provider=self.provider.slug,
             parameters={"path": "hello", "key": "location"},
         )
         kv_v2_fallback_secret_mounting_point = Secret.objects.create(
             name="hello-hashicorp-mntpnt-v2-fallback",
-            slug="hello-hashicorp-mntpnt-v2-fallback",
             provider=self.provider.slug,
             parameters={"path": "hello", "key": "location", "mount_point": "mymount"},
         )
@@ -303,7 +296,6 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         """Try and fail to retrieve a secret with incorrect parameters."""
         bogus_secret = Secret.objects.create(
             name="bogus-hashicorp",
-            slug="bogus-hashicorp",
             provider=AWSSecretsManagerSecretsProvider,  # Wrong provider
             parameters={"name": "hello", "region": "us-east-2", "key": "hello"},  # Wrong params
         )
@@ -551,7 +543,6 @@ class AWSSystemsManagerParameterStoreTestCase(SecretsProviderTestCase):
         super().setUp()
         self.secret = Secret.objects.create(
             name="hello-aws-parameterstore",
-            slug="hello-aws-parameterstore",
             provider=self.provider.slug,
             parameters={"name": "hello", "region": "eu-west-3", "key": "location"},
         )

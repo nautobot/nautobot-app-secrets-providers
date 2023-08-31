@@ -202,6 +202,8 @@ class ThycoticSecretServerSecretsProviderId(ThycoticSecretServerSecretsProviderB
     slug = "thycotic-tss-id"  # type: ignore
     name = "Thycotic Secret Server by ID"  # type: ignore
 
+    # TBD: Remove after pylint-nautobot bump
+    # pylint: disable-next=nb-incorrect-base-class
     class ParametersForm(BootstrapMixin, forms.Form):
         """Required parameters for Thycotic Secret Server."""
 
@@ -225,6 +227,8 @@ class ThycoticSecretServerSecretsProviderPath(ThycoticSecretServerSecretsProvide
     slug = "thycotic-tss-path"  # type: ignore
     name = "Thycotic Secret Server by Path"  # type: ignore
 
+    # TBD: Remove after pylint-nautobot bump
+    # pylint: disable-next=nb-incorrect-base-class
     class ParametersForm(BootstrapMixin, forms.Form):
         """Required parameters for Thycotic Secret Server."""
 

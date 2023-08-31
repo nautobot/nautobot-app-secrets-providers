@@ -7,6 +7,9 @@ services:
       - "NAUTOBOT_DB_ENGINE=django.db.backends.postgresql"
   db:
     image: "postgres:13-alpine"
+    command:
+      - "-c"
+      - "max_connections=200"
     env_file:
       - "development.env"
       - "creds.env"
