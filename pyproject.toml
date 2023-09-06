@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nautobot-secrets-providers"
-version = "2.0.0rc2"
+version = "2.0.0rc1"
 description = "Nautobot Secrets Providers App"
 authors = ["Network to Code, LLC <opensource@networktocode.com>"]
 license = "Apache-2.0"
@@ -19,7 +19,7 @@ packages = [
 [tool.poetry.dependencies]
 boto3 = { version = "~1.19.5", optional = true }
 hvac = { version = ">=0.11.0, <1.1.0", optional = true }
-nautobot = { version = ">=2.0.0-rc.1", optional = true }
+nautobot = { version = ">=2.0.0rc1,<2.0.0rc99", optional = true, allow-prereleases = true }
 python = ">=3.8,<3.12"
 python-tss-sdk = {version = "~1.2.0", optional = true}
 
