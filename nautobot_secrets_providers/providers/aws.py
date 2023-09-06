@@ -151,13 +151,14 @@ class AWSSystemsManagerParameterStore(SecretsProvider):
                 raise exceptions.SecretValueNotFoundError(secret, cls, str(err))
 
             raise exceptions.SecretProviderError(secret, cls, str(err))
-        else:
-            try:
-                # Fetch the Value field from the parameter which must be a json field.
-                data = json.loads(get_secret_value_response["Parameter"]["Value"])
-            except ValueError as err:
-                msg = "InvalidJson"
-                raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err
+
+        try:
+            # Fetch the Value field from the parameter which must be a json field.
+            data = json.loads(get_secret_value_response["Parameter"]["Value"])
+        except ValueError as err:
+            msg = "InvalidJson"
+            raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err
+
         try:
             # Return the value of the secret key configured in the nautobot secret.
             return data[parameters.get("key")]
