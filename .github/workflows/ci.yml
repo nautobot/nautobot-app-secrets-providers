@@ -120,10 +120,8 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        # TBD: Fix tested versions
-        # python-version: ["3.8", "3.9", "3.10", "3.11"]
-        python-version: ["3.8"]
-        nautobot-version: ["2.0.0"]
+        python-version: ["3.8", "3.11"]
+        nautobot-version: ["2.0.0", "stable"]
         db-backend: ["postgresql", "mysql"]
     runs-on: "ubuntu-20.04"
     env:
