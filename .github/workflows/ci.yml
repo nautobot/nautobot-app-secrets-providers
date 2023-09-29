@@ -84,7 +84,7 @@ jobs:
       fail-fast: true
       matrix:
         python-version: ["3.8"]
-        nautobot-version: ["2.0.0-rc.2"]
+        nautobot-version: ["2.0.0"]
     env:
       INVOKE_NAUTOBOT_SECRETS_PROVIDERS_PYTHON_VER: "${{ matrix.python-version }}"
       INVOKE_NAUTOBOT_SECRETS_PROVIDERS_NAUTOBOT_VER: "${{ matrix.nautobot-version }}"
@@ -123,7 +123,7 @@ jobs:
         # TBD: Fix tested versions
         # python-version: ["3.8", "3.9", "3.10", "3.11"]
         python-version: ["3.8"]
-        nautobot-version: ["2.0.0-rc.2"]
+        nautobot-version: ["2.0.0"]
         db-backend: ["postgresql", "mysql"]
     runs-on: "ubuntu-20.04"
     env:
