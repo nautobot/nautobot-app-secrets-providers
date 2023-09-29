@@ -1,8 +1,9 @@
 ---
 dev_addr: "127.0.0.1:8001"
-edit_uri: "edit/main/nautobot-plugin-secrets-providers/docs"
-site_name: "NautobotSecretsProviders Documentation"
-site_url: "https://nautobot-plugin-secrets-providers.readthedocs.io/"
+edit_uri: "blob/develop/docs"
+site_dir: "nautobot_secrets_providers/static/nautobot_secrets_providers/docs"
+site_name: "Nautobot's Secrets Providers Plugin Documentation"
+site_url: "https://docs.nautobot.com/projects/secrets-providers/en/latest/"
 repo_url: "https://github.com/nautobot/nautobot-plugin-secrets-providers"
 python:
   install:
@@ -13,6 +14,36 @@ theme:
   hljs_languages:
     - "django"
     - "yaml"
+  features:
+    - "navigation.tracking"
+    - "navigation.tabs"
+    - "navigation.tabs.sticky"
+    - "navigation.footer"
+    - "search.suggest"
+    - "search.highlight"
+    - "search.share"
+    - "navigation.indexes"
+    - "content.action.edit"
+    - "content.action.view"
+    - "content.code.copy"
+  favicon: "assets/favicon.ico"
+  logo: "assets/nautobot_logo.svg"
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: "default"
+      primary: "black"
+      toggle:
+        icon: "material/weather-sunny"
+        name: "Switch to dark mode"
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: "slate"
+      primary: "black"
+      toggle:
+        icon: "material/weather-night"
+        name: "Switch to light mode"
 extra_css:
   - "extra.css"
 markdown_extensions:

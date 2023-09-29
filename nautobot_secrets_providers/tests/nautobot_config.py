@@ -1,3 +1,5 @@
+# pylint: disable=all
+
 ###################################################################
 #  This file serves as a base configuration for testing purposes  #
 #  only. It is not intended for production use.                   #
