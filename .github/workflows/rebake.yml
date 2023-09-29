@@ -1,0 +1,25 @@
+---
+name: "Rebake Cookie"
+on:
+  schedule:
+    # every day at 4:00
+    - cron: "0 4 * * *"
+  workflow_dispatch: {}
+jobs:
+  rebake:
+    runs-on: "ubuntu-22.04"
+    permissions:
+      actions: "write"
+      contents: "write"
+      packages: "read"
+      pull-requests: "write"
+    container: "ghcr.io/nautobot/cookiecutter-nautobot-app-drift-manager/prod:latest"
+    env:
+      GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+    steps:
+      - name: "Rebake"
+        run: |
+          python -m ntc_cookie_drift_manager rebake \
+            --template-ref "main" \
+            --push \
+            '${{ github.repositoryUrl }}'
