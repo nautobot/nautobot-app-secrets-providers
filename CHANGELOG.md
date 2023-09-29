@@ -1,5 +1,11 @@
 # Nautobot Secrets Providers Changelog
 
+## v2.0.1 (2023-09-29)
+
+### Added
+
+- [#113](https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/113) Added the missing fix for [issue](https://github.com/nautobot/nautobot-plugin-secrets-providers/issues/91) that was not included for v2.0.0
+
 ## v2.0.0 (2023-09-23)
 
 ### Changed
