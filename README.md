@@ -1,6 +1,6 @@
 # Nautobot Secrets Providers
 
-Nautobot Secrets Providers is a plugin for [Nautobot](https://github.com/nautobot/nautobot) 1.2.0 or higher that bundles Secrets Providers for integrating with popular secrets backends. Nautobot 1.2.0 added support for integrating with retrieving secrets from various secrets providers.
+Nautobot Secrets Providers is a plugin for [Nautobot](https://github.com/nautobot/nautobot) 1.4.0 or higher that bundles Secrets Providers for integrating with popular secrets backends. Nautobot 1.4.0 added support for integrating with retrieving secrets from various secrets providers.
 
 This plugin publishes secrets providers that are not included in the within the Nautobot core software package so that it will be easier to maintain and extend support for various secrets providers without waiting on Nautobot software releases.
 
