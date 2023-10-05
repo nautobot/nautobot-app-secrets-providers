@@ -2,7 +2,6 @@
 import os
 import sys
 
-from django.core.exceptions import ImproperlyConfigured
 from nautobot.core.settings import *  # noqa: F403  # pylint: disable=wildcard-import,unused-wildcard-import
 from nautobot.core.settings_funcs import is_truthy, parse_redis_connection
 
