@@ -303,8 +303,6 @@ development/*.txt
 invoke.yml
 
 # Docs
-docs/README.md
-docs/CHANGELOG.md
 public
 /compose.yaml
 /dump.sql
