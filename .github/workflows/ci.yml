@@ -126,7 +126,6 @@ jobs:
         include:
           - python-version: "3.8"
             db-backend: "mysql"
-            nautobot-version: "1.4.0"
           - python-version: "3.11"
             db-backend: "mysql"
     runs-on: "ubuntu-20.04"
