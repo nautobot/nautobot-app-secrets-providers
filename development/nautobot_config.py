@@ -134,9 +134,33 @@ PLUGINS = ["nautobot_secrets_providers"]
 
 # Apps configuration settings. These settings are used by various Apps that the user may have installed.
 # Each key in the dictionary is the name of an installed App and its value is a dictionary of settings.
-# PLUGINS_CONFIG = {
-#     'nautobot_secrets_providers': {
-#         'foo': 'bar',
-#         'buzz': 'bazz'
-#     }
-# }
+
+PLUGINS_CONFIG = {
+    "nautobot_secrets_providers": {
+        "hashicorp_vault": {
+            "url": os.environ.get("VAULT_URL"),
+            "token": os.environ.get("VAULT_TOKEN"),
+        },
+        "thycotic": {  # https://github.com/thycotic/python-tss-sdk
+            "base_url": os.getenv("SECRET_SERVER_BASE_URL"),
+            "cloud_based": is_truthy(os.getenv("SECRET_SERVER_IS_CLOUD_BASED", "False")),
+            # tenant: required when cloud_based == True
+            "tenant": os.getenv("SECRET_SERVER_TENANT", ""),
+            # Setup thycotic authorizer
+            # Username | Password | Token | Domain | Authorizer
+            #   def    |   def    |   *   |   -    | PasswordGrantAuthorizer
+            #   def    |   def    |   *   |  def   | DomainPasswordGrantAuthorizer
+            #    -     |    -     |  def  |   *    | AccessTokenAuthorizer
+            #   def    |    -     |  def  |   *    | AccessTokenAuthorizer
+            #    -     |   def    |  def  |   *    | AccessTokenAuthorizer
+            "username": os.getenv("SECRET_SERVER_USERNAME", ""),
+            "password": os.getenv("SECRET_SERVER_PASSWORD", ""),
+            "token": os.getenv("SECRET_SERVER_TOKEN", ""),
+            "domain": os.getenv("SECRET_SERVER_DOMAIN", ""),
+            # ca_bundle_path: (optional) Path to trusted certificates file.
+            #     This must be set as environment variable.
+            #     see: https://docs.python-requests.org/en/master/user/advanced/
+            "ca_bundle_path": os.getenv("REQUESTS_CA_BUNDLE", ""),
+        },
+    },
+}
