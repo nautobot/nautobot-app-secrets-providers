@@ -10,8 +10,8 @@
         "project_slug": "nautobot-plugin-secrets-providers",
         "repo_url": "https://github.com/nautobot/nautobot-plugin-secrets-providers",
         "base_url": "secrets-providers",
-        "min_nautobot_version": "1.4.0",
-        "max_nautobot_version": "1.9999",
+        "min_nautobot_version": "2.0.0",
+        "max_nautobot_version": "2.9999",
         "camel_name": "NautobotSecretsProviders",
         "project_short_description": "Nautobot's Secrets Providers Plugin",
         "model_class_name": "None",
@@ -24,7 +24,7 @@
             "template_ref": "develop",
             "cookie_dir": "",
             "branch_prefix": "drift-manager",
-            "pull_request_strategy": "update-or-create",
+            "pull_request_strategy": "create",
             "post_actions": [
                 "black"
             ],
