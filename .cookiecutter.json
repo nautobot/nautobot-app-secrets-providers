@@ -12,10 +12,8 @@
         "base_url": "secrets-providers",
         "min_nautobot_version": "1.4.0",
         "max_nautobot_version": "1.9999",
-        "nautobot_version": "latest",
         "camel_name": "NautobotSecretsProviders",
         "project_short_description": "Nautobot's Secrets Providers Plugin",
-        "version": "0.1.0",
         "model_class_name": "None",
         "open_source_license": "Apache-2.0",
         "docs_base_url": "https://docs.nautobot.com",
@@ -26,12 +24,12 @@
             "template_ref": "develop",
             "cookie_dir": "",
             "branch_prefix": "drift-manager",
-            "pull_request_strategy": "create",
+            "pull_request_strategy": "update-or-create",
             "post_actions": [
                 "black"
             ],
             "draft": true,
-            "baked_commit_ref": "56955f118a299001d4039442c6e08db15d2a6781"
+            "baked_commit_ref": "7aafeac5f8c1fb13196084cd328043b2e9d74a3a"
         }
     }
 }

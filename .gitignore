@@ -306,3 +306,4 @@ invoke.yml
 public
 /compose.yaml
 /dump.sql
+/nautobot_secrets_providers/static/nautobot_secrets_providers/docs
