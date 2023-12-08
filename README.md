@@ -1,6 +1,6 @@
 # Nautobot Secrets Providers
 
-Nautobot Secrets Providers is a plugin for [Nautobot](https://github.com/nautobot/nautobot) 1.2.0 or higher that bundles Secrets Providers for integrating with popular secrets backends. Nautobot 1.2.0 added support for integrating with retrieving secrets from various secrets providers.
+Nautobot Secrets Providers is a plugin for [Nautobot](https://github.com/nautobot/nautobot) 1.4.0 or higher that bundles Secrets Providers for integrating with popular secrets backends. Nautobot 1.4.0 added support for integrating with retrieving secrets from various secrets providers.
 
 This plugin publishes secrets providers that are not included in the within the Nautobot core software package so that it will be easier to maintain and extend support for various secrets providers without waiting on Nautobot software releases.
 
@@ -251,7 +251,7 @@ The [PyInvoke](http://www.pyinvoke.org/) library is used to provide some helper 
 
 * `nautobot_ver`: the version of Nautobot to use as a base for any built docker containers (default: 1.4.10)
 * `project_name`: the default docker compose project name (default: nautobot_secrets_providers)
-* `python_ver`: the version of Python to use as a base for any built docker containers (default: 3.7)
+* `python_ver`: the version of Python to use as a base for any built docker containers (default: 3.8)
 * `local`: a boolean flag indicating if invoke tasks should be run on the host or inside the docker containers (default: False, commands will be run in docker containers)
 * `compose_dir`: the full path to a directory containing the project compose files
 * `compose_files`: a list of compose files applied in order (see [Multiple Compose files](https://docs.docker.com/compose/extends/#multiple-compose-files) for more information)

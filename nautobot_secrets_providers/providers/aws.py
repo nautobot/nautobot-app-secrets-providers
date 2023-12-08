@@ -12,8 +12,9 @@ except (ImportError, ModuleNotFoundError):
 from contextlib import closing
 
 from django import forms
-from nautobot.extras.secrets import SecretsProvider, exceptions
-from nautobot.utilities.forms import BootstrapMixin
+
+from nautobot.core.forms import BootstrapMixin
+from nautobot.extras.secrets import exceptions, SecretsProvider
 
 __all__ = ("AWSSecretsManagerSecretsProvider", "AWSSystemsManagerParameterStore")
 
@@ -25,6 +26,8 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
     name = "AWS Secrets Manager"
     is_available = boto3 is not None
 
+    # TBD: Remove after pylint-nautobot bump
+    # pylint: disable-next=nb-incorrect-base-class
     class ParametersForm(BootstrapMixin, forms.Form):
         """Required parameters for AWS Secrets Manager."""
 
@@ -114,6 +117,8 @@ class AWSSystemsManagerParameterStore(SecretsProvider):
     name = "AWS Systems Manager Parameter Store"
     is_available = boto3 is not None
 
+    # TBD: Remove after pylint-nautobot bump
+    # pylint: disable-next=nb-incorrect-base-class
     class ParametersForm(BootstrapMixin, forms.Form):
         """Required parameters for AWS Parameter Store."""
 
@@ -151,13 +156,14 @@ class AWSSystemsManagerParameterStore(SecretsProvider):
                     raise exceptions.SecretValueNotFoundError(secret, cls, str(err))
 
                 raise exceptions.SecretProviderError(secret, cls, str(err))
-            else:
-                try:
-                    # Fetch the Value field from the parameter which must be a json field.
-                    data = json.loads(get_secret_value_response["Parameter"]["Value"])
-                except ValueError as err:
-                    msg = "InvalidJson"
-                    raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err
+
+        try:
+            # Fetch the Value field from the parameter which must be a json field.
+            data = json.loads(get_secret_value_response["Parameter"]["Value"])
+        except ValueError as err:
+            msg = "InvalidJson"
+            raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err
+
         try:
             # Return the value of the secret key configured in the nautobot secret.
             return data[parameters.get("key")]

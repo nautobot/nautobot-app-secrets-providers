@@ -1,13 +1,22 @@
 [tool.poetry]
 name = "nautobot-secrets-providers"
-version = "1.4.1-beta.1"
-description = "Nautobot Secrets Providers Plugin."
+version = "2.0.1"
+description = "Nautobot Secrets Providers App"
 authors = ["Network to Code, LLC <opensource@networktocode.com>"]
 license = "Apache-2.0"
 readme = "README.md"
 homepage = "https://github.com/nautobot/nautobot-plugin-secrets-providers"
 repository = "https://github.com/nautobot/nautobot-plugin-secrets-providers"
 keywords = ["nautobot", "nautobot-plugin"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
 include = [
     "LICENSE",
     "README.md",
@@ -17,42 +26,41 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
-# Pin this to the lowest supported version of Nautobot
-nautobot = "^1.4.0"
-
-#
-# Optional dependencies installed as extras
-# 
-
-# AWS SDK for Python (always keep in sync w/ dev dependency)
 boto3 = { version = "~1.19.5", optional = true }
-# HashiCorp Vault API Client (always keep in sync w/ dev dependency)
 hvac = { version = ">=0.11.0, <1.1.0", optional = true }
-# Thycotic Secret Server (always keep in sync w/ dev dependency)
+nautobot = "^2.0.0"
+python = ">=3.8,<3.12"
 python-tss-sdk = {version = "~1.2.0", optional = true}
 
-
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
+Markdown = "*"
 bandit = "*"
 black = "*"
-boto3 = "~1.19.5"  # (always keep in sync w/ optional dependency)
-coverage = "~6.2"
+coverage = "*"
 django-debug-toolbar = "*"
-flake8 = ">=3.9.2"
-hvac = ">=0.11.0, <1.1.0"  # (always keep in sync w/ optional dependency)
+flake8 = "*"
 invoke = "*"
+mkdocs = "1.5.2"
+mkdocs-material = "9.1.15"
+mkdocs-version-annotations = "1.0.0"
+mkdocstrings = "0.22.0"
+mkdocstrings-python = "1.5.2"
 moto = "~2.2.11"
-mkdocs = "*"
+pyOpenSSL = "23.2.0"
 pydocstyle = "*"
 pylint = "*"
 pylint-django = "*"
-python-tss-sdk = "~1.2.0"  # (always keep in sync w/ optional dependency)
-requests-mock = "~1.9.3"
+pylint-nautobot = "*"
+requests-mock = "1.9.3"
+toml = "*"
 yamllint = "*"
 
 [tool.poetry.extras]
-all = ["boto3", "hvac", "python-tss-sdk"]
+all = [
+    "boto3",
+    "hvac",
+    "python-tss-sdk",
+]
 aws = ["boto3"]
 hashicorp = ["hvac"]
 nautobot = ["nautobot"]
@@ -60,7 +68,7 @@ thycotic = ["python-tss-sdk"]
 
 [tool.black]
 line-length = 120
-target-version = ['py37']
+target-version = ['py38', 'py39', 'py310', 'py311']
 include = '\.pyi?$'
 exclude = '''
 (
@@ -83,20 +91,26 @@ exclude = '''
 
 [tool.pylint.master]
 # Include the pylint_django plugin to avoid spurious warnings about Django patterns
-load-plugins="pylint_django"
+load-plugins = [
+    "pylint_django",
+    "pylint_nautobot",
+]
+# Ignore migrations and tests
+ignore = [
+    ".venv",
+    ".*/tests/*",
+    ".*/migrations/*",
+]
 
 [tool.pylint.basic]
 # No docstrings required for private methods (Pylint default), or for test_ functions, or for inner Meta classes.
 no-docstring-rgx="^(_|test_|Meta$)"
-# Don't lint the test config
-ignore = ["nautobot_config.py"]
 
 [tool.pylint.messages_control]
 # Line length is enforced by Black, so pylint doesn't need to check it.
 # Pylint and Black disagree about how to format multi-line arrays; Black wins.
 disable = """,
     line-too-long,
-    bad-continuation,
     """
 
 [tool.pylint.miscellaneous]
@@ -106,12 +120,23 @@ notes = """,
     XXX,
     """
 
+[tool.pylint-nautobot]
+supported_nautobot_versions = [
+    "2",  # Supporting 2.x.y
+]
+
+[tool.pydocstyle]
+convention = "google"
+inherit = false
+match = "(?!__init__).*\\.py"
+match-dir = "(?!tests|migrations|development)[^\\.].*"
+# D212 is enabled by default in google convention, and complains if we have a docstring like:
+# """
+# My docstring is on the line after the opening quotes instead of on the same line as them.
+# """
+# We've discussed and concluded that we consider this to be a valid style choice.
+add_ignore = "D212"
+
 [build-system]
 requires = ["poetry_core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.pytest.ini_options]
-testpaths = [
-    "tests"
-]
-addopts = "-vv --doctest-modules"
