@@ -59,7 +59,6 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
 
         # https://github.com/boto/boto3/issues/454
         with closing(session.client(service_name="secretsmanager", region_name=region_name)) as client:
-
             # This is based on sample code to only handle the specific exceptions for the 'GetSecretValue' API.
             # See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
             # We rethrow the exception by default.
