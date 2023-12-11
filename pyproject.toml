@@ -31,6 +31,7 @@ hvac = { version = ">=0.11.0, <1.1.0", optional = true }
 nautobot = "^2.0.0"
 python = ">=3.8,<3.12"
 python-tss-sdk = {version = "~1.2.0", optional = true}
+keeper-secrets-manager-core = {version = "~16", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 Markdown = "*"
@@ -65,6 +66,7 @@ aws = ["boto3"]
 hashicorp = ["hvac"]
 nautobot = ["nautobot"]
 thycotic = ["python-tss-sdk"]
+keeper = ["keeper-secrets-manager-core"]
 
 [tool.black]
 line-length = 120
