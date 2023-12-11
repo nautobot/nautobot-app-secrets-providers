@@ -1,5 +1,6 @@
 """Secrets Provider for Thycotic Secret Server."""
 import os
+import time
 from pathlib import Path
 
 from django import forms
@@ -176,14 +177,25 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
             else:
                 delinea = SecretServer(base_url=base_url, authorizer=thy_authorizer)
 
-            # Attempt to retrieve the secret.
-            try:
-                if secret_id is not None:
-                    secret = ServerSecret(**delinea.get_secret(secret_id))
-                else:
-                    secret = ServerSecret(**delinea.get_secret_by_path(secret_path))
-            except SecretServerError as err:
-                raise exceptions.SecretValueNotFoundError(secret, caller_class, str(err)) from err
+            ###
+            # Current issue: https://github.com/DelineaXPM/python-tss-sdk/issues/25
+            # below for loop is an attempt at a workaround
+            ###
+            for retry in range(4):  # try 4 times and then give up.
+                # Attempt to retrieve the secret.
+                try:
+                    if secret_id is not None:
+                        secret = ServerSecret(**delinea.get_secret(secret_id))
+                    else:
+                        secret = ServerSecret(**delinea.get_secret_by_path(secret_path))
+                except SecretServerError as err:
+                    if retry == 3:
+                        raise exceptions.SecretValueNotFoundError(secret, caller_class, str(err)) from err
+
+                # test the secret value
+                if secret.fields[secret_selected_value].value:
+                    break
+                time.sleep(10)  # delinea's API errors in a window of 10s
 
             # Attempt to return the selected value.
             try:
@@ -191,6 +203,7 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
             except KeyError as err:
                 msg = f"The secret value could not be retrieved using key {err}"
                 raise exceptions.SecretValueNotFoundError(secret, caller_class, msg) from err
+
         finally:
             if must_restore_env:
                 os.environ["REQUESTS_CA_BUNDLE"] = original_env
