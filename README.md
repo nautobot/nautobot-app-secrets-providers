@@ -243,7 +243,7 @@ The Keeper Secret Manager plugin includes two providers:
 
 - **`Keeper by UID`**
 
-    This provider uses the `UID` to specifiy the secret that is retrieved. The `UID` is displayed in the `Record Info`.
+    This provider uses the `UID` to specify the secret that is retrieved. The `UID` is displayed in the `Record Info`.
 
     - Example:
 

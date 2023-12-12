@@ -61,6 +61,7 @@ all = [
     "boto3",
     "hvac",
     "python-tss-sdk",
+    "keeper-secrets-manager-core",
 ]
 aws = ["boto3"]
 hashicorp = ["hvac"]

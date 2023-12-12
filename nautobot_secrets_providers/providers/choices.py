@@ -1,4 +1,4 @@
-"""Choices for Thycotic Secret Server Plugin."""
+"""Choices for providers."""
 from nautobot.core.choices import ChoiceSet
 
 
@@ -31,6 +31,7 @@ class HashicorpKVVersionChoices(ChoiceSet):
         (KV_VERSION_2, "V2"),
     )
 
+
 class KeeperTypeChoices(ChoiceSet):
     """Choices for Keeper type."""
 
@@ -38,6 +39,6 @@ class KeeperTypeChoices(ChoiceSet):
     USERNAME = "username"
 
     CHOICES = (
-        (PASSWORD, "password"),
+        (PASSWORD, "password"),  # nosec B105
         (USERNAME, "username"),
     )

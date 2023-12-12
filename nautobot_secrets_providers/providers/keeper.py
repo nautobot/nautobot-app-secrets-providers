@@ -1,5 +1,6 @@
 """Secrets Provider for Keeper."""
 import os
+
 # from pathlib import Path
 # import base64
 # import json
@@ -8,13 +9,15 @@ try:
     from keeper_secrets_manager_core import SecretsManager
     from keeper_secrets_manager_core.core import KSMCache
     from keeper_secrets_manager_core.exceptions import KeeperError, KeeperAccessDenied
-    from keeper_secrets_manager_core.storage import FileKeyValueStorage #, InMemoryKeyValueStorage
+    from keeper_secrets_manager_core.storage import FileKeyValueStorage  # , InMemoryKeyValueStorage
+
     # from keeper_secrets_manager_core.utils import get_totp_code
 except (ImportError, ModuleNotFoundError):
     keeper = None
 
 from django import forms
 from django.conf import settings
+
 # from django.core.exceptions import ValidationError
 
 from nautobot.apps.secrets import exceptions, SecretsProvider
@@ -23,7 +26,7 @@ from nautobot.utilities.forms import BootstrapMixin
 from .choices import KeeperTypeChoices
 
 
-__all__ = ("KeeperSecretsProvider")
+__all__ = ("KeeperSecretsProvider",)
 
 
 try:
@@ -31,6 +34,7 @@ try:
     KEEPER_TOKEN = plugins_config["keeper"]["token"]
 except KeyError:
     KEEPER_TOKEN = None
+
 
 class KeeperSecretsProvider(SecretsProvider):
     """A secrets provider for Keeper Secrets Manager."""
@@ -61,6 +65,17 @@ class KeeperSecretsProvider(SecretsProvider):
             min_length=20,
             initial=KEEPER_TOKEN,
         )
+        """
+        https://docs.keeper.io/secrets-manager/secrets-manager/developer-sdk-library
+        {
+            "hostname": "keepersecurity.com",
+            "clientId": "ab2x3z/Acz0QFTiilm8UxIlqNLlNa25KMj=TpOqznwa4Si-h9tY7n3zvFwlXXDoVWkIs3xrMjcLGwgu3ilmq7Q==",
+            "privateKey": "MLSHAgABCDEFGyqGSM49AEGCCqGSM49AwEHBG0wawIWALTARgmcnWx/DH+r7cKh4kokasdasdaDbvHmLABstNbqDwaCWhRANCAARjunta9SJdZE/LVXfVb22lpIfK4YMkJEDaFMOAyoBt0BrQ8aEhvrHN5/Z1BgZ/WpDm9dMR7E5ASIQuYUiAw0t9",
+            "serverPublicKeyId": "10",
+            "appKey": "RzhSIyKxbpjNu045TUrKaNREYIns+Hk9Kn8YtT+CtK0=",
+            "appOwnerPublicKey": "Sq1W1OAnTwi8V/Vs/lhsin2sfSoaRfOwwDDBqoP+EO9bsBMWCzQdl9ClauDiKLXGmlmyx2xmSAdH+hlxvBRs6kU="
+        }
+        """
         config = forms.JSONField(
             label="Config",
             help_text="The JSON configuration",
@@ -73,12 +88,6 @@ class KeeperSecretsProvider(SecretsProvider):
         #     max_length=300,
         #     min_length=30,
         # )
-            # hostname
-            # clientId
-            # privateKey
-            # serverPublicKeyId
-            # appKey
-            # appOwnerPublicKey
         type = forms.ChoiceField(
             label="Type",
             required=True,
@@ -86,20 +95,18 @@ class KeeperSecretsProvider(SecretsProvider):
             help_text="The type of information to retrieve from the secret/record",
         )
 
+        """
+        Overloaded clean method to check that at least one of the secret's name or uid is provided
+        """
+
         def clean(self):
             cleaned_data = super().clean()
             if not cleaned_data.get("name") and not cleaned_data.get("uid"):
-                raise forms.ValidationError(
-                    "At least the secret's name or uid must be provided"
-                )
+                raise forms.ValidationError("At least the secret's name or uid must be provided")
             if cleaned_data.get("name") and cleaned_data.get("uid"):
-                raise forms.ValidationError(
-                    "Only one of the secret's name or uid must be provided"
-                )
+                raise forms.ValidationError("Only one of the secret's name or uid must be provided")
             if not cleaned_data.get("token") and not cleaned_data.get("config"):
-                raise forms.ValidationError(
-                    "At least the token or config must be provided"
-                )
+                raise forms.ValidationError("At least the token or config must be provided")
             return cleaned_data
 
     @classmethod
@@ -128,15 +135,15 @@ class KeeperSecretsProvider(SecretsProvider):
             raise exceptions.SecretParametersError(secret, cls, msg) from err
 
         if not KEEPER_TOKEN and not token and not config:
-            raise exceptions.SecretProviderError(secret, cls, "Nor the Token or config is configured, at least 1 is required!")
+            raise exceptions.SecretProviderError(
+                secret, cls, "Nor the Token or config is configured, at least 1 is required!"
+            )
 
         if not secret_name and not secret_uid:
             raise exceptions.SecretProviderError(secret, cls, "At least the secret's name or uid must be provided!")
 
         # Ensure required parameters are set
-        if any(
-            [not all([secret_name, secret_uid, token, config, type])]
-        ):
+        if any([not all([secret_name, secret_uid, token, config, type])]):
             raise exceptions.SecretProviderError(
                 secret,
                 "Keeper Secret Manager is not configured!",
@@ -147,8 +154,8 @@ class KeeperSecretsProvider(SecretsProvider):
             secrets_manager = SecretsManager(
                 token=token,
                 # config=InMemoryKeyValueStorage(config),
-                config=FileKeyValueStorage('config.json'),
-                log_level='DEBUG' if os.environ.get('DEBUG', None) else 'ERROR',
+                config=FileKeyValueStorage("config.json"),
+                log_level="DEBUG" if os.environ.get("DEBUG", None) else "ERROR",
                 custom_post_function=KSMCache.caching_post_function,
             )
         except (KeeperError, KeeperAccessDenied) as err:
@@ -181,6 +188,7 @@ class KeeperSecretsProvider(SecretsProvider):
             # api_key = secret.custom_field('API Key', single=True)
             # url = secret.get_standard_field_value('oneTimeCode', True)
             # totp = get_totp_code(url)
+            # https://github.com/Keeper-Security/secrets-manager/blob/master/sdk/python/core/keeper_secrets_manager_core/utils.py#L124C24-L124C24:
         except Exception as err:
             msg = f"The secret field could not be retrieved {err}"
             raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err

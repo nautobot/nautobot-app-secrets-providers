@@ -3400,13 +3400,14 @@ docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.link
 testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy (>=0.9.1)", "pytest-ruff"]
 
 [extras]
-all = ["boto3", "hvac", "python-tss-sdk"]
+all = ["boto3", "hvac", "keeper-secrets-manager-core", "python-tss-sdk"]
 aws = ["boto3"]
 hashicorp = ["hvac"]
+keeper = ["keeper-secrets-manager-core"]
 nautobot = ["nautobot"]
 thycotic = ["python-tss-sdk"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.12"
-content-hash = "d8e186b736680cd34d2f0b46b799812d15f9d55802524f620f8a6bad809a93e3"
+content-hash = "44585886f320202a422f4cb477417bd8e36983cbc5da6094538a11eadc0c67c1"
