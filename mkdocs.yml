@@ -1,10 +1,10 @@
 ---
 dev_addr: "127.0.0.1:8001"
-edit_uri: "edit/main/nautobot-plugin-secrets-providers/docs"
+edit_uri: "edit/main/nautobot-app-secrets-providers/docs"
 site_dir: "nautobot_secrets_providers/static/nautobot_secrets_providers/docs"
-site_name: "Nautobot's Secrets Providers Plugin Documentation"
+site_name: "Nautobot's Secrets Providers App Documentation"
 site_url: "https://docs.nautobot.com/projects/secrets-providers/en/latest/"
-repo_url: "https://github.com/nautobot/nautobot-plugin-secrets-providers"
+repo_url: "https://github.com/nautobot/nautobot-app-secrets-providers"
 copyright: "Copyright &copy; The Authors"
 theme:
   name: "material"

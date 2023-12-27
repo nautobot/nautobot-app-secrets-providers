@@ -1,4 +1,4 @@
-"""Plugin declaration for nautobot_secrets_providers."""
+"""App declaration for nautobot_secrets_providers."""
 # Metadata is inherited from Nautobot. If not including Nautobot in the environment, this should be added
 from importlib import metadata
 
@@ -8,7 +8,7 @@ from nautobot.extras.plugins import NautobotAppConfig
 
 
 class NautobotSecretsProvidersConfig(NautobotAppConfig):
-    """Plugin configuration for the nautobot_secrets_providers plugin."""
+    """App configuration for the nautobot_secrets_providers app."""
 
     name = "nautobot_secrets_providers"
     verbose_name = "Secrets Management Extensions"

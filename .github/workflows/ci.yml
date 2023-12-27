@@ -14,7 +14,7 @@ on: # yamllint disable-line rule:truthy rule:comments
   pull_request: ~
 
 env:
-  PLUGIN_NAME: "nautobot-plugin-secrets-providers"
+  PLUGIN_NAME: "nautobot-app-secrets-providers"
 
 jobs:
   black:

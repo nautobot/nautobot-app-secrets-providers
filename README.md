@@ -1,12 +1,12 @@
 # Nautobot Secrets Providers
 
-Nautobot Secrets Providers is a plugin for [Nautobot](https://github.com/nautobot/nautobot) 1.4.0 or higher that bundles Secrets Providers for integrating with popular secrets backends. Nautobot 1.4.0 added support for integrating with retrieving secrets from various secrets providers.
+Nautobot Secrets Providers is a app for [Nautobot](https://github.com/nautobot/nautobot) 1.4.0 or higher that bundles Secrets Providers for integrating with popular secrets backends. Nautobot 1.4.0 added support for integrating with retrieving secrets from various secrets providers.
 
-This plugin publishes secrets providers that are not included in the within the Nautobot core software package so that it will be easier to maintain and extend support for various secrets providers without waiting on Nautobot software releases.
+This app publishes secrets providers that are not included in the within the Nautobot core software package so that it will be easier to maintain and extend support for various secrets providers without waiting on Nautobot software releases.
 
 ## Supported Secrets Backends
 
-This plugin supports the following popular secrets backends:
+This app supports the following popular secrets backends:
 
 | Secrets Backend                                              | Supported Secret Types                                       | Supported Authentication Methods                             |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -17,27 +17,27 @@ This plugin supports the following popular secrets backends:
 
 ## Screenshots
 
-![Screenshot of installed plugins](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot01.png "Plugin landing page")
+![Screenshot of installed apps](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/screenshot01.png "App landing page")
 
 ---
 
-![Screenshot of plugin home page](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot02.png "Plugin Home page")
+![Screenshot of app home page](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/screenshot02.png "App Home page")
 
 ---
 
-![Screenshot of secret using AWS Secrets Manager](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot03.png "Secret using AWS Secrets Manager")
+![Screenshot of secret using AWS Secrets Manager](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/screenshot03.png "Secret using AWS Secrets Manager")
 
 ---
 
-![Screenshot of secret using HashiCorp Vault](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot04.png "Secret using HashiCorp Vault")
+![Screenshot of secret using HashiCorp Vault](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/screenshot04.png "Secret using HashiCorp Vault")
 
 ---
 
-![Screenshot of secret using Delinea/Thycotic Secret Server by ID](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot05.png "Secret using Thycotic Secret Server by ID")
+![Screenshot of secret using Delinea/Thycotic Secret Server by ID](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/screenshot05.png "Secret using Thycotic Secret Server by ID")
 
 ---
 
-![Screenshot of secret using Delinea/Thycotic Secret Server by Path](https://raw.githubusercontent.com/nautobot/nautobot-plugin-secrets-providers/develop/docs/images/screenshot06.png "Secret using Thycotic Secret Server by Path")
+![Screenshot of secret using Delinea/Thycotic Secret Server by Path](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/screenshot06.png "Secret using Thycotic Secret Server by Path")
 
 ## Installation
 
@@ -57,13 +57,13 @@ pip install nautobot-secrets-providers[all]
 
 ### Dependencies
 
-For this plugin to operate you must install at least one of the dependent libraries required by the secrets providers.
+For this app to operate you must install at least one of the dependent libraries required by the secrets providers.
 
 **You must install the dependencies for at least one of the supported secrets providers or a `RuntimeError` will be raised.**
 
 #### AWS
 
-AWS Secrets Manager and Systems Manager Parameter Store are supported. Both providers require the `boto3` library. This can be easily installed along with the plugin using the following command:
+AWS Secrets Manager and Systems Manager Parameter Store are supported. Both providers require the `boto3` library. This can be easily installed along with the app using the following command:
 
 ```no-highlight
 pip install nautobot-secrets-providers[aws]
@@ -71,7 +71,7 @@ pip install nautobot-secrets-providers[aws]
 
 #### HashiCorp Vault
 
-The HashiCorp Vault provider requires the `hvac` library. This can easily be installed along with the plugin using the following command:
+The HashiCorp Vault provider requires the `hvac` library. This can easily be installed along with the app using the following command:
 
 ```no-highlight
 pip install nautobot-secrets-providers[hashicorp]
@@ -79,7 +79,7 @@ pip install nautobot-secrets-providers[hashicorp]
 
 #### Delinea/Thycotic Secret Server
 
-The Delinea/Thycotic Secret Server provider requires the `python-tss-sdk` library. This can easily be installed along with the plugin using the following command:
+The Delinea/Thycotic Secret Server provider requires the `python-tss-sdk` library. This can easily be installed along with the app using the following command:
 
 ```no-highlight
 pip install nautobot-secrets-providers[thycotic]
@@ -93,7 +93,7 @@ To ensure Nautobot Secrets Providers is automatically re-installed during future
 echo nautobot-secrets-providers >> local_requirements.txt
 ```
 
-Once installed, the plugin needs to be enabled in your `nautobot_config.py`:
+Once installed, the app needs to be enabled in your `nautobot_config.py`:
 
 ```python
 # In your nautobot_config.py
@@ -110,7 +110,7 @@ PLUGINS = ["nautobot_secrets_providers"]
 
 Before you proceed, you must have **at least one** of the dependent libaries installed as detailed above.
 
-Please do not enable this plugin until you are able to install the dependencies, as it will block Nautobot from starting.
+Please do not enable this app until you are able to install the dependencies, as it will block Nautobot from starting.
 
 ### AWS
 
@@ -177,7 +177,7 @@ PLUGINS_CONFIG = {
  
 ### Delinea/Thycotic Secret Server (TSS)
 
-The Delinea/Thycotic Secret Server plugin includes two providers:
+The Delinea/Thycotic Secret Server app includes two providers:
 
 - **`Thycotic Secret Server by ID`**
 
@@ -237,7 +237,7 @@ The project is packaged with a light development environment based on `docker-co
 The project is following Network to Code software development guidelines and is leveraging:
 
 - Black, Pylint, Bandit and pydocstyle for Python linting and formatting.
-- Django unit test to ensure the plugin is working properly.
+- Django unit test to ensure the app is working properly.
 
 ### Development Environment
 
@@ -351,8 +351,8 @@ Each command can be executed with `invoke <command>`. Environment variables `INV
   flake8           This will run flake8 for the specified name and Python version.
   pydocstyle       Run pydocstyle to validate docstring formatting adheres to NTC defined standards.
   pylint           Run pylint code analysis.
-  tests            Run all tests for this plugin.
-  unittest         Run Django unit tests for the plugin.
+  tests            Run all tests for this app.
+  unittest         Run Django unit tests for the app.
 ```
 
 ### Project Documentation
