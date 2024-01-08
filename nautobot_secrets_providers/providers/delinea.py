@@ -51,9 +51,9 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
 
     @classmethod
     def get_value_for_secret(cls, secret, obj=None, **kwargs):  # pylint: disable=too-many-locals
-        """Return the value stored under the secret’s key in the secret’s path."""
+        """Return the value stored under the secret's key in the secret's path."""
         # This is only required for Thycotic Secret Server therefore not defined in
-        # `required_settings` for the plugin config.
+        # `required_settings` for the app config.
         plugin_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
         if "thycotic" not in plugin_settings:
             raise exceptions.SecretProviderError(secret, cls, "Thycotic Secret Server is not configured!")
