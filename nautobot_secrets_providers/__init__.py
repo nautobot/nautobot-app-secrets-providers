@@ -2,20 +2,20 @@
 # Metadata is inherited from Nautobot. If not including Nautobot in the environment, this should be added
 from importlib import metadata
 
-__version__ = metadata.version(__name__)
+from nautobot.apps import NautobotAppConfig
 
-from nautobot.extras.plugins import NautobotAppConfig
+__version__ = metadata.version(__name__)
 
 
 class NautobotSecretsProvidersConfig(NautobotAppConfig):
     """App configuration for the nautobot_secrets_providers app."""
 
     name = "nautobot_secrets_providers"
-    verbose_name = "Secrets Management Extensions"
+    verbose_name = "Nautobot's Secrets Providers App"
     version = __version__
     author = "Network to Code, LLC"
-    description = "Nautobot App that provides direct integrations with Enterprise secrets management systems. Provides patterns to securely fetch secrets for use by other Nautobot Apps and Nautobot Jobs."
-    base_url = "secrets"
+    description = "Nautobot's Secrets Providers App."
+    base_url = "secrets-providers"
     required_settings = []
     min_version = "2.0.0"
     max_version = "2.9999"

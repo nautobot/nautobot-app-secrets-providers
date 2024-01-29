@@ -1,4 +1,4 @@
-# Nautobot Secrets Providers
+# Nautobot's Secrets Providers App
 
 Nautobot Secrets Providers is a app for [Nautobot](https://github.com/nautobot/nautobot) 1.4.0 or higher that bundles Secrets Providers for integrating with popular secrets backends. Nautobot 1.4.0 added support for integrating with retrieving secrets from various secrets providers.
 
@@ -8,12 +8,16 @@ This app publishes secrets providers that are not included in the within the Nau
 
 This app supports the following popular secrets backends:
 
-| Secrets Backend                                              | Supported Secret Types                                       | Supported Authentication Methods                             |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
-| [AWS Systems Manager Parameter Store](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
-| [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2)<br/>[K/V Version 1](https://developer.hashicorp.com/vault/docs/secrets/kv/kv-v1) | [Token](https://www.vaultproject.io/docs/auth/token)<br/>[AppRole](https://www.vaultproject.io/docs/auth/approle)<br/>[AWS](https://www.vaultproject.io/docs/auth/aws)<br/>[Kubernetes](https://www.vaultproject.io/docs/auth/kubernetes)         |
-| [Delinea/Thycotic Secret Server](https://delinea.com/products/secret-server)               | [Secret Server Cloud](https://github.com/DelineaXPM/python-tss-sdk#secret-server-cloud)<br/>[Secret Server (on-prem)](https://github.com/DelineaXPM/python-tss-sdk#initializing-secretserver)| [Access Token Authorization](https://github.com/DelineaXPM/python-tss-sdk#access-token-authorization)<br/>[Domain Authorization](https://github.com/DelineaXPM/python-tss-sdk#domain-authorization)<br/>[Password Authorization](https://github.com/DelineaXPM/python-tss-sdk#password-authorization)<br/>         |
+<p align="center">
+  <img src="https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/icon-nautobot-secrets-providers.png" class="logo" height="200px">
+  <br>
+  <a href="https://github.com/nautobot/nautobot-app-secrets-providers/actions"><img src="https://github.com/nautobot/nautobot-app-secrets-providers/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="https://docs.nautobot.com/projects/secrets-providers/en/latest"><img src="https://readthedocs.org/projects/nautobot-app-secrets-providers/badge/"></a>
+  <a href="https://pypi.org/project/nautobot-secrets-providers/"><img src="https://img.shields.io/pypi/v/nautobot-secrets-providers"></a>
+  <a href="https://pypi.org/project/nautobot-secrets-providers/"><img src="https://img.shields.io/pypi/dm/nautobot-secrets-providers"></a>
+  <br>
+  An <a href="https://www.networktocode.com/nautobot/apps/">App</a> for <a href="https://nautobot.com/">Nautobot</a>.
+</p>
 
 ## Screenshots
 
@@ -23,11 +27,11 @@ This app supports the following popular secrets backends:
 
 ![Screenshot of app home page](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/screenshot02.png "App Home page")
 
----
+> Developer Note: Place the files in the `docs/images/` folder and link them using only full URLs from GitHub, for example: `![Overview](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/app-overview.png)`. This absolute static linking is required to ensure the README renders properly in GitHub, the docs site, and any other external sites like PyPI.
 
-![Screenshot of secret using AWS Secrets Manager](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/screenshot03.png "Secret using AWS Secrets Manager")
+More screenshots can be found in the [Using the App](https://docs.nautobot.com/projects/secrets-providers/en/latest/user/app_use_cases/) page in the documentation. Here's a quick overview of some of the app's added functionality:
 
----
+![](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/placeholder.png)
 
 ![Screenshot of secret using HashiCorp Vault](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/screenshot04.png "Secret using HashiCorp Vault")
 
@@ -45,9 +49,7 @@ This app supports the following popular secrets backends:
 
 The package is available as a Python package in PyPI and can be installed with `pip`:
 
-```no-highlight
-pip install nautobot-secrets-providers
-```
+You can find all the Markdown source for the App documentation under the [`docs`](https://github.com/nautobot/nautobot-app-secrets-providers/tree/develop/docs) folder in this repository. For simple edits, a Markdown capable editor is sufficient: clone the repository and edit away.
 
 You may quickly install all of the dependent libraries using the following command, however, this is *not recommended for production deployments* as it will install extras that you may not need:
 
