@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "nautobot-secrets-providers"
-version = "0.1.0"
-description = "Nautobot's Secrets Providers App"
+version = "2.0.1"
+description = "Nautobot Secrets Providers App"
 authors = ["Network to Code, LLC <info@networktocode.com>"]
 license = "Apache-2.0"
 readme = "README.md"
@@ -30,8 +30,7 @@ boto3 = { version = "~1.19.5", optional = true }
 hvac = { version = ">=0.11.0, <1.1.0", optional = true }
 nautobot = "^2.0.0"
 python = ">=3.8,<3.12"
-# Used for local development
-nautobot = "^2.0.0"
+python-tss-sdk = {version = "~1.2.0", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 Markdown = "*"
@@ -48,7 +47,6 @@ pylint-nautobot = "*"
 ruff = "*"
 yamllint = "*"
 toml = "*"
-Markdown = "*"
 # Rendering docs to HTML
 mkdocs = "1.5.2"
 # Material for MkDocs theme
@@ -59,10 +57,20 @@ mkdocs-version-annotations = "1.0.0"
 mkdocstrings = "0.22.0"
 mkdocstrings-python = "1.5.2"
 towncrier = "~23.6.0"
+moto = "~2.2.11"
+pyOpenSSL = "23.2.0"
+requests-mock = "1.9.3"
 
 [tool.poetry.extras]
 all = [
+    "boto3",
+    "hvac",
+    "python-tss-sdk",
 ]
+aws = ["boto3"]
+hashicorp = ["hvac"]
+nautobot = ["nautobot"]
+thycotic = ["python-tss-sdk"]
 
 [tool.black]
 line-length = 120
