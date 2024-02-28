@@ -14,6 +14,7 @@ This app supports the following popular secrets backends:
 | [AWS Systems Manager Parameter Store](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
 | [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2)<br/>[K/V Version 1](https://developer.hashicorp.com/vault/docs/secrets/kv/kv-v1) | [Token](https://www.vaultproject.io/docs/auth/token)<br/>[AppRole](https://www.vaultproject.io/docs/auth/approle)<br/>[AWS](https://www.vaultproject.io/docs/auth/aws)<br/>[Kubernetes](https://www.vaultproject.io/docs/auth/kubernetes)         |
 | [Delinea/Thycotic Secret Server](https://delinea.com/products/secret-server)               | [Secret Server Cloud](https://github.com/DelineaXPM/python-tss-sdk#secret-server-cloud)<br/>[Secret Server (on-prem)](https://github.com/DelineaXPM/python-tss-sdk#initializing-secretserver)| [Access Token Authorization](https://github.com/DelineaXPM/python-tss-sdk#access-token-authorization)<br/>[Domain Authorization](https://github.com/DelineaXPM/python-tss-sdk#domain-authorization)<br/>[Password Authorization](https://github.com/DelineaXPM/python-tss-sdk#password-authorization)<br/>         |
+| [CyberARK AIM](https://www.cyberark.com/) | [Password](https://www.cyberark.com/what-is/secrets-management/)  | Token<br/>Username/Password |
 
 ## Screenshots
 
@@ -83,6 +84,12 @@ The Delinea/Thycotic Secret Server provider requires the `python-tss-sdk` librar
 
 ```no-highlight
 pip install nautobot-secrets-providers[thycotic]
+```
+
+### CyberARK AIM
+
+```no-highlight
+pip install nautobot-secrets-providers[cyberark]
 ```
 
 ### Enabling Secrets Providers
@@ -227,6 +234,34 @@ PLUGINS_CONFIG = {
 - `tenant` - (optional) Required for 'Domain Authorization'.
 - `token` - (optional) Required for 'Access Token Authorization'.
 - `username` - (optional) Required for 'Secret Server Cloud', 'Password Authorization', 'Domain Authorization'.
+
+### CyberARK AIM
+
+The CyberARK AIM Secret Provider includes only one provider:
+
+- **`CyberARK AIM`**
+    
+    This provider allows to get a password from CyberARK Password Vault using API.
+    The user configured to access to CyberARK needs to be able to see the Vault where the account is stored to see it, if not it will return an error.
+
+#### Configuration
+
+```python
+PLUGINS_CONFIG = {
+    "nautobot_secrets_providers": {
+        "cyberark": {
+            "url": os.getenv("NAUTOBOT_CYBERARK_URL", None),
+            "token": os.getenv("NAUTOBOT_CYBERARK_TOKEN", None),
+            "username": os.getenv("NAUTOBOT_CYBERARK_USERNAME", None),
+            "password": os.getenv("NAUTOBOT_CYBERARK_PASSWORD", None),
+        }
+    }
+}
+```
+- `url` - (required) The URL to access to the CyberARK instance. _e.g. 'https://cyberark.example.local' (Without the slash '/' char at the end)
+- `token` - (optional) Either token or username/password need to be set to access the CyberARK API.
+- `username` - (optional) Either token or username/password need to be set to access the CyberARK API.
+- `password` - (optional) Either token or username/password need to be set to access the CyberARK API.
 
 ## Contributing
 
