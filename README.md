@@ -8,12 +8,13 @@ This app publishes secrets providers that are not included in the within the Nau
 
 This app supports the following popular secrets backends:
 
-| Secrets Backend                                              | Supported Secret Types                                       | Supported Authentication Methods                             |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
-| [AWS Systems Manager Parameter Store](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
-| [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2)<br/>[K/V Version 1](https://developer.hashicorp.com/vault/docs/secrets/kv/kv-v1) | [Token](https://www.vaultproject.io/docs/auth/token)<br/>[AppRole](https://www.vaultproject.io/docs/auth/approle)<br/>[AWS](https://www.vaultproject.io/docs/auth/aws)<br/>[Kubernetes](https://www.vaultproject.io/docs/auth/kubernetes)         |
-| [Delinea/Thycotic Secret Server](https://delinea.com/products/secret-server)               | [Secret Server Cloud](https://github.com/DelineaXPM/python-tss-sdk#secret-server-cloud)<br/>[Secret Server (on-prem)](https://github.com/DelineaXPM/python-tss-sdk#initializing-secretserver)| [Access Token Authorization](https://github.com/DelineaXPM/python-tss-sdk#access-token-authorization)<br/>[Domain Authorization](https://github.com/DelineaXPM/python-tss-sdk#domain-authorization)<br/>[Password Authorization](https://github.com/DelineaXPM/python-tss-sdk#password-authorization)<br/>         |
+| Secrets Backend                                                                | Supported Secret Types                                                                                                                                                                        | Supported Authentication Methods                                                                                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/)                 | [Other: Key/value pairs](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html)                                                                         | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below)                                                                                                                                                                                         |
+| [AWS Systems Manager Parameter Store](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html)                                                                   | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below)                                                                                                                                                                                         |
+| [HashiCorp Vault](https://www.vaultproject.io)                                 | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2)<br/>[K/V Version 1](https://developer.hashicorp.com/vault/docs/secrets/kv/kv-v1)                                           | [Token](https://www.vaultproject.io/docs/auth/token)<br/>[AppRole](https://www.vaultproject.io/docs/auth/approle)<br/>[AWS](https://www.vaultproject.io/docs/auth/aws)<br/>[Kubernetes](https://www.vaultproject.io/docs/auth/kubernetes)                                                                  |
+| [Delinea/Thycotic Secret Server](https://delinea.com/products/secret-server)   | [Secret Server Cloud](https://github.com/DelineaXPM/python-tss-sdk#secret-server-cloud)<br/>[Secret Server (on-prem)](https://github.com/DelineaXPM/python-tss-sdk#initializing-secretserver) | [Access Token Authorization](https://github.com/DelineaXPM/python-tss-sdk#access-token-authorization)<br/>[Domain Authorization](https://github.com/DelineaXPM/python-tss-sdk#domain-authorization)<br/>[Password Authorization](https://github.com/DelineaXPM/python-tss-sdk#password-authorization)<br/> |
+| [Azure Key Vault](https://learn.microsoft.com/en-us/azure/key-vault/)          | [Key Vault Secrets](https://learn.microsoft.com/en-us/azure/key-vault/secrets/about-secrets)                                                                                                  | [Entra ID Service Principal](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.environmentcredential?view=azure-python)                                                                                                                                                           |
 
 ## Screenshots
 
@@ -49,7 +50,7 @@ The package is available as a Python package in PyPI and can be installed with `
 pip install nautobot-secrets-providers
 ```
 
-You may quickly install all of the dependent libraries using the following command, however, this is *not recommended for production deployments* as it will install extras that you may not need:
+You may quickly install all of the dependent libraries using the following command, however, this is _not recommended for production deployments_ as it will install extras that you may not need:
 
 ```no-highlight
 pip install nautobot-secrets-providers[all]
@@ -83,6 +84,14 @@ The Delinea/Thycotic Secret Server provider requires the `python-tss-sdk` librar
 
 ```no-highlight
 pip install nautobot-secrets-providers[thycotic]
+```
+
+#### Azure Key Vault
+
+The Azure Key Vault provider requires the `azure-identity` and `azure-keyvault-secrets` libraries. This can be easily installed along with the plugin using the following command:
+
+```no-highlight
+pip install nautobot-secrets-providers[azure]
 ```
 
 ### Enabling Secrets Providers
@@ -163,43 +172,43 @@ PLUGINS_CONFIG = {
 ```
 
 - `url` - (required) The URL to the HashiCorp Vault instance (e.g. `http://localhost:8200`).
-- `auth_method` - (optional / defaults to "token") The method used to authenticate against the HashiCorp Vault instance. Either `"approle"`, `"aws"`, `"kubernetes"` or `"token"`.  For information on using AWS authentication with vault see the [authentication](#authentication) section above.
-- `ca_cert` - (optional) Path to a PEM formatted CA certificate to use when verifying the Vault connection.  Can alternatively be set to `False` to ignore SSL verification (not recommended) or `True` to use the system certificates.
+- `auth_method` - (optional / defaults to "token") The method used to authenticate against the HashiCorp Vault instance. Either `"approle"`, `"aws"`, `"kubernetes"` or `"token"`. For information on using AWS authentication with vault see the [authentication](#authentication) section above.
+- `ca_cert` - (optional) Path to a PEM formatted CA certificate to use when verifying the Vault connection. Can alternatively be set to `False` to ignore SSL verification (not recommended) or `True` to use the system certificates.
 - `default_mount_point` - (optional / defaults to "secret") The default mount point of the K/V Version 2 secrets engine within Hashicorp Vault.
 - `kv_version` - (optional / defaults to "v2") The version of the KV engine to use, can be `v1` or `v2`
-- `k8s_token_path` - (optional) Path to the kubernetes service account token file.  Defaults to "/var/run/secrets/kubernetes.io/serviceaccount/token".
+- `k8s_token_path` - (optional) Path to the kubernetes service account token file. Defaults to "/var/run/secrets/kubernetes.io/serviceaccount/token".
 - `token` - (optional) Required when `"auth_method": "token"` or `auth_method` is not supplied. The token for authenticating the client with the HashiCorp Vault instance. As with other sensitive service credentials, we recommend that you provide the token value as an environment variable and retrieve it with `{"token": os.getenv("NAUTOBOT_HASHICORP_VAULT_TOKEN")}` rather than hard-coding it in your `nautobot_config.py`.
-- `role_name` - (optional) Required when `"auth_method": "kubernetes"`, optional when `"auth_method": "aws"`.  The Vault Kubernetes role or Vault AWS role to assume which the pod's service account has access to.
+- `role_name` - (optional) Required when `"auth_method": "kubernetes"`, optional when `"auth_method": "aws"`. The Vault Kubernetes role or Vault AWS role to assume which the pod's service account has access to.
 - `role_id` - (optional) Required when `"auth_method": "approle"`. As with other sensitive service credentials, we recommend that you provide the role_id value as an environment variable and retrieve it with `{"role_id": os.getenv("NAUTOBOT_HASHICORP_VAULT_ROLE_ID")}` rather than hard-coding it in your `nautobot_config.py`.
 - `secret_id` - (optional) Required when `"auth_method": "approle"`.As with other sensitive service credentials, we recommend that you provide the secret_id value as an environment variable and retrieve it with `{"secret_id": os.getenv("NAUTOBOT_HASHICORP_VAULT_SECRET_ID")}` rather than hard-coding it in your `nautobot_config.py`.
 - `login_kwargs` - (optional) Additional optional parameters to pass to the login method for [`approle`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.AppRole.login), [`aws`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.Aws.iam_login) and [`kubernetes`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.Kubernetes.login) authentication methods.
 - `namespace` - (optional) Namespace to use for the [`X-Vault-Namespace` header](https://github.com/hvac/hvac/blob/main/hvac/adapters.py#L287) on all hvac client requests. Required when the [`Namespaces`](https://developer.hashicorp.com/vault/docs/enterprise/namespaces#usage) feature is enabled in Vault Enterprise.
- 
+
 ### Delinea/Thycotic Secret Server (TSS)
 
 The Delinea/Thycotic Secret Server app includes two providers:
 
 - **`Thycotic Secret Server by ID`**
 
-    This provider uses the `Secret ID` to specifiy the secret that is selected. The `Secret ID` is displayed in the browser's URL field if you `Edit` the data in Thycotic Secret Server.
+  This provider uses the `Secret ID` to specifiy the secret that is selected. The `Secret ID` is displayed in the browser's URL field if you `Edit` the data in Thycotic Secret Server.
 
-    - Example:
+  - Example:
 
-        The url is: _https://pw.example.local/SecretServer/app/#/secret/**1234**/general_
+    The url is: _https://pw.example.local/SecretServer/app/#/secret/**1234**/general_
 
-        In this example the value for `Secret ID` is **1234**.
+    In this example the value for `Secret ID` is **1234**.
 
 - **`Thycotic Secret Server by Path`**
 
-    This provider allows to select the secret by folder-path and secret-name. The path delimiter is a '\\'.
+  This provider allows to select the secret by folder-path and secret-name. The path delimiter is a '\\'.
 
-    The `Secret path` is displayed as page header when `Edit` a secret.
+  The `Secret path` is displayed as page header when `Edit` a secret.
 
-    - Example:
+  - Example:
 
-        The header is: **NET-Automation > Nautobot > My-Secret**
+    The header is: **NET-Automation > Nautobot > My-Secret**
 
-        In this example the value for `Secret path` is **`\NET-Automation\Nautobot\My-Secret`**.
+    In this example the value for `Secret path` is **`\NET-Automation\Nautobot\My-Secret`**.
 
 #### Configuration
 
@@ -219,7 +228,8 @@ PLUGINS_CONFIG = {
     }
 }
 ```
-- `base_url` - (required) The Secret Server base_url. _e.g.'https://pw.example.local/SecretServer'_
+
+- `base_url` - (required) The Secret Server base*url. \_e.g.'https://pw.example.local/SecretServer'*
 - `ca_bundle_path` - (optional) When using self-signed certificates this variable must be set to a file containing the trusted certificates (in .pem format). _e.g. '/etc/ssl/certs/ca-bundle.trust.crt'_.
 - `cloud_based` - (optional) Set to "True" if Secret Server Cloud should be used. (Default: "False").
 - `domain` - (optional) Required for 'Domain Authorization'
@@ -227,6 +237,14 @@ PLUGINS_CONFIG = {
 - `tenant` - (optional) Required for 'Domain Authorization'.
 - `token` - (optional) Required for 'Access Token Authorization'.
 - `username` - (optional) Required for 'Secret Server Cloud', 'Password Authorization', 'Domain Authorization'.
+
+### Azure Key Vault
+
+#### Authentication
+
+No configuration is required within Nautobot for this provider to work. You must provide [Azure Service Principal credentials in one of the formats supported by the azure-identity library](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.environmentcredential?view=azure-python). The credential variables should be injected into Nautobot's environment via your preferred method.
+
+The recommended method is to use a Service Principal with Secret, for which creds.example.env has an example. [More information on how to set up the SP in Azure in the Azure docs](https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide?tabs=azure-cli).
 
 ## Contributing
 
@@ -247,16 +265,16 @@ Below is a quick start guide if you're already familiar with the development env
 
 #### Invoke
 
-The [PyInvoke](http://www.pyinvoke.org/) library is used to provide some helper commands based on the environment.  There are a few configuration parameters which can be passed to PyInvoke to override the default configuration:
+The [PyInvoke](http://www.pyinvoke.org/) library is used to provide some helper commands based on the environment. There are a few configuration parameters which can be passed to PyInvoke to override the default configuration:
 
-* `nautobot_ver`: the version of Nautobot to use as a base for any built docker containers (default: 1.4.10)
-* `project_name`: the default docker compose project name (default: nautobot_secrets_providers)
-* `python_ver`: the version of Python to use as a base for any built docker containers (default: 3.8)
-* `local`: a boolean flag indicating if invoke tasks should be run on the host or inside the docker containers (default: False, commands will be run in docker containers)
-* `compose_dir`: the full path to a directory containing the project compose files
-* `compose_files`: a list of compose files applied in order (see [Multiple Compose files](https://docs.docker.com/compose/extends/#multiple-compose-files) for more information)
+- `nautobot_ver`: the version of Nautobot to use as a base for any built docker containers (default: 1.4.10)
+- `project_name`: the default docker compose project name (default: nautobot_secrets_providers)
+- `python_ver`: the version of Python to use as a base for any built docker containers (default: 3.8)
+- `local`: a boolean flag indicating if invoke tasks should be run on the host or inside the docker containers (default: False, commands will be run in docker containers)
+- `compose_dir`: the full path to a directory containing the project compose files
+- `compose_files`: a list of compose files applied in order (see [Multiple Compose files](https://docs.docker.com/compose/extends/#multiple-compose-files) for more information)
 
-Using **PyInvoke** these configuration options can be overridden using [several methods](http://docs.pyinvoke.org/en/stable/concepts/configuration.html).  Perhaps the simplest is simply setting an environment variable `INVOKE_NAUTOBOT_SECRETS_PROVIDERS_VARIABLE_NAME` where `VARIABLE_NAME` is the variable you are trying to override.  The only exception is `compose_files`, because it is a list it must be overridden in a yaml file.  There is an example `invoke.yml` (`invoke.example.yml`) in this directory which can be used as a starting point.
+Using **PyInvoke** these configuration options can be overridden using [several methods](http://docs.pyinvoke.org/en/stable/concepts/configuration.html). Perhaps the simplest is simply setting an environment variable `INVOKE_NAUTOBOT_SECRETS_PROVIDERS_VARIABLE_NAME` where `VARIABLE_NAME` is the variable you are trying to override. The only exception is `compose_files`, because it is a list it must be overridden in a yaml file. There is an example `invoke.yml` (`invoke.example.yml`) in this directory which can be used as a starting point.
 
 #### Local Poetry Development Environment
 
@@ -357,7 +375,7 @@ Each command can be executed with `invoke <command>`. Environment variables `INV
 
 ### Project Documentation
 
-Project documentation is generated by [mkdocs](https://www.mkdocs.org/) from the documentation located in the docs folder.  You can configure [readthedocs.io](https://readthedocs.io/) to point at this folder in your repo.  For development purposes a `docker-compose.docs.yml` is also included.  A container hosting the docs will be started using the invoke commands on [http://localhost:8001](http://localhost:8001), as changes are saved the docs will be automatically reloaded.
+Project documentation is generated by [mkdocs](https://www.mkdocs.org/) from the documentation located in the docs folder. You can configure [readthedocs.io](https://readthedocs.io/) to point at this folder in your repo. For development purposes a `docker-compose.docs.yml` is also included. A container hosting the docs will be started using the invoke commands on [http://localhost:8001](http://localhost:8001), as changes are saved the docs will be automatically reloaded.
 
 ### Developing Against Secrets Backends
 
