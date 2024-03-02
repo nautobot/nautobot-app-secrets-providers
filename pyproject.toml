@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nautobot-secrets-providers"
-version = "2.0.1"
+version = "2.0.2"
 description = "Nautobot Secrets Providers App"
 authors = ["Network to Code, LLC <info@networktocode.com>"]
 license = "Apache-2.0"
@@ -66,11 +66,13 @@ all = [
     "boto3",
     "hvac",
     "python-tss-sdk",
+    "requests"
 ]
 aws = ["boto3"]
 hashicorp = ["hvac"]
 nautobot = ["nautobot"]
 thycotic = ["python-tss-sdk"]
+cyberark = ["requests"]
 
 [tool.black]
 line-length = 120
