@@ -1,12 +1,13 @@
 [tool.poetry]
 name = "nautobot-secrets-providers"
-version = "2.0.1"
-description = "Nautobot Secrets Providers App"
+version = "0.1.0"
+description = "Nautobot App that provides direct integrations with Enterprise secrets management systems. Provides patterns to securely fetch secrets for use by other Nautobot Apps and Nautobot Jobs."
 authors = ["Network to Code, LLC <info@networktocode.com>"]
 license = "Apache-2.0"
 readme = "README.md"
 homepage = "https://github.com/nautobot/nautobot-app-secrets-providers"
 repository = "https://github.com/nautobot/nautobot-app-secrets-providers"
+documentation = "https://docs.nautobot.com/projects/secrets-providers/en/latest/"
 keywords = ["nautobot", "nautobot-app", "nautobot-plugin"]
 classifiers = [
     "Intended Audience :: Developers",
@@ -57,9 +58,8 @@ mkdocs-version-annotations = "1.0.0"
 mkdocstrings = "0.22.0"
 mkdocstrings-python = "1.5.2"
 towncrier = "~23.6.0"
-moto = "~2.2.11"
-pyOpenSSL = "23.2.0"
-requests-mock = "1.9.3"
+to-json-schema = "*"
+jsonschema = "*"
 
 [tool.poetry.extras]
 all = [
@@ -173,7 +173,7 @@ requires = ["poetry_core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.towncrier]
-package = "nautobot"
+package = "nautobot_secrets_providers"
 directory = "changes"
 filename = "docs/admin/release_notes/version_X.Y.md"
 template = "development/towncrier_template.j2"
