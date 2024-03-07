@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "nautobot-secrets-providers"
-version = "0.1.0"
-description = "Nautobot App that provides direct integrations with Enterprise secrets management systems. Provides patterns to securely fetch secrets for use by other Nautobot Apps and Nautobot Jobs."
+version = "2.0.1"
+description = "Nautobot Secrets Providers App"
 authors = ["Network to Code, LLC <info@networktocode.com>"]
 license = "Apache-2.0"
 readme = "README.md"
@@ -60,6 +60,9 @@ mkdocstrings-python = "1.5.2"
 towncrier = "~23.6.0"
 to-json-schema = "*"
 jsonschema = "*"
+moto = "~2.2.11"
+pyOpenSSL = "23.2.0"
+requests-mock = "1.9.3"
 
 [tool.poetry.extras]
 all = [
