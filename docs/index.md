@@ -33,7 +33,3 @@ This app supports the following popular secrets backends:
 ## Nautobot Features Used
 
 - Secrets Providers
-
-### Extras
-
-None
