@@ -7,24 +7,33 @@ This document provides an overview of the App including critical information and
 
 ## Description
 
+Nautobot Secrets Providers is an app for [Nautobot](https://github.com/nautobot/nautobot) 1.4.0 or higher that bundles Secrets Providers for integrating with popular secrets backends. Nautobot 1.4.0 added support for integrating with retrieving secrets from various secrets providers.
+
+This app publishes secrets providers that are not included in the within the Nautobot core software package so that it will be easier to maintain and extend support for various secrets providers without waiting on Nautobot software releases.
+
+### Supported Secrets Backends
+
+This app supports the following popular secrets backends:
+
+| Secrets Backend                                              | Supported Secret Types                                       | Supported Authentication Methods                             |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/secretsmanager/latest/userguide/manage_create-basic-secret.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
+| [AWS Systems Manager Parameter Store](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
+| [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2)<br/>[K/V Version 1](https://developer.hashicorp.com/vault/docs/secrets/kv/kv-v1) | [Token](https://www.vaultproject.io/docs/auth/token)<br/>[AppRole](https://www.vaultproject.io/docs/auth/approle)<br/>[AWS](https://www.vaultproject.io/docs/auth/aws)<br/>[Kubernetes](https://www.vaultproject.io/docs/auth/kubernetes)         |
+| [Delinea/Thycotic Secret Server](https://delinea.com/products/secret-server)               | [Secret Server Cloud](https://github.com/DelineaXPM/python-tss-sdk#secret-server-cloud)<br/>[Secret Server (on-prem)](https://github.com/DelineaXPM/python-tss-sdk#initializing-secretserver)| [Access Token Authorization](https://github.com/DelineaXPM/python-tss-sdk#access-token-authorization)<br/>[Domain Authorization](https://github.com/DelineaXPM/python-tss-sdk#domain-authorization)<br/>[Password Authorization](https://github.com/DelineaXPM/python-tss-sdk#password-authorization)<br/>         |
 
 ## Audience (User Personas) - Who should use this App?
 
-!!! warning "Developer Note - Remove Me!"
-    Who is this meant for/ who is the common user of this app?
+- Anyone who needs to retrieve secrets from Hashicorp Vault, AWS, or Delinea/Thycotic and use them in Nautobot
 
 ## Authors and Maintainers
 
-!!! warning "Developer Note - Remove Me!"
-    Add the team and/or the main individuals maintaining this project. Include historical maintainers as well.
+- Nautobot Core Team
 
 ## Nautobot Features Used
 
-!!! warning "Developer Note - Remove Me!"
-    What is shown today in the Installed Apps page in Nautobot. What parts of Nautobot does it interact with, what does it add etc. ?
+- Secrets Providers
 
 ### Extras
 
-!!! warning "Developer Note - Remove Me!"
-    Custom Fields - things like which CFs are created by this app?
-    Jobs - are jobs, if so, which ones, installed by this app?
+None
