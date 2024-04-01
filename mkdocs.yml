@@ -102,3 +102,11 @@ watch:
 
 nav:
   - Overview: "index.md"
+  - Administrator Guide:
+      - Install and Configure: "admin/install.md"
+      - Uninstall: "admin/uninstall.md"
+      - Compatibility Matrix: "admin/compatibility_matrix.md"
+  - Developer Guide:
+      - Contributing to the App: "dev/contributing.md"
+      - Development Environment: "dev/dev_environment.md"
+  - Nautobot Docs Home ↗︎: "https://docs.nautobot.com"
