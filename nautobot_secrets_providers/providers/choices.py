@@ -1,4 +1,5 @@
 """Choices for Thycotic Secret Server Plugin."""
+
 from nautobot.core.choices import ChoiceSet
 
 
@@ -10,6 +11,8 @@ class ThycoticSecretChoices(ChoiceSet):
     SECRET_USERNAME = "username"  # nosec
     SECRET_URL = "url"  # nosec
     SECRET_NOTES = "notes"  # nosec
+    SECRET_PASSWORD1 = "password-1"  # nosec
+    SECRET_PASSWORD2 = "password-2"  # nosec
 
     CHOICES = (
         (SECRET_TOKEN, "Token"),
@@ -17,6 +20,8 @@ class ThycoticSecretChoices(ChoiceSet):
         (SECRET_USERNAME, "Username"),
         (SECRET_URL, "URL"),
         (SECRET_NOTES, "Notes"),
+        (SECRET_PASSWORD1, "Password 1"),
+        (SECRET_PASSWORD2, "Password 2"),
     )
 
 
