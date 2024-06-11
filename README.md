@@ -23,6 +23,7 @@ This app supports the following popular secrets backends:
 | [AWS Systems Manager Parameter Store](https://aws.amazon.com/secrets-manager/) | [Other: Key/value pairs](https://docs.aws.amazon.com/systems-manager/latest/userguide/systems-manager-parameter-store.html) | [AWS credentials](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html) (see Usage section below) |
 | [HashiCorp Vault](https://www.vaultproject.io)               | [K/V Version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2)<br/>[K/V Version 1](https://developer.hashicorp.com/vault/docs/secrets/kv/kv-v1) | [Token](https://www.vaultproject.io/docs/auth/token)<br/>[AppRole](https://www.vaultproject.io/docs/auth/approle)<br/>[AWS](https://www.vaultproject.io/docs/auth/aws)<br/>[Kubernetes](https://www.vaultproject.io/docs/auth/kubernetes)         |
 | [Delinea/Thycotic Secret Server](https://delinea.com/products/secret-server)               | [Secret Server Cloud](https://github.com/DelineaXPM/python-tss-sdk#secret-server-cloud)<br/>[Secret Server (on-prem)](https://github.com/DelineaXPM/python-tss-sdk#initializing-secretserver)| [Access Token Authorization](https://github.com/DelineaXPM/python-tss-sdk#access-token-authorization)<br/>[Domain Authorization](https://github.com/DelineaXPM/python-tss-sdk#domain-authorization)<br/>[Password Authorization](https://github.com/DelineaXPM/python-tss-sdk#password-authorization)<br/>         |
+| [Keeper Secret Manager](https://docs.keeper.io/secrets-manager/secrets-manager/quick-start-guide)               | [Other: Key/value pairs](https://docs.keeper.io/secrets-manager/secrets-manager/developer-sdk-library/python-sdk#retrieve-secrets)| [One Time Access Token](https://docs.keeper.io/secrets-manager/secrets-manager/about/one-time-token)        |
 
 ## Screenshots
 
@@ -51,6 +52,49 @@ This app supports the following popular secrets backends:
 ## Installation
 
 See the [installation documentation](https://docs.nautobot.com/projects/secrets-providers/en/latest/admin/install/) for detailed instructions on installing the Nautobot Secrets Providers app.
+
+### Keeper Secret Manager
+
+The Keeper Secret Manager plugin includes two providers:
+
+- **`Keeper by UID`**
+
+    This provider uses the `UID` to specify the secret that is retrieved. The `UID` is displayed in the `Record Info`.
+
+    - Example:
+
+        The url is: _https://keepersecurity.com/vault/#detail/OuiSc5IkgxEBnbnSyVJ5UA_
+
+        In this example the value for `UID` is **OuiSc5IkgxEBnbnSyVJ5UA**.
+
+- **`Keeper by Name/Title`**
+
+    This provider allows to select the secret by name/title.
+
+    - Example:
+
+        The url is _https://keepersecurity.com/vault/#search/XXX-SW-XXX-F0_
+
+        In this example the value for `Title` is **XXX-SW-XXX-F0**.
+
+#### Configuration
+
+```python
+PLUGINS_CONFIG = {
+    "nautobot_secrets_providers": {
+        "keeper": {  # https://github.com/Keeper-Security/secrets-manager/tree/master/sdk/python
+            "token": os.getenv("KEEPER_TOKEN", None),
+        },
+    }
+}
+```
+- `name` - (optional with uid) The secret name/title. _e.g.'XXX-SW-XXX-F0'_
+- `uid` - (optional with name) The secret uid. _e.g.'OuiSc5IkgxEBnbnSyVJ5UA'_
+- `token` - (optional with config) The Keeper Secret Manager token. _e.g.'1234'_
+- `config` - (optional with token) The Keeper Secret Manager config. _e.g.'JSON'_
+- `type` - (required) The info type to retrieve from the secret (ENUM CHOICE `password` / `username`). _e.g.'password'_
+
+Either one of `uid` or `name` must be specified. If `token` is not specified, it will use JSON config specified either in the form or in config file instead. If none of them are specified, it will fail to connect to Keeper Secret Manager.
 
 ## Contributing
 

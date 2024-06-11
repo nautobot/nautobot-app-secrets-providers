@@ -1128,6 +1128,24 @@ files = [
 Django = ">=2.2"
 
 [[package]]
+name = "ecdsa"
+version = "0.18.0"
+description = "ECDSA cryptographic signature library (pure python)"
+optional = true
+python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
+files = [
+    {file = "ecdsa-0.18.0-py2.py3-none-any.whl", hash = "sha256:80600258e7ed2f16b9aa1d7c295bd70194109ad5a30fdee0eaeefef1d4c559dd"},
+    {file = "ecdsa-0.18.0.tar.gz", hash = "sha256:190348041559e21b22a1d65cee485282ca11a6f81d503fddb84d5017e9ed1e49"},
+]
+
+[package.dependencies]
+six = ">=1.9.0"
+
+[package.extras]
+gmpy = ["gmpy"]
+gmpy2 = ["gmpy2"]
+
+[[package]]
 name = "emoji"
 version = "2.8.0"
 description = "Emoji for Python"
@@ -1565,6 +1583,22 @@ files = [
 [package.dependencies]
 importlib-resources = {version = ">=1.4.0", markers = "python_version < \"3.9\""}
 referencing = ">=0.28.0"
+
+[[package]]
+name = "keeper-secrets-manager-core"
+version = "16.6.2"
+description = "Keeper Secrets Manager for Python 3"
+optional = true
+python-versions = ">=3.6"
+files = [
+    {file = "keeper-secrets-manager-core-16.6.2.tar.gz", hash = "sha256:bc22c3141863ebaa0b1c98a806487a329675e03ef36bb908ca23dacce92152cb"},
+]
+
+[package.dependencies]
+cryptography = ">=39.0.1"
+ecdsa = "*"
+importlib_metadata = "*"
+requests = "*"
 
 [[package]]
 name = "kombu"
@@ -3677,9 +3711,10 @@ docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.link
 testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy (>=0.9.1)", "pytest-ruff"]
 
 [extras]
-all = ["boto3", "hvac", "python-tss-sdk"]
+all = ["boto3", "hvac", "keeper-secrets-manager-core", "python-tss-sdk"]
 aws = ["boto3"]
 hashicorp = ["hvac"]
+keeper = ["keeper-secrets-manager-core"]
 nautobot = ["nautobot"]
 thycotic = ["python-tss-sdk"]
 
