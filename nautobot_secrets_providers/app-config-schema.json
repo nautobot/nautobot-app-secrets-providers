@@ -1,0 +1,95 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/nautobot_secrets_providers/app-config-schema.json",
+    "type": "object",
+    "properties": {
+        "hashicorp_vault": {
+            "type": "object",
+            "properties": {
+                "auth_method": {
+                    "type": "string",
+                    "default": "token",
+                    "oneOf": [
+                        "approle",
+                        "aws",
+                        "kubernetes",
+                        "token"
+                    ]
+                },
+                "ca_cert": {
+                    "type": ["string", "boolean"]
+                },
+                "default_kv_version": {
+                    "type": "string",
+                    "default": "v2",
+                    "oneOf": ["v1", "v2"]
+                },
+                "default_mount_point": {
+                    "type": "string",
+                    "default": "secret"
+                },
+                "k8s_token_path": {
+                    "type": "string",
+                    "default": "/var/run/secrets/kubernetes.io/serviceaccount/token"
+                },
+                "kv_version": {
+                    "type": "string",
+                    "default": "v2",
+                    "oneOf": ["v1", "v2"]
+                },
+                "login_kwargs": {
+                    "type": "object"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "role_id": {
+                    "type": "string"
+                },
+                "role_name": {
+                    "type": "string"
+                },
+                "secret_id": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            },
+            "required": ["url"]
+        },
+        "thycotic": {
+            "type": "object",
+            "properties": {
+                "base_url": {
+                    "type": "string"
+                },
+                "ca_bundle_path": {
+                    "type": "string"
+                },
+                "cloud_based": {
+                    "type": "boolean"
+                },
+                "domain": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "tenant": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            },
+            "required": ["base_url"]
+        }
+    }
+}

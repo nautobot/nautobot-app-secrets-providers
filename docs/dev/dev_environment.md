@@ -32,17 +32,15 @@ This project is managed by [Python Poetry](https://python-poetry.org/) and has a
 1. Install Poetry, see the [Poetry Documentation](https://python-poetry.org/docs/#installation) for your operating system.
 2. Install Docker, see the [Docker documentation](https://docs.docker.com/get-docker/) for your operating system.
 
-Once you have Poetry and Docker installed you can run the following commands (in the root of the repository) to install all other development dependencies in an isolated Python virtual environment:
+Once you have Poetry and Docker installed you can run the following commands to install all other development dependencies in an isolated python virtual environment:
 
 ```shell
 poetry shell
 poetry install
-cp development/creds.example.env development/creds.env
-invoke build
 invoke start
 ```
 
-The Nautobot server can now be accessed at [http://localhost:8080](http://localhost:8080) and the live documentation at [http://localhost:8001](http://localhost:8001).
+Nautobot server can now be accessed at [http://localhost:8080](http://localhost:8080).
 
 To either stop or destroy the development environment use the following options.
 
@@ -51,7 +49,9 @@ To either stop or destroy the development environment use the following options.
 
 ### Local Poetry Development Environment
 
-- Create an `invoke.yml` file with the following contents at the root of the repo and edit as necessary
+1. Copy `development/creds.example.env` to `development/creds.env` (This file will be ignored by Git and Docker)
+2. Uncomment the `POSTGRES_HOST`, `REDIS_HOST`, and `NAUTOBOT_ROOT` variables in `development/creds.env`
+3. Create an `invoke.yml` file with the following contents at the root of the repo (you can also `cp invoke.example.yml invoke.yml` and edit as necessary):
 
 ```yaml
 ---
@@ -59,21 +59,20 @@ nautobot_secrets_providers:
   local: true
 ```
 
-Run the following commands:
+3. Run the following commands:
 
 ```shell
 poetry shell
 poetry install --extras nautobot
-export $(cat development/development.env | xargs)
+export $(cat development/dev.env | xargs)
 export $(cat development/creds.env | xargs)
 invoke start && sleep 5
 nautobot-server migrate
 ```
 
-!!! note
-    If you want to develop on the latest develop branch of Nautobot, run the following command: `poetry add --optional git+https://github.com/nautobot/nautobot@develop`. After the `@` symbol must match either a branch or a tag.
+> If you want to develop on the latest develop branch of Nautobot, run the following command: `poetry add --optional git+https://github.com/nautobot/nautobot@develop`. After the `@` symbol must match either a branch or a tag.
 
-You can now run `nautobot-server` commands as you would from the [Nautobot documentation](https://nautobot.readthedocs.io/en/latest/) for example to start the development server:
+4. You can now run nautobot-server commands as you would from the [Nautobot documentation](https://nautobot.readthedocs.io/en/latest/) for example to start the development server:
 
 ```shell
 nautobot-server runserver 0.0.0.0:8080 --insecure
@@ -125,11 +124,242 @@ Each command can be executed with `invoke <command>`. All commands support the a
   bandit           Run bandit to validate basic static code security analysis.
   black            Run black to check that Python files adhere to its style standards.
   flake8           Run flake8 to check that Python files adhere to its style standards.
-  pydocstyle       Run pydocstyle to validate docstring formatting adheres to NTC defined standards.
+  ruff             Run ruff to validate docstring formatting adheres to NTC defined standards.
   pylint           Run pylint code analysis.
-  tests            Run all tests for this plugin.
-  unittest         Run Django unit tests for the plugin.
+  tests            Run all tests for this app.
+  unittest         Run Django unit tests for the app.
 ```
+
+### Developing Against Secrets Backends
+
+#### AWS Secrets Manager
+
+This assumes you are logged into the AWS Console.
+
+- Navigate to AWS Console
+- Navigate to AWS Secrets Manager
+- Click "Store a new secret"
+  - Select “Other type of secrets”
+  - Use Secret key/value
+  - Enter `hello=world`
+  - Use "DefaultEncryptionKey" for now
+  - Click "Next"
+  - Under "Secret name" fill out `hello`
+  - Click "Next"
+  - Under "Configure automatic rotation"
+    - Leave it as "Disable automatic rotation"
+  - On "Store a new secret"
+    - Copy the sample code (see below)
+  - Click "Store"
+- END
+
+##### Install the AWS CLI
+
+Next, install the [AWS CLI](https://aws.amazon.com/cli/).
+
+On MacOS, this can be done using `brew install awscli`:
+
+```
+brew install awscli
+```
+
+On Linux, you will need to run a `curl` command (This assumes x86. Please see the docs for [AWS CLI on
+Linux](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html) for ARM and other options):
+
+```
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+```
+
+##### Configure the AWS CLI
+
+After installing the AWS CLI, you will need to configure it for authentication.
+
+You may use an existing AWS access key or create a new one. For these instructions we cover the need to create a new access key that can be used for this.
+
+- Navigate to AWS Console
+- Click your username
+  - Click "My security credentials"
+  - Click "create access key"
+- Save your "Access key ID" and "Secret access key" for use when configuring the AWS CLI
+
+Now configure the CLI:
+
+- Run `aws configure`
+- Enter your credentials from above
+- Choose your region
+- Use output format: `json`
+
+Example:
+
+```no-highlight
+$ aws configure
+AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE
+AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+Default region name [None]: us-east-2
+Default output format [None]: json
+```
+
+Now you are ready to use the sample code to retrieve your secret from AWS Secrets Manager!
+
+##### Sample Code
+
+Make sure that the `boto3` client is installed:
+
+```no-highlight
+poetry install --extras aws
+```
+
+Next, save this as `aws_secrets.py`:
+
+```python
+# Use this code snippet in your app.
+# If you need more information about configurations or implementing the sample code, visit the AWS docs:
+# https://aws.amazon.com/developers/getting-started/python/
+
+import boto3
+import base64
+from botocore.exceptions import ClientError
+
+
+def get_secret():
+
+    secret_name = "hello"
+    region_name = "us-east-2"
+
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    # In this sample we only handle the specific exceptions for the 'GetSecretValue' API.
+    # See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+    # We rethrow the exception by default.
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'DecryptionFailureException':
+            # Secrets Manager can't decrypt the protected secret text using the provided KMS key.
+            # Deal with the exception here, and/or rethrow at your discretion.
+            raise e
+        elif e.response['Error']['Code'] == 'InternalServiceErrorException':
+            # An error occurred on the server side.
+            # Deal with the exception here, and/or rethrow at your discretion.
+            raise e
+        elif e.response['Error']['Code'] == 'InvalidParameterException':
+            # You provided an invalid value for a parameter.
+            # Deal with the exception here, and/or rethrow at your discretion.
+            raise e
+        elif e.response['Error']['Code'] == 'InvalidRequestException':
+            # You provided a parameter value that is not valid for the current state of the resource.
+            # Deal with the exception here, and/or rethrow at your discretion.
+            raise e
+        elif e.response['Error']['Code'] == 'ResourceNotFoundException':
+            # We can't find the resource that you asked for.
+            # Deal with the exception here, and/or rethrow at your discretion.
+            raise e
+    else:
+        # Decrypts secret using the associated KMS CMK.
+        # Depending on whether the secret is a string or binary, one of these fields will be populated.
+        if 'SecretString' in get_secret_value_response:
+            secret = get_secret_value_response['SecretString']
+        else:
+            decoded_binary_secret = base64.b64decode(get_secret_value_response['SecretBinary'])
+
+    # Your code goes here.
+
+# ^ Above was generated by AWS.
+
+# This was added by us so you can run this as a script:
+if __name__ == "__main__":
+    secret = get_secret()
+    print(f"Secret = {secret}")
+```
+
+Run it with `python aws_secrets.py`:
+
+```
+$ python aws_secrets.py
+Secret = {"hello":"world"}.
+```
+
+Note that this blob is JSON and will also need to be decoded if you want to extract the value.
+
+#### HashiCorp Vault
+
+Make sure that the `hvac` client is installed:
+
+```no-highlight
+poetry install --extras hashicorp
+```
+
+##### Start Services with Docker
+
+```no-highlight
+invoke start
+```
+
+##### Set an alias to work with `vault`
+
+This will allow you to easily run the CLI command from within the container:
+
+```no-highlight
+alias vault="docker exec -it nautobot_secrets_providers_vault_1 vault"
+```
+
+Interact with the Vault vi CLI (via `docker exec` into the container from localhost):
+
+```no-highlight
+$ vault status
+Key             Value
+---             -----
+Seal Type       shamir
+Initialized     true
+Sealed          false
+Total Shares    1
+Threshold       1
+Version         1.8.2
+Storage Type    inmem
+Cluster Name    vault-cluster-35c5d319
+Cluster ID      2611f99c-a6de-a883-1fcc-bfffdc0217bc
+HA Enabled      false
+```
+
+##### Using the Python `hvac` Library
+
+This establishes a client, creates a basic key/value secret (`hello=world`) at the path `hello`, and then retrieves the data from the `hello` key at the secret path `hello`.
+
+> This is equivalent to the command `vault kv get -field hello secret/hello`.
+
+```python
+In [1]: import hvac
+
+In [2]: client = hvac.Client(url="http://localhost:8200", token="nautobot")
+
+In [3]: client.secrets.kv.create_or_update_secret(path="hello", secret=dict(hello="world"))
+Out[3]:
+{'request_id': 'c4709868-c08f-4cb1-ab8c-605c58b82f3f',
+ 'lease_id': '',
+ 'renewable': False,
+ 'lease_duration': 0,
+ 'data': {'created_time': '2021-09-16T23:21:07.5564132Z',
+  'deletion_time': '',
+  'destroyed': False,
+  'version': 2},
+ 'wrap_info': None,
+ 'warnings': None,
+ 'auth': None}
+
+In [4]: client.secrets.kv.read_secret(path="hello")["data"]["data"]["hello"]
+Out[4]: 'world'
+```
+
 
 ## Project Overview
 
@@ -290,9 +520,9 @@ This will safely shut down all of your running Docker containers for this projec
 
 Your environment should now be fully setup, all necessary Docker containers are created and running, and you're logged into Nautobot in your web browser. Now what?
 
-Now you can start developing your plugin in the project folder!
+Now you can start developing your app in the project folder!
 
-The magic here is the root directory is mounted inside your Docker containers when built and ran, so **any** changes made to the files in here are directly updated to the Nautobot plugin code running in Docker. This means that as you modify the code in your plugin folder, the changes will be instantly updated in Nautobot.
+The magic here is the root directory is mounted inside your Docker containers when built and ran, so **any** changes made to the files in here are directly updated to the Nautobot app code running in Docker. This means that as you modify the code in your app folder, the changes will be instantly updated in Nautobot.
 
 !!! warning
 	There are a few exceptions to this, as outlined in the section [To Rebuild or Not To Rebuild](#to-rebuild-or-not-to-rebuild).
@@ -316,7 +546,7 @@ When trying to debug an issue, one helpful thing you can look at are the logs wi
 !!! info
     Want to limit the log output even further? Use the `--tail <#>` command line argument in conjunction with `-f`.
 
-So for example, our plugin is named `nautobot-secrets-providers`, the command would most likely be `docker logs nautobot_secrets_providers_nautobot_1 -f`. You can find the name of all running containers via `docker ps`.
+So for example, our app is named `nautobot-secrets-providers`, the command would most likely be `docker logs nautobot_secrets_providers_nautobot_1 -f`. You can find the name of all running containers via `docker ps`.
 
 If you want to view the logs specific to the worker container, simply use the name of that container instead.
 
@@ -342,7 +572,7 @@ Once completed, the new/updated environment variables should now be live.
 
 ### Installing Additional Python Packages
 
-If you want your plugin to leverage another available Nautobot plugin or another Python package, you can easily add them into your Docker environment.
+If you want your app to leverage another available Nautobot app or another Python package, you can easily add them into your Docker environment.
 
 ```bash
 ➜ poetry shell
@@ -357,18 +587,18 @@ Once the dependencies are resolved, stop the existing containers, rebuild the Do
 ➜ invoke start
 ```
 
-### Installing Additional Nautobot Plugins
+### Installing Additional Nautobot Apps
 
-Let's say for example you want the new plugin you're creating to integrate into Slack. To do this, you will want to integrate into the existing Nautobot ChatOps Plugin.
+Let's say for example you want the new app you're creating to integrate into Slack. To do this, you will want to integrate into the existing Nautobot ChatOps App.
 
 ```bash
 ➜ poetry shell
 ➜ poetry add nautobot-chatops
 ```
 
-Once you activate the virtual environment via Poetry, you then tell Poetry to install the new plugin.
+Once you activate the virtual environment via Poetry, you then tell Poetry to install the new app.
 
-Before you continue, you'll need to update the file `development/nautobot_config.py` accordingly with the name of the new plugin under `PLUGINS` and any relevant settings as necessary for the plugin under `PLUGINS_CONFIG`. Since you're modifying the underlying OS (not just Django files), you need to rebuild the image. This is a similar process to updating environment variables, which was explained earlier.
+Before you continue, you'll need to update the file `development/nautobot_config.py` accordingly with the name of the new app under `PLUGINS` and any relevant settings as necessary for the app under `PLUGINS_CONFIG`. Since you're modifying the underlying OS (not just Django files), you need to rebuild the image. This is a similar process to updating environment variables, which was explained earlier.
 
 ```bash
 ➜ invoke stop
@@ -376,7 +606,7 @@ Before you continue, you'll need to update the file `development/nautobot_config
 ➜ invoke start
 ```
 
-Once the containers are up and running, you should now see the new plugin installed in your Nautobot instance.
+Once the containers are up and running, you should now see the new app installed in your Nautobot instance.
 
 !!! note
     You can even launch an `ngrok` service locally on your laptop, pointing to port 8080 (such as for chatops development), and it will point traffic directly to your Docker images.
@@ -466,6 +696,24 @@ To run an individual test, you can run any or all of the following:
 ➜ invoke bandit
 ➜ invoke black
 ➜ invoke flake8
-➜ invoke pydocstyle
+➜ invoke ruff
 ➜ invoke pylint
 ```
+
+### App Configuration Schema
+
+In the package source, there is the `nautobot_secrets_providers/app-config-schema.json` file, conforming to the [JSON Schema](https://json-schema.org/) format. This file is used to validate the configuration of the app in CI pipelines.
+
+If you make changes to `PLUGINS_CONFIG` or the configuration schema, you can run the following command to validate the schema:
+
+```bash
+invoke validate-app-config
+```
+
+To generate the `app-config-schema.json` file based on the current `PLUGINS_CONFIG` configuration, run the following command:
+
+```bash
+invoke generate-app-config-schema
+```
+
+This command can only guess the schema, so it's up to the developer to manually update the schema as needed.
