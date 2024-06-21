@@ -1,8 +1,17 @@
-# Nautobot Secrets Providers
+# Nautobot's Secrets Providers App
 
-Nautobot Secrets Providers is a app for [Nautobot](https://github.com/nautobot/nautobot) 1.4.0 or higher that bundles Secrets Providers for integrating with popular secrets backends. Nautobot 1.4.0 added support for integrating with retrieving secrets from various secrets providers.
+<p align="center">
+  <a href="https://github.com/nautobot/nautobot-app-secrets-providers/actions"><img src="https://github.com/nautobot/nautobot-app-secrets-providers/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="https://docs.nautobot.com/projects/secrets-providers/en/latest/"><img src="https://readthedocs.org/projects/nautobot-plugin-secrets-providers/badge/"></a>
+  <a href="https://pypi.org/project/nautobot-secrets-providers/"><img src="https://img.shields.io/pypi/v/nautobot-secrets-providers"></a>
+  <a href="https://pypi.org/project/nautobot-secrets-providers/"><img src="https://img.shields.io/pypi/dm/nautobot-secrets-providers"></a>
+  <br>
+  An <a href="https://www.networktocode.com/nautobot/apps/">App</a> for <a href="https://nautobot.com/">Nautobot</a>.
+</p>
 
-This app publishes secrets providers that are not included in the within the Nautobot core software package so that it will be easier to maintain and extend support for various secrets providers without waiting on Nautobot software releases.
+Nautobot Secrets Providers is an app for [Nautobot](https://github.com/nautobot/nautobot) 1.2.1 or higher that bundles Secrets Providers for integrating with popular secrets backends. Nautobot 1.2.0 added support for integrating with retrieving secrets from various secrets providers.
+
+This app publishes secrets providers that are not included in the Nautobot core software package so that it will be easier to maintain and extend support for various secrets providers without waiting on Nautobot software releases.
 
 ## Supported Secrets Backends
 

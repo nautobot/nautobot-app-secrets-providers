@@ -6,7 +6,7 @@
 # -------------------------------------------------------------------------------------
 # !!! USE CAUTION WHEN MODIFYING LINES BELOW
 
-# Accepts a desired Nautobot version as build argument, default to `2.0.0`
+# Accepts a desired Nautobot version as build argument, default to 2.0.0
 ARG NAUTOBOT_VER="2.0.0"
 
 # Accepts a desired Python version as build argument, default to 3.11
@@ -28,7 +28,7 @@ ENV INVOKE_NAUTOBOT_SECRETS_PROVIDERS_LOCAL=true
 # Since this is only used for development and we don't ship this container, pinning Poetry back is not expressly necessary
 # We also don't need virtual environments in container
 RUN which poetry || curl -sSL https://install.python-poetry.org | python3 - && \
-  poetry config virtualenvs.create false
+    poetry config virtualenvs.create false
 
 # !!! USE CAUTION WHEN MODIFYING LINES ABOVE
 # -------------------------------------------------------------------------------------
@@ -63,8 +63,8 @@ RUN pip show nautobot | grep "^Version: " | sed -e 's/Version: /nautobot==/' > c
 #
 # We can't use the entire freeze as it takes forever to resolve with rigidly fixed non-direct dependencies,
 #   especially those that are only direct to Nautobot but the container included versions slightly mismatch
-RUN poetry export -f requirements.txt --without-hashes --output poetry_freeze_base.txt
-RUN poetry export -f requirements.txt --with dev --without-hashes --output poetry_freeze_all.txt
+RUN poetry export -f requirements.txt --without-hashes --extras all --output poetry_freeze_base.txt
+RUN poetry export -f requirements.txt --without-hashes --extras all --with dev --output poetry_freeze_all.txt
 RUN sort poetry_freeze_base.txt poetry_freeze_all.txt | uniq -u > poetry_freeze_dev.txt
 
 # Install all local project as editable, constrained on Nautobot version, to get any additional
