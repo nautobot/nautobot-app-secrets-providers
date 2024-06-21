@@ -6,7 +6,7 @@ try:
   from azure.identity import DefaultAzureCredential
   from azure.keyvault.secrets import SecretClient
   azure_available = True
-except (ImportError, ModuleNotFoundError):
+except ImportError:
   azure_available = False
 
 from django import forms
@@ -58,13 +58,5 @@ class AzureKeyVaultSecretsProvider(SecretsProvider):
         # The value is in the 'value' attribute of the response.
         secret_value = response.value
 
-        # Assuming the secret value is JSON, parse it.
-        try:
-            data = json.loads(secret_value)
-        except json.JSONDecodeError as err:
-            # If JSON parsing fails, the secret might just be a string.
-            # In that case, just return the secret value directly.
-            return secret_value
-
-        # If it's a JSON object, return the entire JSON object.
-        return data
+        # Return the secret value.
+        return secret_value
