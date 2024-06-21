@@ -1,4 +1,5 @@
 """Choices for Thycotic Secret Server Plugin."""
+
 from nautobot.core.choices import ChoiceSet
 
 

@@ -1,4 +1,5 @@
 """Django urlpatterns declaration for nautobot_secrets_providers app."""
+
 from django.urls import path
 
 from nautobot_secrets_providers import views

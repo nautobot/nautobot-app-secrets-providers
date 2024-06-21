@@ -1,4 +1,5 @@
 """Secrets Provider for Thycotic Secret Server."""
+
 import os
 from pathlib import Path
 

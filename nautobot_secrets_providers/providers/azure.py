@@ -1,19 +1,19 @@
 """Secrets Provider for Azure Key Vault."""
 
-import json
-
 try:
-  from azure.identity import DefaultAzureCredential
-  from azure.keyvault.secrets import SecretClient
-  azure_available = True
+    from azure.identity import DefaultAzureCredential
+    from azure.keyvault.secrets import SecretClient
+
+    azure_available = True  # pylint: disable=invalid-name
 except ImportError:
-  azure_available = False
+    azure_available = False  # pylint: disable=invalid-name
 
 from django import forms
 from nautobot.core.forms import BootstrapMixin
 from nautobot.extras.secrets import exceptions, SecretsProvider
 
-__all__ = ("AzureKeyVaultSecretsProvider")
+__all__ = ("AzureKeyVaultSecretsProvider",)
+
 
 class AzureKeyVaultSecretsProvider(SecretsProvider):
     """A secrets provider for Azure Key Vault."""
@@ -21,7 +21,7 @@ class AzureKeyVaultSecretsProvider(SecretsProvider):
     slug = "azure-key-vault"
     name = "Azure Key Vault"
     is_available = azure_available
-    
+
     # pylint: disable-next=nb-incorrect-base-class
     class ParametersForm(BootstrapMixin, forms.Form):
         """Required parameters for Azure Key Vault."""

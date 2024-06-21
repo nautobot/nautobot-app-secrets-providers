@@ -1,4 +1,5 @@
 """Unit tests for Secrets Providers."""
+
 import os
 from unittest.mock import patch, mock_open
 
