@@ -1,0 +1,1 @@
+Added fallthrough for boto3 error handling to catch errors not explicitly defined.
