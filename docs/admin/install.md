@@ -47,7 +47,7 @@ pip install nautobot-secrets-providers[thycotic]
 
 #### Azure Key Vault
 
-The Azure Key Vault provider requires the `azure-identity` and `azure-keyvault-secrets` libraries. This can be easily installed along with the plugin using the following command:
+The Azure Key Vault provider requires the `azure-identity` and `azure-keyvault-secrets` libraries. This can be easily installed along with the app using the following command:
 
 ```no-highlight
 pip install nautobot-secrets-providers[azure]
