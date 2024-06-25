@@ -1,6 +1,6 @@
-### HashiCorp Vault
+# HashiCorp Vault
 
-#### Configuration
+## Configuration
 
 You must provide a mapping in `PLUGINS_CONFIG` within your `nautobot_config.py`, for example:
 
@@ -8,9 +8,8 @@ You must provide a mapping in `PLUGINS_CONFIG` within your `nautobot_config.py`,
 PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
         "hashicorp_vault": {
-            "url": "http://localhost:8200",
-            "auth_method": "token",
-            "token": os.getenv("NAUTOBOT_HASHICORP_VAULT_TOKEN"),
+            "url": os.environ.get("HASHICORP_VAULT_URL"),
+            "token": os.environ.get("HASHICORP_VAULT_TOKEN"),
         }
     },
 }

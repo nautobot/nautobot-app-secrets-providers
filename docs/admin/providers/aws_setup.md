@@ -1,8 +1,8 @@
-### AWS
+# AWS
 
-#### Authentication
+## Authentication
 
-No configuration is needed within Nautobot for this provider to operate. Instead, you must provide [AWS credentials in one of the methods supported by the `boto3` library](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials).
+No configuration is needed within Nautobot for this provider to operate. Instead, you must provide AWS credentials in one of the [methods supported by the `boto3` library](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials).
 
 Boto3 credentials can be configured in multiple ways (eight as of this writing) that are mirrored here:
 
@@ -19,7 +19,7 @@ Boto3 credentials can be configured in multiple ways (eight as of this writing) 
 
 We highly recommend you defer to using environment variables for your deployment as specified in the credentials documentation linked above. The values specified in the linked documentation should be [set within your `~.bashrc`](https://nautobot.readthedocs.io/en/latest/installation/nautobot/#update-the-nautobot-bashrc) (or similar profile) on your system.
 
-#### Configuration
+## Configuration
 
 This is an example based on our recommended deployment pattern in the section above (method 3) that uses [environment variables](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#environment-variables). You will need to set these in the environment prior to starting Nautobot:
 

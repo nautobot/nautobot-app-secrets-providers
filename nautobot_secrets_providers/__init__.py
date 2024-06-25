@@ -12,7 +12,7 @@ class NautobotSecretsProvidersConfig(NautobotAppConfig):
     """App configuration for the nautobot_secrets_providers app."""
 
     name = "nautobot_secrets_providers"
-    verbose_name = "Nautobot's Secrets Providers App"
+    verbose_name = "Secrets Providers"
     version = __version__
     author = "Network to Code, LLC"
     description = "Nautobot App that provides direct integrations with Enterprise secrets management systems. Provides patterns to securely fetch secrets for use by other Nautobot Apps and Nautobot Jobs."

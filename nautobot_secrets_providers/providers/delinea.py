@@ -1,4 +1,4 @@
-"""Secrets Provider for Thycotic Secret Server."""
+"""Secrets Provider for Delinea Secret Server."""
 
 import os
 from pathlib import Path
@@ -17,7 +17,7 @@ try:
         SecretServerError,
     )
 
-    thycotic_installed = True  # pylint: disable=invalid-name
+    delinea_installed = True  # pylint: disable=invalid-name
 except ImportError:
     try:
         from thycotic.secrets.server import (
@@ -30,34 +30,34 @@ except ImportError:
             SecretServerError,
         )
 
-        thycotic_installed = True  # pylint: disable=invalid-name
+        delinea_installed = True  # pylint: disable=invalid-name
     except ImportError:
-        thycotic_installed = False  # pylint: disable=invalid-name
+        delinea_installed = False  # pylint: disable=invalid-name
 
 from nautobot.core.forms import BootstrapMixin
 from nautobot.extras.secrets import exceptions, SecretsProvider
 
-from .choices import ThycoticSecretChoices
+from .choices import DelineaSecretChoices
 
 __all__ = (
-    "ThycoticSecretServerSecretsProviderId",
-    "ThycoticSecretServerSecretsProviderPath",
+    "DelineaSecretServerSecretsProviderId",
+    "DelineaSecretServerSecretsProviderPath",
 )
 
 
-class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
-    """A secrets provider for Thycotic Secret Server."""
+class DelineaSecretServerSecretsProviderBase(SecretsProvider):
+    """A secrets provider for Delinea Secret Server."""
 
-    is_available = thycotic_installed
+    is_available = delinea_installed
 
     @classmethod
     def get_value_for_secret(cls, secret, obj=None, **kwargs):  # pylint: disable=too-many-locals
         """Return the value stored under the secret's key in the secret's path."""
-        # This is only required for Thycotic Secret Server therefore not defined in
+        # This is only required for Delinea Secret Server therefore not defined in
         # `required_settings` for the app config.
         plugin_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
-        if "thycotic" not in plugin_settings:
-            raise exceptions.SecretProviderError(secret, cls, "Thycotic Secret Server is not configured!")
+        if "delinea" not in plugin_settings:
+            raise exceptions.SecretProviderError(secret, cls, "Delinea Secret Server is not configured!")
 
         # Try to get parameters and error out early.
         parameters = secret.rendered_parameters(obj=obj)
@@ -79,28 +79,28 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
             msg = "The secret parameter could not be retrieved for field!"
             raise exceptions.SecretParametersError(secret, cls, msg)
 
-        thycotic_settings = plugin_settings["thycotic"]
-        if thycotic_settings["base_url"] is None:
-            raise exceptions.SecretProviderError(secret, cls, "Thycotic Secret Server is not configured!")
+        delinea_settings = plugin_settings["delinea"]
+        if delinea_settings["base_url"] is None:
+            raise exceptions.SecretProviderError(secret, cls, "Delinea Secret Server is not configured!")
 
-        return cls.query_thycotic_secret_server(
+        return cls.query_delinea_secret_server(
             secret=secret,
-            base_url=thycotic_settings["base_url"],
-            ca_bundle_path=thycotic_settings["ca_bundle_path"],
-            cloud_based=thycotic_settings["cloud_based"],
-            domain=thycotic_settings["domain"],
-            password=thycotic_settings["password"],
+            base_url=delinea_settings["base_url"],
+            ca_bundle_path=delinea_settings["ca_bundle_path"],
+            cloud_based=delinea_settings["cloud_based"],
+            domain=delinea_settings["domain"],
+            password=delinea_settings["password"],
             secret_id=secret_id,
             secret_path=secret_path,
             secret_selected_value=secret_selected_value,
-            tenant=thycotic_settings["tenant"],
-            token=thycotic_settings["token"],
-            username=thycotic_settings["username"],
+            tenant=delinea_settings["tenant"],
+            token=delinea_settings["token"],
+            username=delinea_settings["username"],
             caller_class=cls,
         )
 
     @staticmethod
-    def query_thycotic_secret_server(  # pylint: disable=too-many-boolean-expressions,too-many-locals,too-many-branches,too-many-arguments
+    def query_delinea_secret_server(  # pylint: disable=too-many-boolean-expressions,too-many-locals,too-many-branches,too-many-arguments
         secret,
         base_url,
         ca_bundle_path=None,
@@ -115,7 +115,7 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
         username=None,
         caller_class=None,
     ):
-        """Query Thycotic Secret Server."""
+        """Query Delinea Secret Server."""
         # Ensure required parameters are set
         if any(
             [token is None and not all([username, password]), cloud_based and not all([tenant, username, password])]
@@ -123,8 +123,8 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
             raise exceptions.SecretProviderError(
                 secret,
                 caller_class,
-                """Thycotic Secret Server is not configured!
-                See section 'Thycotic Secret Server (TSS)' in `README.md'.
+                """Delinea Secret Server is not configured!
+                See section 'Delinea Secret Server' in `README.md'.
                 """,
             )
 
@@ -138,7 +138,7 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
                         secret,
                         caller_class,
                         (
-                            "Delinea/Thycotic Secret Server is not configured properly! "
+                            "Delinea Secret Server is not configured properly! "
                             "Trusted certificates file not found: "
                             "Environment variable 'REQUESTS_CA_BUNDLE': "
                             f"{ca_bundle_path}."
@@ -147,35 +147,33 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
                 if original_env != ca_bundle_path:
                     os.environ["REQUESTS_CA_BUNDLE"] = ca_bundle_path
                     must_restore_env = True
-            # Setup thycotic authorizer
+            # Setup Delinea authorizer
             # Username | Password | Token | Domain | Authorizer
             #   def    |   def    |   *   |   -    | PasswordGrantAuthorizer
             #   def    |   def    |   *   |  def   | DomainPasswordGrantAuthorizer
-            #    -     |    -     |  def  |   *    | AccessTokenAuthorizer
-            #   def    |    -     |  def  |   *    | AccessTokenAuthorizer
-            #    -     |   def    |  def  |   *    | AccessTokenAuthorizer
+            #    *     |    *     |  def  |   -    | AccessTokenAuthorizer
             if all([username, password]):
                 if domain is not None:
-                    thy_authorizer = DomainPasswordGrantAuthorizer(
+                    delinea_authorizer = DomainPasswordGrantAuthorizer(
                         base_url=base_url,
                         domain=domain,
                         username=username,
                         password=password,
                     )
                 else:
-                    thy_authorizer = PasswordGrantAuthorizer(
+                    delinea_authorizer = PasswordGrantAuthorizer(
                         base_url=base_url,
                         username=username,
                         password=password,
                     )
             else:
-                thy_authorizer = AccessTokenAuthorizer(token)
+                delinea_authorizer = AccessTokenAuthorizer(token)
 
             # Get the client.
             if cloud_based:
-                delinea = SecretServerCloud(tenant=tenant, authorizer=thy_authorizer)
+                delinea = SecretServerCloud(tenant=tenant, authorizer=delinea_authorizer)
             else:
-                delinea = SecretServer(base_url=base_url, authorizer=thy_authorizer)
+                delinea = SecretServer(base_url=base_url, authorizer=delinea_authorizer)
 
             # Attempt to retrieve the secret.
             try:
@@ -197,41 +195,41 @@ class ThycoticSecretServerSecretsProviderBase(SecretsProvider):
                 os.environ["REQUESTS_CA_BUNDLE"] = original_env
 
 
-class ThycoticSecretServerSecretsProviderId(ThycoticSecretServerSecretsProviderBase):
-    """A secrets provider for Thycotic Secret Server."""
+class DelineaSecretServerSecretsProviderId(DelineaSecretServerSecretsProviderBase):
+    """A secrets provider for Delinea Secret Server."""
 
-    slug = "thycotic-tss-id"  # type: ignore
-    name = "Thycotic Secret Server by ID"  # type: ignore
+    slug = "delinea-tss-id"  # type: ignore
+    name = "Delinea Secret Server by ID"  # type: ignore
 
     # TBD: Remove after pylint-nautobot bump
     # pylint: disable-next=nb-incorrect-base-class
     class ParametersForm(BootstrapMixin, forms.Form):
-        """Required parameters for Thycotic Secret Server."""
+        """Required parameters for Delinea Secret Server."""
 
         secret_id = forms.IntegerField(
             label="Secret ID",
             required=True,
             min_value=1,
-            help_text="The secret-id used to select the entry in Thycotic Secret Server.",
+            help_text="The secret-id used to select the entry in Delinea Secret Server.",
         )
         secret_selected_value = forms.ChoiceField(
             label="Return value",
             required=True,
-            choices=ThycoticSecretChoices,
+            choices=DelineaSecretChoices,
             help_text="Select which value to return.",
         )
 
 
-class ThycoticSecretServerSecretsProviderPath(ThycoticSecretServerSecretsProviderBase):
-    """A secrets provider for Thycotic Secret Server."""
+class DelineaSecretServerSecretsProviderPath(DelineaSecretServerSecretsProviderBase):
+    """A secrets provider for Delinea Secret Server."""
 
-    slug = "thycotic-tss-path"  # type: ignore
-    name = "Thycotic Secret Server by Path"  # type: ignore
+    slug = "delinea-tss-path"  # type: ignore
+    name = "Delinea Secret Server by Path"  # type: ignore
 
     # TBD: Remove after pylint-nautobot bump
     # pylint: disable-next=nb-incorrect-base-class
     class ParametersForm(BootstrapMixin, forms.Form):
-        """Required parameters for Thycotic Secret Server."""
+        """Required parameters for Delinea Secret Server."""
 
         secret_path = forms.CharField(
             required=True,
@@ -242,6 +240,6 @@ class ThycoticSecretServerSecretsProviderPath(ThycoticSecretServerSecretsProvide
         secret_selected_value = forms.ChoiceField(
             label="Return value",
             required=True,
-            choices=ThycoticSecretChoices,
+            choices=DelineaSecretChoices,
             help_text="Select which value to return.",
         )

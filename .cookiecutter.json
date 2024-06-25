@@ -5,7 +5,7 @@
         "email": "info@networktocode.com",
         "github_org": "nautobot",
         "app_name": "nautobot_secrets_providers",
-        "verbose_name": "Nautobot Secrets Providers App",
+        "verbose_name": "Secrets Providers",
         "app_slug": "nautobot-secrets-providers",
         "project_slug": "nautobot-app-secrets-providers",
         "repo_url": "https://github.com/nautobot/nautobot-app-secrets-providers",
