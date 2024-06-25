@@ -2,7 +2,7 @@
 dev_addr: "127.0.0.1:8001"
 edit_uri: "edit/main/nautobot-app-secrets-providers/docs"
 site_dir: "nautobot_secrets_providers/static/nautobot_secrets_providers/docs"
-site_name: "Nautobot's Secrets Providers App Documentation"
+site_name: "Secrets Providers Documentation"
 site_url: "https://docs.nautobot.com/projects/secrets-providers/en/latest/"
 repo_url: "https://github.com/nautobot/nautobot-app-secrets-providers"
 copyright: "Copyright &copy; The Authors"
@@ -102,6 +102,11 @@ watch:
 
 nav:
   - Overview: "index.md"
+  - User Guide:
+      - App Overview: "user/app_overview.md"
+      - Getting Started: "user/app_getting_started.md"
+      - Using the App: "user/app_use_cases.md"
+      - Frequently Asked Questions: "user/faq.md"
   - Administrator Guide:
       - Install and Configure: "admin/install.md"
       - Provider Setup:
@@ -110,6 +115,7 @@ nav:
           - Azure: "admin/providers/azure_setup.md"
           - Delinea/Thycotic: "admin/providers/delinea_setup.md"
           - HashiCorp: "admin/providers/hashicorp_setup.md"
+      - Upgrade: "admin/upgrade.md"
       - Uninstall: "admin/uninstall.md"
       - Compatibility Matrix: "admin/compatibility_matrix.md"
       - Release Notes:
@@ -122,6 +128,11 @@ nav:
           - v1.1: "admin/release_notes/version_1.1.md"
           - v1.0: "admin/release_notes/version_1.0.md"
   - Developer Guide:
+      - Extending the App: "dev/extending.md"
       - Contributing to the App: "dev/contributing.md"
       - Development Environment: "dev/dev_environment.md"
+      - Code Reference:
+          - "dev/code_reference/index.md"
+          - Package: "dev/code_reference/package.md"
+          - Providers: "dev/code_reference/providers.md"
   - Nautobot Docs Home ↗︎: "https://docs.nautobot.com"
