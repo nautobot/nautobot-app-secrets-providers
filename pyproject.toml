@@ -37,7 +37,6 @@ hvac = { version = ">=0.11.0, <1.1.0", optional = true }
 python-tss-sdk = {version = "~1.2.0", optional = true}
 
 [tool.poetry.group.dev.dependencies]
-Markdown = "*"
 bandit = "*"
 black = "*"
 coverage = "*"
@@ -51,6 +50,7 @@ pylint-nautobot = "*"
 ruff = "*"
 yamllint = "*"
 toml = "*"
+Markdown = "*"
 # Rendering docs to HTML
 mkdocs = "1.5.2"
 # Material for MkDocs theme

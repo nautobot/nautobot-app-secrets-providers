@@ -104,6 +104,12 @@ nav:
   - Overview: "index.md"
   - Administrator Guide:
       - Install and Configure: "admin/install.md"
+      - Provider Setup:
+          - "admin/providers/index.md"
+          - AWS: "admin/providers/aws_setup.md"
+          - Azure: "admin/providers/azure_setup.md"
+          - Delinea/Thycotic: "admin/providers/delinea_setup.md"
+          - HashiCorp: "admin/providers/hashicorp_setup.md"
       - Uninstall: "admin/uninstall.md"
       - Compatibility Matrix: "admin/compatibility_matrix.md"
   - Developer Guide:
