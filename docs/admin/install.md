@@ -45,6 +45,14 @@ The Delinea/Thycotic Secret Server provider requires the `python-tss-sdk` librar
 pip install nautobot-secrets-providers[thycotic]
 ```
 
+#### Azure Key Vault
+
+The Azure Key Vault provider requires the `azure-identity` and `azure-keyvault-secrets` libraries. This can be easily installed along with the app using the following command:
+
+```no-highlight
+pip install nautobot-secrets-providers[azure]
+```
+
 ### Access Requirements
 
 There are no special access requirements to install the app.
@@ -210,3 +218,11 @@ PLUGINS_CONFIG = {
 - `tenant` - (optional) Required for 'Domain Authorization'.
 - `token` - (optional) Required for 'Access Token Authorization'.
 - `username` - (optional) Required for 'Secret Server Cloud', 'Password Authorization', 'Domain Authorization'.
+
+### Azure Key Vault
+
+#### Authentication
+
+No configuration is required within Nautobot for this provider to work. You must provide [Azure Service Principal credentials in one of the formats supported by the azure-identity library](https://learn.microsoft.com/en-us/python/api/azure-identity/azure.identity.environmentcredential?view=azure-python). The credential variables should be injected into Nautobot's environment via your preferred method.
+
+The recommended method is to use a Service Principal with Secret, for which creds.example.env has an example. [More information on how to set up the SP in Azure in the Azure docs](https://learn.microsoft.com/en-us/azure/key-vault/general/rbac-guide?tabs=azure-cli).
