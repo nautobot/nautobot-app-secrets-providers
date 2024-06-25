@@ -8,24 +8,28 @@ This document describes common use-cases and scenarios for this App.
 
 ## Screenshots
 
-![Screenshot of installed plugins](../images/screenshot01.png "Plugin landing page")
+![Screenshot of installed apps](../images/secrets-providers-installed-apps.png "App landing page")
 
 ---
 
-![Screenshot of plugin home page](../images/screenshot02.png "Plugin Home page")
+![Screenshot of plugin home page](../images/secrets-providers-home.png "App Home page")
 
 ---
 
-![Screenshot of secret using AWS Secrets Manager](../images/screenshot03.png "Secret using AWS Secrets Manager")
+![Screenshot of secret using AWS Secrets Manager](../images/aws-secrets-manager-secrets-provider-add.png "Secret using AWS Secrets Manager")
 
 ---
 
-![Screenshot of secret using HashiCorp Vault](../images/screenshot04.png "Secret using HashiCorp Vault")
+![Screenshot of secret using HashiCorp Vault](../images/hashicorp-vault-secrets-provider-add.png "Secret using HashiCorp Vault")
 
 ---
 
-![Screenshot of secret using Delinea/Thycotic Secret Server by ID](../images/screenshot05.png "Secret using Thycotic Secret Server by ID")
+![Screenshot of secret using Delinea Secret Server by ID](../images/delinea-id-secrets-provider-add.png "Secret using Delinea Secret Server by ID")
 
 ---
 
-![Screenshot of secret using Delinea/Thycotic Secret Server by Path](../images/screenshot06.png "Secret using Thycotic Secret Server by Path")
+![Screenshot of secret using Delinea Secret Server by Path](../images/delinea-path-secrets-provider-add.png "Secret using Delinea Secret Server by Path")
+
+---
+
+![Screenshot of secret using Azure Key Vault](../images/azure-key-vault-secrets-provider-add.png "Secret using Azure Key Vault")

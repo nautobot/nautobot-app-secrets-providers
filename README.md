@@ -31,13 +31,13 @@ This app supports the following popular secrets backends:
 
 ### Screenshots
 
-More screenshots can be found in the [Using the App](https://docs.nautobot.com/projects/secrets-providers/en/latest/user/app_use_cases/) page in the documentation. Here's a quick overview of some of the plugin's added functionality:
+More screenshots can be found in the [Using the App](https://docs.nautobot.com/projects/secrets-providers/en/latest/user/app_use_cases/) page in the documentation. Here's a quick overview of some of the app's added functionality:
 
-![Screenshot of app home page](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/screenshot02.png "App Home page")
+![Screenshot of app home page](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/secrets-providers-home.png "App Home page")
 
 ---
 
-![Screenshot of secret using AWS Secrets Manager](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/screenshot03.png "Secret using AWS Secrets Manager")
+![Screenshot of secret using AWS Secrets Manager](https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/aws-secrets-manager-secrets-provider-add.png "Secret using AWS Secrets Manager")
 
 ## Documentation
 
