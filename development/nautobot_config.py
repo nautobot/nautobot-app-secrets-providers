@@ -134,30 +134,19 @@ PLUGINS = ["nautobot_secrets_providers"]
 
 PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
-        "hashicorp_vault": {
-            "url": os.environ.get("VAULT_URL"),
-            "token": os.environ.get("VAULT_TOKEN"),
-        },
-        "thycotic": {  # https://github.com/thycotic/python-tss-sdk
+        "delinea": {
             "base_url": os.getenv("SECRET_SERVER_BASE_URL"),
-            "cloud_based": is_truthy(os.getenv("SECRET_SERVER_IS_CLOUD_BASED", "False")),
-            # tenant: required when cloud_based == True
-            "tenant": os.getenv("SECRET_SERVER_TENANT", ""),
-            # Setup thycotic authorizer
-            # Username | Password | Token | Domain | Authorizer
-            #   def    |   def    |   *   |   -    | PasswordGrantAuthorizer
-            #   def    |   def    |   *   |  def   | DomainPasswordGrantAuthorizer
-            #    -     |    -     |  def  |   *    | AccessTokenAuthorizer
-            #   def    |    -     |  def  |   *    | AccessTokenAuthorizer
-            #    -     |   def    |  def  |   *    | AccessTokenAuthorizer
-            "username": os.getenv("SECRET_SERVER_USERNAME", ""),
-            "password": os.getenv("SECRET_SERVER_PASSWORD", ""),
-            "token": os.getenv("SECRET_SERVER_TOKEN", ""),
-            "domain": os.getenv("SECRET_SERVER_DOMAIN", ""),
-            # ca_bundle_path: (optional) Path to trusted certificates file.
-            #     This must be set as environment variable.
-            #     see: https://docs.python-requests.org/en/master/user/advanced/
             "ca_bundle_path": os.getenv("REQUESTS_CA_BUNDLE", ""),
+            "cloud_based": is_truthy(os.getenv("SECRET_SERVER_IS_CLOUD_BASED", "False")),
+            "domain": os.getenv("SECRET_SERVER_DOMAIN", ""),
+            "password": os.getenv("SECRET_SERVER_PASSWORD", ""),
+            "tenant": os.getenv("SECRET_SERVER_TENANT", ""),
+            "token": os.getenv("SECRET_SERVER_TOKEN", ""),
+            "username": os.getenv("SECRET_SERVER_USERNAME", ""),
+        },
+        "hashicorp_vault": {
+            "url": os.environ.get("HASHICORP_VAULT_URL"),
+            "token": os.environ.get("HASHICORP_VAULT_TOKEN"),
         },
     },
 }

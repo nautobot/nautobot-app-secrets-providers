@@ -12,7 +12,8 @@ from nautobot_secrets_providers import providers
 # (meaning their dependent library is installed).
 secrets_providers = []
 
-for provider in providers.__all__:
+for provider_name in providers.__all__:
+    provider = getattr(providers, provider_name)  # pylint: disable=invalid-name
     # Don't publish multiple times.
     if provider in secrets_providers:
         continue

@@ -1,0 +1,6 @@
+Updated `creds.example.env` file with clearer environment variables for providers.
+Updated lock file dependencies.
+Moved installation guides for specific secrets providers to separate pages.
+Renamed any existing references of `Thycotic` to `Delinea`.
+Updated app's verbose name to `Secrets Providers`.
+Updated screenshots in Nautobot 2.0 UI.
