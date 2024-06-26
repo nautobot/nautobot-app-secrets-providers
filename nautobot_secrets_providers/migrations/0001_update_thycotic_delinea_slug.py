@@ -3,7 +3,7 @@
 from django.db import migrations
 
 
-def update_secrets_provider_slug(apps, schema_editor):
+def update_secrets_provider_slugs(apps, schema_editor):
     Secret = apps.get_model("extras", "Secret")
     Secret.objects.filter(provider="thycotic-tss-id").update(provider="delinea-tss-id")
     Secret.objects.filter(provider="thycotic-tss-path").update(provider="delinea-tss-path")
@@ -20,5 +20,5 @@ class Migration(migrations.Migration):
     dependencies = []
 
     operations = [
-        migrations.RunPython(update_secrets_provider_slug, reverse_code=reverse_secrets_provider_slugs),
+        migrations.RunPython(update_secrets_provider_slugs, reverse_code=reverse_secrets_provider_slugs),
     ]
