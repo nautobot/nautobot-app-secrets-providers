@@ -1,2 +1,2 @@
-Removed unnecessary provider config from `nautobot_config.py`
+Removed unnecessary provider config from `nautobot_config.py`.
 Removed old references to previous Nautobot versions.
