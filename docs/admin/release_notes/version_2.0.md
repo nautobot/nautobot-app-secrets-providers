@@ -8,16 +8,21 @@ This release updates Secrets Provider to be compatible with Nautobot v2.0.
 
 ## [v2.0.1 (2023-09-29)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v2.0.1)
 
-### Changed
+### Added
 
-- [#113](https://github.com/nautobot/nautobot-app-secrets-providers/issues/113) - Updated version in app's `__init__.py`.
+- [#113](https://github.com/nautobot/nautobot-app-secrets-providers/issues/113) - Added the missing fix for [issue](https://github.com/nautobot/nautobot-app-secrets-providers/issues/91) that was not included for v2.0.0.
 
 ## [v2.0.0 (2023-09-29)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v2.0.0)
 
 ### Changed
 
+- [#105](https://github.com/nautobot/nautobot-app-secrets-providers/pull/106) Updated `nautobot` to `2.0`.
 - [#111](https://github.com/nautobot/nautobot-app-secrets-providers/issues/111) - Migrate app to Nautobot v2.0 compatible.
 
 ### Fixed
 
 - [#92](https://github.com/nautobot/nautobot-app-secrets-providers/issues/92) - Fixed null AWS region.
+
+### Removed
+
+- [#105](https://github.com/nautobot/nautobot-app-secrets-providers/pull/106) - Removed `slug` field from `Secret` model. Can be replaced with `name` field or [natural keys](https://docs.nautobot.com/projects/core/en/next/development/apps/migration/model-updates/global/#replace-the-usage-of-slugs-with-composite-keys).
