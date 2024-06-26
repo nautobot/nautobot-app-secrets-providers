@@ -8,10 +8,10 @@ def update_secret_provider_slug(apps, schema_editor):
     Secret.objects.filter(provider="thycotic-tss-id").update(provider="delinea-tss-id")
     Secret.objects.filter(provider="thycotic-tss-path").update(provider="delinea-tss-path")
 
+
 class Migration(migrations.Migration):
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.RunPython(update_secret_provider_slug),
