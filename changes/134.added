@@ -1,3 +1,0 @@
-Added previous release notes to docs.
-Added logos and missing doc sections.
-Added `0001_update_thycotic_delinea_slug.py` migration to update any legacy Thycotic secrets.

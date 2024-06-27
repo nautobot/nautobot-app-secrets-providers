@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nautobot-secrets-providers"
-version = "2.0.1"
+version = "3.0.0"
 description = "Nautobot Secrets Providers App"
 authors = ["Network to Code, LLC <info@networktocode.com>"]
 license = "Apache-2.0"

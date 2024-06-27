@@ -635,7 +635,7 @@ def help_task(context):
 
 @task(
     help={
-        "version": "Version of Nautobot's Secrets Providers App to generate the release notes for.",
+        "version": "Version of Nautobot Secrets Providers App to generate the release notes for.",
     }
 )
 def generate_release_notes(context, version=""):
