@@ -4,7 +4,7 @@ This document describes all new features and changes in the release `3.0`. The f
 
 ## Release Overview
 
-This release includes support for the Azure Key Vault secrets provider along with significant refactoring and housekeeping.
+This release includes support for the Azure Key Vault secrets provider along with significant refactoring and housekeeping. Notably, all existing references to `Thycotic` were changed to `Delinea`. Be sure to update your app accordingly, including within `PLUGINS_CONFIG` in `nautobot_config.py`.
 
 ## [v3.0.0 (2024-06-27)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v3.0.0)
 
