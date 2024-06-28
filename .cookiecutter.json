@@ -1,19 +1,19 @@
 {
     "cookiecutter": {
-        "codeowner_github_usernames": "@smith-ntc",
+        "codeowner_github_usernames": "@nautobot/core",
         "full_name": "Network to Code, LLC",
         "email": "info@networktocode.com",
         "github_org": "nautobot",
-        "plugin_name": "nautobot_secrets_providers",
-        "verbose_name": "Nautobot's Secrets Providers Plugin",
-        "plugin_slug": "nautobot-secrets-providers",
-        "project_slug": "nautobot-plugin-secrets-providers",
-        "repo_url": "https://github.com/nautobot/nautobot-plugin-secrets-providers",
+        "app_name": "nautobot_secrets_providers",
+        "verbose_name": "Secrets Providers",
+        "app_slug": "nautobot-secrets-providers",
+        "project_slug": "nautobot-app-secrets-providers",
+        "repo_url": "https://github.com/nautobot/nautobot-app-secrets-providers",
         "base_url": "secrets-providers",
         "min_nautobot_version": "2.0.0",
         "max_nautobot_version": "2.9999",
         "camel_name": "NautobotSecretsProviders",
-        "project_short_description": "Nautobot's Secrets Providers Plugin",
+        "project_short_description": "Nautobot App that provides direct integrations with Enterprise secrets management systems. Provides patterns to securely fetch secrets for use by other Nautobot Apps and Nautobot Jobs.",
         "model_class_name": "None",
         "open_source_license": "Apache-2.0",
         "docs_base_url": "https://docs.nautobot.com",
@@ -21,7 +21,7 @@
         "_drift_manager": {
             "template": "https://github.com/nautobot/cookiecutter-nautobot-app.git",
             "template_dir": "nautobot-app",
-            "template_ref": "develop",
+            "template_ref": "refs/tags/nautobot-app-v2.2.1",
             "cookie_dir": "",
             "branch_prefix": "drift-manager",
             "pull_request_strategy": "create",
@@ -29,7 +29,8 @@
                 "black"
             ],
             "draft": true,
-            "baked_commit_ref": "7aafeac5f8c1fb13196084cd328043b2e9d74a3a"
+            "baked_commit_ref": "07ab5a6da72c934c43f1f957ce073bedbfdbfc9a"
         }
     }
 }
+

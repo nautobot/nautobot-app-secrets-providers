@@ -1,4 +1,5 @@
 """Unit tests for Secrets Providers."""
+
 import os
 from unittest.mock import patch, mock_open
 
@@ -248,7 +249,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
     @requests_mock.Mocker()
     def test_v2_fallback(self, requests_mocker):
         """
-        Before https://github.com/nautobot/nautobot-plugin-secrets-providers/pull/53 was merged, the Hashicorp
+        Before https://github.com/nautobot/nautobot-app-secrets-providers/pull/53 was merged, the Hashicorp
         provider would only support KV v2 and did not include a way to specify the KV version.
         This test ensures that the provider will still work without the kv_version parameter.
         """

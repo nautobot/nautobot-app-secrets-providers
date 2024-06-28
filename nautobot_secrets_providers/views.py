@@ -1,4 +1,4 @@
-"""Plugin UI views for Secrets Providers."""
+"""App UI views for Secrets Providers."""
 
 from django.views.generic import TemplateView
 
@@ -6,7 +6,7 @@ from nautobot_secrets_providers import secrets
 
 
 class SecretsProvidersHomeView(TemplateView):
-    """Plugin home page for Secrets Providers."""
+    """App home page for Secrets Providers."""
 
     template_name = "nautobot_secrets_providers/home.html"
 

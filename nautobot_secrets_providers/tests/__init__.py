@@ -1,1 +1,1 @@
-"""Unit tests for nautobot_secrets_providers plugin."""
+"""Unit tests for nautobot_secrets_providers app."""
