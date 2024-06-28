@@ -11,9 +11,5 @@ app_name = "nautobot_secrets_providers"
 
 urlpatterns = [
     path("", views.SecretsProvidersHomeView.as_view(), name="home"),
-    path(
-        "docs/",
-        RedirectView.as_view(url=static("nautobot_secrets_providers/docs/index.html")),
-        name="docs"
-    )
+    path("docs/", RedirectView.as_view(url=static("nautobot_secrets_providers/docs/index.html")), name="docs"),
 ]
