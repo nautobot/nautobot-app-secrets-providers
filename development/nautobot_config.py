@@ -145,8 +145,24 @@ PLUGINS_CONFIG = {
             "username": os.getenv("SECRET_SERVER_USERNAME", ""),
         },
         "hashicorp_vault": {
-            "url": os.environ.get("HASHICORP_VAULT_URL"),
-            "token": os.environ.get("HASHICORP_VAULT_TOKEN"),
+            # "url": os.environ.get("HASHICORP_VAULT_URL"),
+            # "token": os.environ.get("HASHICORP_VAULT_TOKEN"),
+            # "kv_version": "v2",
+            # "ca_cert": False,
+            "configurations": {
+                "hashicorp_approle": {
+                    "url": os.environ.get("HASHICORP_VAULT_URL"),
+                    "auth_method": "approle",
+                    "role_id": os.getenv("NAUTOBOT_HASHICORP_VAULT_ROLE_ID"),
+                    "secret_id": os.getenv("NAUTOBOT_HASHICORP_VAULT_SECRET_ID"),
+                },
+                "hashicorp_v1_custom_mount": {
+                    "url": os.environ.get("HASHICORP_VAULT_URL"),
+                    "token": os.environ.get("HASHICORP_VAULT_TOKEN"),
+                    "kv_version": "v1",
+                    "default_mount_point": "secret_kv",
+                },
+            }
         },
     },
 }
