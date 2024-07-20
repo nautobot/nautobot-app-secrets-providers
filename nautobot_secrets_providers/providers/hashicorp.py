@@ -93,7 +93,10 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         # This is only required for HashiCorp Vault therefore not defined in
         # `required_settings` for the plugin config.
         if not vault_settings:
-            raise exceptions.SecretProviderError(secret, cls, "HashiCorp Vault is not configured!")
+            if vault_config is None:
+                 vault_config = "default"
+            raise exceptions.SecretProviderError(secret, cls, f"HashiCorp Vault {vault_config} is not configured!")
+
 
         auth_method = vault_settings.get("auth_method", "token")
         kv_version = vault_settings.get("kv_version", HashicorpKVVersionChoices.KV_VERSION_2)
