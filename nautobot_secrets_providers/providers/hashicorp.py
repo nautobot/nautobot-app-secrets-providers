@@ -36,8 +36,7 @@ def hashicorp_vault_choices():
     try:
         if plugin_settings["hashicorp_vault"].get("vaults"):
             choices.extend(
-                (key, key.replace("_", " ").title())
-                for key in plugin_settings["hashicorp_vault"]["vaults"].keys()
+                (key, key.replace("_", " ").title()) for key in plugin_settings["hashicorp_vault"]["vaults"].keys()
             )
         else:
             choices.append(("default", "Default"))
@@ -74,7 +73,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         mount_point = forms.CharField(
             required=False,
             help_text="Override Vault Setting: The path where the secret engine was mounted on (Default: <code>secret</code>)",
-            label="Mount Point (override)"
+            label="Mount Point (override)",
         )
         kv_version = forms.ChoiceField(
             required=False,
@@ -82,7 +81,6 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             help_text="Override Vault Setting: The version of the kv engine (either v1 or v2) (Default: <code>v2</code>)",
             label="KV Version (override)",
         )
-
 
     @staticmethod
     def retrieve_vault_settings(name=None):
@@ -92,14 +90,13 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             name (str, optional): Vault name to retrieve from settings. Defaults to None.
 
         Returns:
-            dict: Hashicorp Vault Settings
+            vault_settings (dict): Hashicorp Vault Settings
         """
-
         vault_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"].get("hashicorp_vault", {})
         if name and name != "default":
-            vault_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["hashicorp_vault"][
-                "vaults"
-            ].get(name, {})
+            vault_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["hashicorp_vault"]["vaults"].get(
+                name, {}
+            )
         return vault_settings
 
     @classmethod

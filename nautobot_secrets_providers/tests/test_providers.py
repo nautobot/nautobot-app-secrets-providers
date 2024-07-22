@@ -18,7 +18,7 @@ from nautobot_secrets_providers.providers import (
     AWSSystemsManagerParameterStore,
     HashiCorpVaultSecretsProvider,
 )
-from nautobot_secrets_providers.providers.hashicorp import hashicorp_config_choices
+from nautobot_secrets_providers.providers.hashicorp import hashicorp_vault_choices
 
 from nautobot_secrets_providers.providers.choices import HashicorpKVVersionChoices
 
@@ -208,7 +208,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             parameters={
                 "path": "hello",
                 "key": "location",
-                "hashicorp_config": "example",
+                "hashicorp_vault": "example",
             },
         )
 
@@ -309,7 +309,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         multiple_plugins_config = {
             "nautobot_secrets_providers": {
                 "hashicorp_vault": {
-                    "configurations": {
+                    "vaults": {
                         "example": {"token": "nautobot", "url": "http://localhost:8200"},
                         "example_2": {"token": "nautobot", "url": "http://example.com"},
                     }
@@ -528,7 +528,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         multiple_plugins_config = {
             "nautobot_secrets_providers": {
                 "hashicorp_vault": {
-                    "configurations": {
+                    "vaults": {
                         "example": {"token": "nautobot", "url": "http://localhost:8200"},
                         "example_2": {"token": "nautobot", "url": "http://example.com"},
                     }
@@ -539,12 +539,12 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             returned_settings = self.provider.validate_vault_settings(self.secret, "example")
             self.assertEqual(
                 returned_settings,
-                settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["hashicorp_vault"]["configurations"]["example"],
+                settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["hashicorp_vault"]["vaults"]["example"],
             )
             returned_settings = self.provider.validate_vault_settings(self.secret, "example_2")
             self.assertEqual(
                 returned_settings,
-                settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["hashicorp_vault"]["configurations"]["example_2"],
+                settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["hashicorp_vault"]["vaults"]["example_2"],
             )
 
     @patch.dict(os.environ, aws_auth_env_vars)
@@ -590,13 +590,13 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
                 'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault Login failed (auth_method: aws). Error: , on post http://localhost:8200/v1/auth/aws/login',
             )
 
-    def test_hashicorp_config_choices(self):
-        choices = hashicorp_config_choices()
+    def test_hashicorp_vault_choices(self):
+        choices = hashicorp_vault_choices()
         self.assertEqual(choices, [("default", "Default")])
         multiple_plugins_config = {
             "nautobot_secrets_providers": {
                 "hashicorp_vault": {
-                    "configurations": {
+                    "vaults": {
                         "example": {"token": "nautobot", "url": "http://localhost:8200"},
                         "example_2": {"token": "nautobot", "url": "http://example.com"},
                     }
@@ -604,7 +604,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             }
         }
         with self.settings(PLUGINS_CONFIG=multiple_plugins_config):
-            choices = hashicorp_config_choices()
+            choices = hashicorp_vault_choices()
             self.assertEqual(choices, [("example", "Example"), ("example_2", "Example 2")])
 
 
