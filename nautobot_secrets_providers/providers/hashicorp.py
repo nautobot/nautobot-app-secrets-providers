@@ -24,20 +24,20 @@ K8S_TOKEN_DEFAULT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"  
 AUTH_METHOD_CHOICES = ["approle", "aws", "kubernetes", "token"]
 
 
-def hashicorp_config_choices():
-    """Generate Choices for hashicorp_config form field.
+def hashicorp_vault_choices():
+    """Generate Choices for hashicorp_vault form field.
 
-    If `configurations` is a key in the hashicorp_vault config,
-    then we build a form option for each key in configurations.
+    If `vaults` is a key in the hashicorp_vault config,
+    then we build a form option for each key in vaults.
     Otherwise we fall "Default" to make this a non-breaking change.
     """
     choices = []
     plugin_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
     try:
-        if plugin_settings["hashicorp_vault"].get("configurations"):
+        if plugin_settings["hashicorp_vault"].get("vaults"):
             choices.extend(
                 (key, key.replace("_", " ").title())
-                for key in plugin_settings["hashicorp_vault"]["configurations"].keys()
+                for key in plugin_settings["hashicorp_vault"]["vaults"].keys()
             )
         else:
             choices.append(("default", "Default"))
@@ -66,37 +66,52 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             required=True,
             help_text="The key of the HashiCorp Vault secret",
         )
+        hashicorp_vault = forms.ChoiceField(
+            required=False,  # This should be required, but would be a breaking change
+            choices=hashicorp_vault_choices,
+            help_text="HashiCorp Vault where secret is stored in.",
+        )
         mount_point = forms.CharField(
             required=False,
-            help_text="The path where the secret engine was mounted on (Default: <code>secret</code>)",
+            help_text="Override Vault Setting: The path where the secret engine was mounted on (Default: <code>secret</code>)",
+            label="Mount Point (override)"
         )
         kv_version = forms.ChoiceField(
             required=False,
             choices=add_blank_choice(HashicorpKVVersionChoices),
-            help_text="The version of the kv engine (either v1 or v2) (Default: <code>v2</code>)",
-            label="KV Version",
-        )
-        hashicorp_config = forms.ChoiceField(
-            required=False,
-            choices=hashicorp_config_choices,
-            help_text="",
+            help_text="Override Vault Setting: The version of the kv engine (either v1 or v2) (Default: <code>v2</code>)",
+            label="KV Version (override)",
         )
 
-    @classmethod
-    def validate_vault_settings(cls, secret=None, vault_config=None):
-        """Validate the vault settings."""
+
+    @staticmethod
+    def retrieve_vault_settings(name=None):
+        """Retrieve the configuration from settings that matches the provided vault name.
+
+        Args:
+            name (str, optional): Vault name to retrieve from settings. Defaults to None.
+
+        Returns:
+            dict: Hashicorp Vault Settings
+        """
+
         vault_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"].get("hashicorp_vault", {})
-        if vault_config and vault_config != "default":
+        if name and name != "default":
             vault_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["hashicorp_vault"][
-                "configurations"
-            ].get(vault_config, {})
+                "vaults"
+            ].get(name, {})
+        return vault_settings
+
+    @classmethod
+    def validate_vault_settings(cls, secret=None, vault_name=None):
+        """Validate the vault settings."""
+        vault_settings = cls.retrieve_vault_settings(vault_name)
         # This is only required for HashiCorp Vault therefore not defined in
         # `required_settings` for the plugin config.
         if not vault_settings:
-            if vault_config is None:
-                 vault_config = "default"
-            raise exceptions.SecretProviderError(secret, cls, f"HashiCorp Vault {vault_config} is not configured!")
-
+            if vault_name is None:
+                vault_name = "default"
+            raise exceptions.SecretProviderError(secret, cls, f"HashiCorp Vault {vault_name} is not configured!")
 
         auth_method = vault_settings.get("auth_method", "token")
         kv_version = vault_settings.get("kv_version", HashicorpKVVersionChoices.KV_VERSION_2)
@@ -130,9 +145,9 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         return vault_settings
 
     @classmethod
-    def get_client(cls, secret=None, vault_config=None):
+    def get_client(cls, secret=None, vault_name=None):
         """Authenticate and return a hashicorp client."""
-        vault_settings = cls.validate_vault_settings(secret, vault_config)
+        vault_settings = cls.validate_vault_settings(secret, vault_name)
         auth_method = vault_settings.get("auth_method", "token")
 
         k8s_token_path = vault_settings.get("k8s_token_path", K8S_TOKEN_DEFAULT_PATH)
@@ -195,27 +210,29 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         # Try to get parameters and error out early.
         parameters = secret.rendered_parameters(obj=obj)
         try:
-            configuration = parameters.get("hashicorp_config", "default")
-            vault_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"].get("hashicorp_vault", {})
-            if configuration and configuration != "default":
-                vault_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["hashicorp_vault"][
-                    "configurations"
-                ].get(configuration, {})
+            vault_name = parameters.get("hashicorp_vault", "default")
+            vault_settings = cls.retrieve_vault_settings(vault_name)
         except KeyError:
             vault_settings = {}
+        # Get the mount_point and kv_version from the Vault configuration. These default to the
+        # default Vault that HashiCorp provides.
         secret_mount_point = vault_settings.get("default_mount_point", "secret")
         secret_kv_version = vault_settings.get("kv_version", HashicorpKVVersionChoices.KV_VERSION_2)
 
         try:
             secret_path = parameters["path"]
             secret_key = parameters["key"]
+            # If the user does choose to override the Vault settings at their own risk, we will use
+            # the settings they provide. These are here to support multiple vaults (vault engines) when
+            # that was not allowed by the settings. Ideally these should be deprecated and removed in
+            # the future.
             secret_mount_point = parameters.get("mount_point", secret_mount_point) or secret_mount_point
             secret_kv_version = parameters.get("kv_version", secret_kv_version) or secret_kv_version
         except KeyError as err:
             msg = f"The secret parameter could not be retrieved for field {err}"
             raise exceptions.SecretParametersError(secret, cls, msg) from err
 
-        client = cls.get_client(secret, configuration)
+        client = cls.get_client(secret, vault_name)
 
         try:
             if secret_kv_version == HashicorpKVVersionChoices.KV_VERSION_1:

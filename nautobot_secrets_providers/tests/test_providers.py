@@ -447,7 +447,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
                 self.provider.validate_vault_settings(self.secret)
         self.assertEqual(
             str(err.exception),
-            'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault is not configured!',
+            'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault default is not configured!',
         )
 
         vault_url = "http://localhost:8200"

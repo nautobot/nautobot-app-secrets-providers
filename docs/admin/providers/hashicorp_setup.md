@@ -28,17 +28,17 @@ PLUGINS_CONFIG = {
 - `login_kwargs` - (optional) Additional optional parameters to pass to the login method for [`approle`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.AppRole.login), [`aws`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.Aws.iam_login) and [`kubernetes`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.Kubernetes.login) authentication methods.
 - `namespace` - (optional) Namespace to use for the [`X-Vault-Namespace` header](https://github.com/hvac/hvac/blob/main/hvac/adapters.py#L287) on all hvac client requests. Required when the [`Namespaces`](https://developer.hashicorp.com/vault/docs/enterprise/namespaces#usage) feature is enabled in Vault Enterprise.
 
-### Multiple Hashicorp Configurations
+### Multiple Hashicorp Vaults
 
 +++ 3.1.0
 
-Hashicorp Provider now supports using multiple configurations. You will be able to choose the configuration when creating a secret.
+Hashicorp Provider now supports using multiple vaults (configurations). You will be able to choose the vault when creating a secret.
 
 ```python
 PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
         "hashicorp_vault": {
-            "configurations": {
+            "vaults": {
                 "hashicorp_approle": {
                     "url": os.environ.get("HASHICORP_VAULT_URL"),
                     "auth_method": "approle",
@@ -57,8 +57,8 @@ PLUGINS_CONFIG = {
 }
 ```
 
-![Select Secret Configuration](../../images/light/hashicorp_multiple_configurations.png#only-light)
-![Select Secret Configuration](../../images/dark/hashicorp_multiple_configurations.png#only-dark)
+![Select Secret Configuration](../../images/light/hashicorp_multiple_vaults.png#only-light)
+![Select Secret Configuration](../../images/dark/hashicorp_multiple_vaults.png#only-dark)
 
 !!! note
-    If using this option, you should not have any keys except `configurations` under `hashicorp_vault`.
+    If using this option, you should not have any keys except `vaults` under `hashicorp_vault`.
