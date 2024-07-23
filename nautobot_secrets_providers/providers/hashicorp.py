@@ -24,25 +24,17 @@ K8S_TOKEN_DEFAULT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"  
 AUTH_METHOD_CHOICES = ["approle", "aws", "kubernetes", "token"]
 
 
-def hashicorp_vault_choices():
-    """Generate Choices for hashicorp_vault form field.
+def vault_choices():
+    """Generate Choices for vault form field.
 
-    If `vaults` is a key in the hashicorp_vault config,
+    If `vaults` is a key in the vault config,
     then we build a form option for each key in vaults.
     Otherwise we fall "Default" to make this a non-breaking change.
     """
-    choices = []
     plugin_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
-    try:
-        if plugin_settings["hashicorp_vault"].get("vaults"):
-            choices.extend(
-                (key, key.replace("_", " ").title()) for key in plugin_settings["hashicorp_vault"]["vaults"].keys()
-            )
-        else:
-            choices.append(("default", "Default"))
-    except KeyError:
-        choices.append(("default", "Default"))
-    return choices
+    if "vaults" in plugin_settings["hashicorp_vault"]:
+        return [(key, key.replace("_", " ").title()) for key in plugin_settings["hashicorp_vault"]["vaults"].keys()]
+    return [("default", "Default")]
 
 
 class HashiCorpVaultSecretsProvider(SecretsProvider):
@@ -65,20 +57,20 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             required=True,
             help_text="The key of the HashiCorp Vault secret",
         )
-        hashicorp_vault = forms.ChoiceField(
+        vault = forms.ChoiceField(
             required=False,  # This should be required, but would be a breaking change
-            choices=hashicorp_vault_choices,
-            help_text="HashiCorp Vault where secret is stored in.",
+            choices=vault_choices,
+            help_text="HashiCorp Vault to retrieve the secret from.",
         )
         mount_point = forms.CharField(
             required=False,
-            help_text="Override Vault Setting: The path where the secret engine was mounted on (Default: <code>secret</code>)",
+            help_text="Override Vault Setting: The path where the secret engine was mounted on.",
             label="Mount Point (override)",
         )
         kv_version = forms.ChoiceField(
             required=False,
             choices=add_blank_choice(HashicorpKVVersionChoices),
-            help_text="Override Vault Setting: The version of the kv engine (either v1 or v2) (Default: <code>v2</code>)",
+            help_text="Override Vault Setting: The version of the kv engine (either v1 or v2).",
             label="KV Version (override)",
         )
 
@@ -93,21 +85,20 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
             vault_settings (dict): Hashicorp Vault Settings
         """
         vault_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"].get("hashicorp_vault", {})
-        if name and name != "default":
-            vault_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["hashicorp_vault"]["vaults"].get(
-                name, {}
-            )
+        if name and "vaults" in vault_settings:
+            return vault_settings["vaults"][name]
         return vault_settings
 
     @classmethod
     def validate_vault_settings(cls, secret=None, vault_name=None):
         """Validate the vault settings."""
-        vault_settings = cls.retrieve_vault_settings(vault_name)
-        # This is only required for HashiCorp Vault therefore not defined in
-        # `required_settings` for the plugin config.
+        try:
+            vault_settings = cls.retrieve_vault_settings(vault_name)
+        except KeyError as err:
+            raise exceptions.SecretProviderError(
+                secret, cls, f"HashiCorp Vault {vault_name} is not configured!"
+            ) from err
         if not vault_settings:
-            if vault_name is None:
-                vault_name = "default"
             raise exceptions.SecretProviderError(secret, cls, f"HashiCorp Vault {vault_name} is not configured!")
 
         auth_method = vault_settings.get("auth_method", "token")
@@ -142,7 +133,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         return vault_settings
 
     @classmethod
-    def get_client(cls, secret=None, vault_name=None):
+    def get_client(cls, secret=None, vault_name=None):  # pylint: disable-msg=too-many-locals
         """Authenticate and return a hashicorp client."""
         vault_settings = cls.validate_vault_settings(secret, vault_name)
         auth_method = vault_settings.get("auth_method", "token")
@@ -155,6 +146,8 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         # so we use a parameter to specify the path to the ca_cert, if not provided we use the default of None
         ca_cert = vault_settings.get("ca_cert", None)
 
+        namespace = vault_settings.get("namespace", None)
+
         # Get the client and attempt to retrieve the secret.
         try:
             if auth_method == "token":
@@ -162,12 +155,10 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
                     url=vault_settings["url"],
                     token=vault_settings["token"],
                     verify=ca_cert,
-                    namespace=vault_settings.get("namespace", None),
+                    namespace=namespace,
                 )
             else:
-                client = hvac.Client(
-                    url=vault_settings["url"], verify=ca_cert, namespace=vault_settings.get("namespace", None)
-                )
+                client = hvac.Client(url=vault_settings["url"], verify=ca_cert, namespace=namespace)
                 if auth_method == "approle":
                     client.auth.approle.login(
                         role_id=vault_settings["role_id"],
@@ -207,7 +198,7 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         # Try to get parameters and error out early.
         parameters = secret.rendered_parameters(obj=obj)
         try:
-            vault_name = parameters.get("hashicorp_vault", "default")
+            vault_name = parameters.get("vault", "default")
             vault_settings = cls.retrieve_vault_settings(vault_name)
         except KeyError:
             vault_settings = {}

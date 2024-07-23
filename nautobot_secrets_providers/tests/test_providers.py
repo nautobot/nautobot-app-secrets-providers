@@ -18,7 +18,7 @@ from nautobot_secrets_providers.providers import (
     AWSSystemsManagerParameterStore,
     HashiCorpVaultSecretsProvider,
 )
-from nautobot_secrets_providers.providers.hashicorp import hashicorp_vault_choices
+from nautobot_secrets_providers.providers.hashicorp import vault_choices
 
 from nautobot_secrets_providers.providers.choices import HashicorpKVVersionChoices
 
@@ -208,7 +208,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             parameters={
                 "path": "hello",
                 "key": "location",
-                "hashicorp_vault": "example",
+                "vault": "example",
             },
         )
 
@@ -319,6 +319,25 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         with self.settings(PLUGINS_CONFIG=multiple_plugins_config):
             response = self.provider.get_value_for_secret(self.secret_configuration)
             self.assertEqual(self.mock_response["data"]["data"]["location"], response)
+
+    def test_retrieve_configuration_non_configured_vault(self):
+        multiple_plugins_config = {
+            "nautobot_secrets_providers": {
+                "hashicorp_vault": {
+                    "vaults": {
+                        "example": {"token": "nautobot", "url": "http://localhost:8200"},
+                        "example_2": {"token": "nautobot", "url": "http://example.com"},
+                    }
+                }
+            }
+        }
+        with self.settings(PLUGINS_CONFIG=multiple_plugins_config):
+            with self.assertRaises(exceptions.SecretProviderError) as err:
+                self.provider.validate_vault_settings(self.secret, "test")
+        self.assertEqual(
+            str(err.exception),
+            'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault test is not configured!',
+        )
 
     @requests_mock.Mocker()
     def test_retrieve_invalid_parameters(self, requests_mocker):
@@ -441,10 +460,28 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         returned_settings = self.provider.validate_vault_settings(self.secret, "default")
         self.assertEqual(returned_settings, settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["hashicorp_vault"])
 
+        # Test with named default configuration
+        multiple_plugins_config = {
+            "nautobot_secrets_providers": {
+                "hashicorp_vault": {
+                    "vaults": {
+                        "default": {"token": "nautobot", "url": "http://localhost:8200"},
+                        "example_2": {"token": "nautobot", "url": "http://example.com"},
+                    }
+                }
+            }
+        }
+        with self.settings(PLUGINS_CONFIG=multiple_plugins_config):
+            returned_settings = self.provider.validate_vault_settings(self.secret, "default")
+            self.assertEqual(
+                returned_settings,
+                settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["hashicorp_vault"]["vaults"]["default"],
+            )
+
         # No nautobot_secrets_providers
         with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {}}):
             with self.assertRaises(exceptions.SecretProviderError) as err:
-                self.provider.validate_vault_settings(self.secret)
+                self.provider.validate_vault_settings(self.secret, "default")
         self.assertEqual(
             str(err.exception),
             'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault default is not configured!',
@@ -590,8 +627,8 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
                 'SecretProviderError: Secret "hello-hashicorp" (provider "HashiCorpVaultSecretsProvider"): HashiCorp Vault Login failed (auth_method: aws). Error: , on post http://localhost:8200/v1/auth/aws/login',
             )
 
-    def test_hashicorp_vault_choices(self):
-        choices = hashicorp_vault_choices()
+    def test_vault_choices(self):
+        choices = vault_choices()
         self.assertEqual(choices, [("default", "Default")])
         multiple_plugins_config = {
             "nautobot_secrets_providers": {
@@ -604,7 +641,7 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
             }
         }
         with self.settings(PLUGINS_CONFIG=multiple_plugins_config):
-            choices = hashicorp_vault_choices()
+            choices = vault_choices()
             self.assertEqual(choices, [("example", "Example"), ("example_2", "Example 2")])
 
 
