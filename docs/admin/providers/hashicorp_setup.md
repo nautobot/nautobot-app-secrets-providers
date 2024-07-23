@@ -32,7 +32,7 @@ PLUGINS_CONFIG = {
 
 +++ 3.1.0
 
-Hashicorp Provider now supports using multiple vaults (configurations). You will be able to choose the vault when creating a secret.
+Hashicorp Provider now supports using multiple vaults (configurations). You will be able to choose the vault when creating a secret, For example, you could have one vault using `approle` authentication, and a second vault using `token` authentication in combination with a different default mount point:
 
 ```python
 PLUGINS_CONFIG = {
