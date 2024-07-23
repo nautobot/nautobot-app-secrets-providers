@@ -27,3 +27,38 @@ PLUGINS_CONFIG = {
 - `secret_id` - (optional) Required when `"auth_method": "approle"`.As with other sensitive service credentials, we recommend that you provide the secret_id value as an environment variable and retrieve it with `{"secret_id": os.getenv("NAUTOBOT_HASHICORP_VAULT_SECRET_ID")}` rather than hard-coding it in your `nautobot_config.py`.
 - `login_kwargs` - (optional) Additional optional parameters to pass to the login method for [`approle`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.AppRole.login), [`aws`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.Aws.iam_login) and [`kubernetes`](https://hvac.readthedocs.io/en/stable/source/hvac_api_auth_methods.html#hvac.api.auth_methods.Kubernetes.login) authentication methods.
 - `namespace` - (optional) Namespace to use for the [`X-Vault-Namespace` header](https://github.com/hvac/hvac/blob/main/hvac/adapters.py#L287) on all hvac client requests. Required when the [`Namespaces`](https://developer.hashicorp.com/vault/docs/enterprise/namespaces#usage) feature is enabled in Vault Enterprise.
+
+### Multiple Hashicorp Vaults
+
++++ 3.1.0
+
+Hashicorp Provider now supports using multiple vaults (configurations). You will be able to choose the vault when creating a secret, For example, you could have one vault using `approle` authentication, and a second vault using `token` authentication in combination with a different default mount point:
+
+```python
+PLUGINS_CONFIG = {
+    "nautobot_secrets_providers": {
+        "hashicorp_vault": {
+            "vaults": {
+                "hashicorp_approle": {
+                    "url": os.environ.get("HASHICORP_VAULT_URL"),
+                    "auth_method": "approle",
+                    "role_id": os.getenv("NAUTOBOT_HASHICORP_VAULT_ROLE_ID"),
+                    "secret_id": os.getenv("NAUTOBOT_HASHICORP_VAULT_SECRET_ID"),
+                },
+                "hashicorp_v1_custom_mount": {
+                    "url": os.environ.get("HASHICORP_VAULT_URL"),
+                    "token": os.environ.get("HASHICORP_VAULT_TOKEN"),
+                    "kv_version": "v1",
+                    "default_mount_point": "secret_kv",
+                },
+            }
+        }
+    },
+}
+```
+
+![Select Secret Configuration](../../images/light/hashicorp_multiple_vaults.png#only-light)
+![Select Secret Configuration](../../images/dark/hashicorp_multiple_vaults.png#only-dark)
+
+!!! note
+    If using this option, you should not have any keys except `vaults` under `hashicorp_vault`.
