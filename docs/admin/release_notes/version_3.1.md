@@ -6,7 +6,7 @@ This document describes all new features and changes in the release `3.1`. The f
 
 This release adds support for multiple HashiCorp Vault secrets providers.
 
-## [v3.1.0 (2024-08-02)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v3.1.0)
+## [v3.1.0 (2024-08-01)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v3.1.0)
 
 ### Added
 
