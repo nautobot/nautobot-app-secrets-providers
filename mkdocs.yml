@@ -2,7 +2,7 @@
 dev_addr: "127.0.0.1:8001"
 edit_uri: "edit/main/nautobot-app-secrets-providers/docs"
 site_dir: "nautobot_secrets_providers/static/nautobot_secrets_providers/docs"
-site_name: "Nautobot's Secrets Providers App Documentation"
+site_name: "Secrets Providers Documentation"
 site_url: "https://docs.nautobot.com/projects/secrets-providers/en/latest/"
 repo_url: "https://github.com/nautobot/nautobot-app-secrets-providers"
 copyright: "Copyright &copy; The Authors"
@@ -72,6 +72,8 @@ extra:
       link: "https://twitter.com/networktocode"
       name: "Network to Code Twitter"
 markdown_extensions:
+  - "markdown_version_annotations":
+      admonition_tag: "???"
   - "admonition"
   - "toc":
       permalink: true
@@ -89,7 +91,6 @@ markdown_extensions:
   - "footnotes"
 plugins:
   - "search"
-  - "mkdocs-version-annotations"
   - "mkdocstrings":
       default_handler: "python"
       handlers:

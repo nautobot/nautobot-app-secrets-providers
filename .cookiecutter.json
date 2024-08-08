@@ -1,11 +1,11 @@
 {
     "cookiecutter": {
-        "codeowner_github_usernames": "@smith-ntc",
+        "codeowner_github_usernames": "@nautobot/core",
         "full_name": "Network to Code, LLC",
         "email": "info@networktocode.com",
         "github_org": "nautobot",
         "app_name": "nautobot_secrets_providers",
-        "verbose_name": "Nautobot's Secrets Providers App",
+        "verbose_name": "Secrets Providers",
         "app_slug": "nautobot-secrets-providers",
         "project_slug": "nautobot-app-secrets-providers",
         "repo_url": "https://github.com/nautobot/nautobot-app-secrets-providers",
@@ -21,7 +21,7 @@
         "_drift_manager": {
             "template": "https://github.com/nautobot/cookiecutter-nautobot-app.git",
             "template_dir": "nautobot-app",
-            "template_ref": "refs/tags/nautobot-app-v2.2.0",
+            "template_ref": "refs/tags/nautobot-app-v2.3.0",
             "cookie_dir": "",
             "branch_prefix": "drift-manager",
             "pull_request_strategy": "create",

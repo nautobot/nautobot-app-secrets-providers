@@ -1,4 +1,4 @@
-# Nautobot's Secrets Providers App API Package
+# Secrets Providers API Package
 
 ::: nautobot_secrets_providers.api
     options:

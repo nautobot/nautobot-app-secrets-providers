@@ -1,4 +1,4 @@
-# Nautobot's Secrets Providers App
+# Secrets Providers
 
 <!--
 Developer Note - Remove Me!
@@ -18,7 +18,7 @@ To avoid extra work and temporary links, make sure that publishing docs (or merg
   <a href="https://pypi.org/project/nautobot-secrets-providers/"><img src="https://img.shields.io/pypi/v/nautobot-secrets-providers"></a>
   <a href="https://pypi.org/project/nautobot-secrets-providers/"><img src="https://img.shields.io/pypi/dm/nautobot-secrets-providers"></a>
   <br>
-  An <a href="https://www.networktocode.com/nautobot/apps/">App</a> for <a href="https://nautobot.com/">Nautobot</a>.
+  An <a href="https://networktocode.com/nautobot-apps/">App</a> for <a href="https://nautobot.com/">Nautobot</a>.
 </p>
 
 ## Overview

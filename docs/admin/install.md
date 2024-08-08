@@ -29,7 +29,7 @@ The app is available as a Python package via PyPI and can be installed with `pip
 pip install nautobot-secrets-providers
 ```
 
-To ensure Nautobot's Secrets Providers App is automatically re-installed during future upgrades, create a file named `local_requirements.txt` (if not already existing) in the Nautobot root directory (alongside `requirements.txt`) and list the `nautobot-secrets-providers` package:
+To ensure Secrets Providers is automatically re-installed during future upgrades, create a file named `local_requirements.txt` (if not already existing) in the Nautobot root directory (alongside `requirements.txt`) and list the `nautobot-secrets-providers` package:
 
 ```shell
 echo nautobot-secrets-providers >> local_requirements.txt
