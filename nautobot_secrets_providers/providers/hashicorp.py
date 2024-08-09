@@ -13,14 +13,14 @@ try:
 except ImportError:
     hvac = None
 
-from nautobot.core.forms import add_blank_choice, BootstrapMixin
-from nautobot.extras.secrets import exceptions, SecretsProvider
+from nautobot.core.forms import BootstrapMixin, add_blank_choice
+from nautobot.extras.secrets import SecretsProvider, exceptions
 
 from .choices import HashicorpKVVersionChoices
 
 __all__ = ("HashiCorpVaultSecretsProvider",)
 
-K8S_TOKEN_DEFAULT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"  # nosec B105
+K8S_TOKEN_DEFAULT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"  # noqa: S105
 AUTH_METHOD_CHOICES = ["approle", "aws", "kubernetes", "token"]
 
 

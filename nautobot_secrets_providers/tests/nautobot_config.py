@@ -10,7 +10,6 @@ import os
 from nautobot.core.settings import *  # noqa: F401,F403
 from nautobot.core.settings_funcs import parse_redis_connection
 
-
 ALLOWED_HOSTS = ["*"]
 
 DATABASES = {
@@ -20,7 +19,7 @@ DATABASES = {
         "PASSWORD": os.getenv("NAUTOBOT_DB_PASSWORD", ""),
         "HOST": os.getenv("NAUTOBOT_DB_HOST", "localhost"),
         "PORT": os.getenv("NAUTOBOT_DB_PORT", ""),
-        "CONN_MAX_AGE": int(os.getenv("NAUTOBOT_DB_TIMEOUT", 300)),
+        "CONN_MAX_AGE": int(os.getenv("NAUTOBOT_DB_TIMEOUT", "300")),
         "ENGINE": os.getenv("NAUTOBOT_DB_ENGINE", "django.db.backends.postgresql"),
     }
 }

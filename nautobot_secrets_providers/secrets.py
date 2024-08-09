@@ -7,7 +7,6 @@ Please see the README for how to install those.
 
 from nautobot_secrets_providers import providers
 
-
 # Iterate over included secrets providers and only publish them if their `is_available` flag is True
 # (meaning their dependent library is installed).
 secrets_providers = []

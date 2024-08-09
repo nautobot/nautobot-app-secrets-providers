@@ -16,7 +16,6 @@ def reverse_secrets_provider_slugs(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = []
 
     operations = [
