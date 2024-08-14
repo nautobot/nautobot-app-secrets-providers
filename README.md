@@ -1,4 +1,4 @@
-# Nautobot Secrets Providers App
+# Secrets Providers
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/icon-nautobot-secrets-providers.png" class="logo" height="200px">
@@ -8,7 +8,7 @@
   <a href="https://pypi.org/project/nautobot-secrets-providers/"><img src="https://img.shields.io/pypi/v/nautobot-secrets-providers"></a>
   <a href="https://pypi.org/project/nautobot-secrets-providers/"><img src="https://img.shields.io/pypi/dm/nautobot-secrets-providers"></a>
   <br>
-  An <a href="https://www.networktocode.com/nautobot/apps/">App</a> for <a href="https://nautobot.com/">Nautobot</a>.
+  An <a href="https://networktocode.com/nautobot-apps/">App</a> for <a href="https://nautobot.com/">Nautobot</a>.
 </p>
 
 ## Overview

@@ -9,12 +9,12 @@ from django.conf import settings
 try:
     from delinea.secrets.server import (
         AccessTokenAuthorizer,
-        PasswordGrantAuthorizer,
         DomainPasswordGrantAuthorizer,
-        SecretServerCloud,
+        PasswordGrantAuthorizer,
         SecretServer,
-        ServerSecret,
+        SecretServerCloud,
         SecretServerError,
+        ServerSecret,
     )
 
     delinea_installed = True  # pylint: disable=invalid-name
@@ -22,12 +22,12 @@ except ImportError:
     try:
         from thycotic.secrets.server import (
             AccessTokenAuthorizer,
-            PasswordGrantAuthorizer,
             DomainPasswordGrantAuthorizer,
-            SecretServerCloud,
+            PasswordGrantAuthorizer,
             SecretServer,
-            ServerSecret,
+            SecretServerCloud,
             SecretServerError,
+            ServerSecret,
         )
 
         delinea_installed = True  # pylint: disable=invalid-name
@@ -35,7 +35,7 @@ except ImportError:
         delinea_installed = False  # pylint: disable=invalid-name
 
 from nautobot.core.forms import BootstrapMixin
-from nautobot.extras.secrets import exceptions, SecretsProvider
+from nautobot.extras.secrets import SecretsProvider, exceptions
 
 from .choices import DelineaSecretChoices
 
