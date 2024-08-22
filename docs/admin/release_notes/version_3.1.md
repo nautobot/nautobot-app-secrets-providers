@@ -15,6 +15,7 @@ This release adds support for multiple HashiCorp Vault secrets providers.
 ### Housekeeping
 
 - [#144](https://github.com/nautobot/nautobot-app-secrets-providers/issues/144) - Rebaked from the cookie `nautobot-app-v2.3.0`.
+- [#147](https://github.com/nautobot/nautobot-app-secrets-providers/pull/147) - Updated documentation dependencies and added a pin for the `griffe` documentation dependency.
 
 ## [v3.1.0 (2024-08-01)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v3.1.0)
 
