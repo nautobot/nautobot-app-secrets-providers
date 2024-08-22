@@ -2,8 +2,8 @@
 
 from .aws import AWSSecretsManagerSecretsProvider, AWSSystemsManagerParameterStore
 from .azure import AzureKeyVaultSecretsProvider
-from .hashicorp import HashiCorpVaultSecretsProvider
 from .delinea import DelineaSecretServerSecretsProviderId, DelineaSecretServerSecretsProviderPath
+from .hashicorp import HashiCorpVaultSecretsProvider
 
 __all__ = (
     "AWSSecretsManagerSecretsProvider",

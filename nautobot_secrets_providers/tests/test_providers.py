@@ -1,26 +1,25 @@
 """Unit tests for Secrets Providers."""
 
 import os
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
 
 import boto3
+import requests_mock
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, tag
 from hvac import Client as HVACClient
 from moto import mock_secretsmanager, mock_ssm
-import requests_mock
-
 from nautobot.extras.models import Secret
 from nautobot.extras.secrets import exceptions
+
 from nautobot_secrets_providers.providers import (
     AWSSecretsManagerSecretsProvider,
     AWSSystemsManagerParameterStore,
     HashiCorpVaultSecretsProvider,
 )
-from nautobot_secrets_providers.providers.hashicorp import vault_choices
-
 from nautobot_secrets_providers.providers.choices import HashicorpKVVersionChoices
+from nautobot_secrets_providers.providers.hashicorp import vault_choices
 
 # Use the proper swappable User model
 User = get_user_model()

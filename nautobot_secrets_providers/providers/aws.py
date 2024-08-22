@@ -10,10 +10,8 @@ except (ImportError, ModuleNotFoundError):
     boto3 = None
 
 from django import forms
-
 from nautobot.core.forms import BootstrapMixin
-from nautobot.extras.secrets import exceptions, SecretsProvider
-
+from nautobot.extras.secrets import SecretsProvider, exceptions
 
 __all__ = ("AWSSecretsManagerSecretsProvider", "AWSSystemsManagerParameterStore")
 
