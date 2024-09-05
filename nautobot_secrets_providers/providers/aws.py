@@ -137,7 +137,7 @@ class AWSSystemsManagerParameterStore(SecretsProvider):
         # Create a SSM client.
         session = boto3.session.Session()
         client = session.client(service_name="ssm", region_name=parameters.get("region"))
-        try:
+        try:  # pylint: disable=no-else-raise
             get_secret_value_response = client.get_parameter(Name=parameters.get("name"), WithDecryption=True)
         except ClientError as err:
             if err.response["Error"]["Code"] == "ParameterNotFound":
