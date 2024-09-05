@@ -119,19 +119,16 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.11"]
         db-backend: ["postgresql"]
-        nautobot-version: ["1.6.27"]
+        nautobot-version: ["1.6"]
         include:
-          - python-version: "3.10"
+          - python-version: "3.11"
             db-backend: "postgresql"
-            nautobot-version: "1.4.0"
-          - python-version: "3.8"
+            nautobot-version: "1.6.0"
+          - python-version: "3.11"
             db-backend: "mysql"
-            nautobot-version: "1.4.0"
-          - python-version: "3.10"
-            db-backend: "mysql"
-            nautobot-version: "1.6.27"
+            nautobot-version: "1.6"
     runs-on: "ubuntu-20.04"
     env:
       INVOKE_NAUTOBOT_SECRETS_PROVIDERS_PYTHON_VER: "${{ matrix.python-version }}"
