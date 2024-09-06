@@ -35,6 +35,7 @@ azure-keyvault-secrets = { version = "^4.8.0", optional = true }
 boto3 = { version = "^1.19.5", optional = true }
 hvac = { version = ">=0.11.0, <1.1.0", optional = true }
 python-tss-sdk = {version = "~1.2.0", optional = true}
+onepassword = {git = "https://github.com/1Password/onepassword-sdk-python.git", rev = "v0.1.1", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 coverage = "*"
@@ -71,6 +72,7 @@ all = [
     "azure-keyvault-secrets",
     "boto3",
     "hvac",
+    "onepassword",
     "python-tss-sdk",
 ]
 aws = ["boto3"]
@@ -78,6 +80,7 @@ azure = ["azure-identity", "azure-keyvault-secrets"]
 hashicorp = ["hvac"]
 nautobot = ["nautobot"]
 thycotic = ["python-tss-sdk"]
+onepassword = ["onepassword"]
 
 [tool.pylint.master]
 # Include the pylint_django plugin to avoid spurious warnings about Django patterns
