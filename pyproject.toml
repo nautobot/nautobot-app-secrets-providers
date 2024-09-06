@@ -135,6 +135,8 @@ ignore = [
     "D407", # Missing dashed underline after section
     "D416", # Section name ends in colon
     "E501", # Line too long
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments in function definition
 ]
 
 [tool.ruff.lint.pydocstyle]
