@@ -90,7 +90,7 @@ def docker_compose(context, command, **kwargs):
         "PYTHON_VER": context.nautobot_secrets_providers.python_ver,
     }
     compose_command_tokens = [
-        "docker-compose",
+        "docker compose",
         f"--project-name {context.nautobot_secrets_providers.project_name}",
         f'--project-directory "{context.nautobot_secrets_providers.compose_dir}"',
     ]
@@ -106,7 +106,7 @@ def docker_compose(context, command, **kwargs):
     if service is not None:
         compose_command_tokens.append(service)
 
-    print(f'Running docker-compose command "{command}"')
+    print(f'Running docker compose command "{command}"')
     compose_command = " ".join(compose_command_tokens)
 
     return context.run(compose_command, env=build_env, **kwargs)
