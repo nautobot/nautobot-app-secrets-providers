@@ -14,7 +14,7 @@ To avoid extra work and temporary links, make sure that publishing docs (or merg
   <img src="https://raw.githubusercontent.com/nautobot/nautobot-app-secrets-providers/develop/docs/images/icon-nautobot-secrets-providers.png" class="logo" height="200px">
   <br>
   <a href="https://github.com/nautobot/nautobot-app-secrets-providers/actions"><img src="https://github.com/nautobot/nautobot-app-secrets-providers/actions/workflows/ci.yml/badge.svg?branch=main"></a>
-  <a href="https://docs.nautobot.com/projects/secrets-providers/en/latest/"><img src="https://readthedocs.org/projects/nautobot-plugin-secrets-providers/badge/"></a>
+  <a href="https://docs.nautobot.com/projects/secrets-providers/en/latest/"><img src="https://readthedocs.org/projects/nautobot-app-secrets-providers/badge/"></a>
   <a href="https://pypi.org/project/nautobot-secrets-providers/"><img src="https://img.shields.io/pypi/v/nautobot-secrets-providers"></a>
   <a href="https://pypi.org/project/nautobot-secrets-providers/"><img src="https://img.shields.io/pypi/dm/nautobot-secrets-providers"></a>
   <br>

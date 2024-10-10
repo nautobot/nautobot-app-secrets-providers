@@ -22,6 +22,7 @@ class NautobotSecretsProvidersConfig(NautobotAppConfig):
     max_version = "2.9999"
     default_settings = {}
     caching_config = {}
+    docs_view_name = "plugins:nautobot_secrets_providers:docs"
 
 
 config = NautobotSecretsProvidersConfig  # pylint:disable=invalid-name
