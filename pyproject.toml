@@ -72,7 +72,7 @@ all = [
     "azure-keyvault-secrets",
     "boto3",
     "hvac",
-    "onepassword",
+    "onepassword-sdk",
     "python-tss-sdk",
 ]
 aws = ["boto3"]
