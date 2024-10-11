@@ -11,11 +11,10 @@ PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
         "one_password": {
             "token": os.environ.get("OP_SERVICE_ACCOUNT_TOKEN"),
-            "vaults" {
+            "vaults": {
                 "MyVault": {
                     "token": os.environ.get("OP_SERVICE_ACCOUNT_TOKEN"),
                 },
-                "
             },
         },
     },
