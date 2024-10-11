@@ -54,7 +54,7 @@ pip install nautobot-secrets-providers[hashicorp]
 
 #### 1Password Vault
 
-The 1Password Vault provider requires the `onepassword-sdk` library. THis can easily be installed along witht he app using the following command.
+The 1Password Vault provider requires the `onepassword-sdk` library. This can easily be installed along with the app using the following command.
 
 ```no-highlight
 pip install nautobot-secrets-providers[onepassword]
