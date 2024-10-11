@@ -73,7 +73,8 @@ class OnePasswordSecretsProvider(SecretsProvider):
         )
         field = forms.CharField(
             required=True,
-            help_text="The field where the secret is located.",
+            help_text="The field where the secret is located. Defaults to 'password'.",
+            initial="password",
         )
 
     @classmethod
@@ -84,8 +85,8 @@ class OnePasswordSecretsProvider(SecretsProvider):
             return plugin_settings["one_password"]["vaults"][vault]["token"]
         try:
             return plugin_settings["one_password"]["token"]
-        except KeyError as e:
-            raise exceptions.SecretProviderError(secret, cls, "1Password token is not configured!") from e
+        except KeyError as exc:
+            raise exceptions.SecretProviderError(secret, cls, "1Password token is not configured!") from exc
 
     @classmethod
     def get_value_for_secret(cls, secret, obj=None, **kwargs):  # pylint: disable=too-many-locals

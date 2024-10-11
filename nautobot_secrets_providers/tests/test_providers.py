@@ -755,13 +755,14 @@ class OnePasswordSecretsProviderTestCase(SecretsProviderTestCase):
         }
 
     @patch("nautobot_secrets_providers.providers.one_password.get_secret_from_vault", return_value="world")
-    def test_retrieve_success(self, requests_mocker):
+    def test_retrieve_success(self, get_secret_from_vault):
         """Retrieve a secret successfully."""
-        with self.settings(PLUGINS_CONFIG=self.plugin_config):
-            response = self.provider.get_value_for_secret(self.secret)
-            self.assertEqual("world", response)
-            response2 = self.provider.get_value_for_secret(self.secret2)
-            self.assertEqual("world", response2)
+        with get_secret_from_vault:
+            with self.settings(PLUGINS_CONFIG=self.plugin_config):
+                response = self.provider.get_value_for_secret(self.secret)
+                self.assertEqual("world", response)
+                response2 = self.provider.get_value_for_secret(self.secret2)
+                self.assertEqual("world", response2)
 
     def test_multiple_valid_settings(self):
         # Test with a configuration passed in
