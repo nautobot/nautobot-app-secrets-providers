@@ -36,9 +36,6 @@ files = [
     {file = "annotated_types-0.7.0.tar.gz", hash = "sha256:aff07c09a53a08bc8cfccb9c85b05f1aa9a2a6f23728d790723543408344ce89"},
 ]
 
-[package.dependencies]
-typing-extensions = {version = ">=4.0.0", markers = "python_version < \"3.9\""}
-
 [[package]]
 name = "appnope"
 version = "0.1.4"
@@ -2316,22 +2313,37 @@ signals = ["blinker (>=1.4.0)"]
 signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
-name = "onepassword"
-version = "0.1.1"
+name = "onepassword-sdk"
+version = "0.1.2"
 description = "The 1Password Python SDK offers programmatic read access to your secrets in 1Password in an interface native to Python."
 optional = true
-python-versions = "*"
-files = []
-develop = false
+python-versions = ">=3.9"
+files = [
+    {file = "onepassword_sdk-0.1.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:1ecf5cf2dd51d409171e6fac45cc782dcbb2d87fcc030268a65348224bad23e8"},
+    {file = "onepassword_sdk-0.1.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:714c9f9ec17612e1ed96789145e603335c838cfb29cf78924400a47034bf3688"},
+    {file = "onepassword_sdk-0.1.2-cp310-cp310-manylinux_2_32_aarch64.whl", hash = "sha256:bcf824a3c874833e9534a9c633c1b2b68e5ce04121e82cbb9808328459ecc3b3"},
+    {file = "onepassword_sdk-0.1.2-cp310-cp310-manylinux_2_32_x86_64.whl", hash = "sha256:b1e50d86fc033730f551217d2cb34cab1e486ff4d2bc18918cf36b71955d935c"},
+    {file = "onepassword_sdk-0.1.2-cp310-cp310-win_amd64.whl", hash = "sha256:567828bae40ca48bf493118efec990efd898e10ac3ef7a9cbdc3e2f786241180"},
+    {file = "onepassword_sdk-0.1.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:47e7a6534042a69067ff117998693956bc1429d58cfeac3eb1caa5afb99d7a35"},
+    {file = "onepassword_sdk-0.1.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:72beaa348d8e3e11adc63765e93569b2ca0201a61034889bb0344f1071a91088"},
+    {file = "onepassword_sdk-0.1.2-cp311-cp311-manylinux_2_32_aarch64.whl", hash = "sha256:27516b172bbc0c9156ff1ee3d551703f12c3ae135786e5936acf670d5892cab0"},
+    {file = "onepassword_sdk-0.1.2-cp311-cp311-manylinux_2_32_x86_64.whl", hash = "sha256:809f4d41c1779e980412a4c016917d5fde0a6be7ea54743ef38c13b3fddd577b"},
+    {file = "onepassword_sdk-0.1.2-cp311-cp311-win_amd64.whl", hash = "sha256:55550e1f9756ba6fbe7dab548e1958ba31b1e4ece228e24b407dbd2013b04248"},
+    {file = "onepassword_sdk-0.1.2-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:6da00e28c74a268597d104c3b77fa6f75dc7e75300273d7d245bd07c037d1dd2"},
+    {file = "onepassword_sdk-0.1.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:d28ed9f1f27cb32d418e36ec26b59c4436b2d6627d8ed41a8a84f61c73f28271"},
+    {file = "onepassword_sdk-0.1.2-cp312-cp312-manylinux_2_32_aarch64.whl", hash = "sha256:a03517073b581d7a6525976b2ee79b3a16adc5cd39640ae7e596c33d28d23853"},
+    {file = "onepassword_sdk-0.1.2-cp312-cp312-manylinux_2_32_x86_64.whl", hash = "sha256:663cc389c34eb88bd6f6d74fff5aa6ea7dd96365998c8a3c86ea3528675cd919"},
+    {file = "onepassword_sdk-0.1.2-cp312-cp312-win_amd64.whl", hash = "sha256:33fa9d53f93fdaf5593aeb45a270023f49df42b4790aa498d521e47c4c1c0a80"},
+    {file = "onepassword_sdk-0.1.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:4720067bb35a15e1bee6f539295290cd5cf6b44c5704aeec62a254c23c164d19"},
+    {file = "onepassword_sdk-0.1.2-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:fcea1bcff89bb4e9d14e87d22e1069f8dfd457790b418f60b146dabcbb34a1f8"},
+    {file = "onepassword_sdk-0.1.2-cp39-cp39-manylinux_2_32_aarch64.whl", hash = "sha256:01f73d0a781826c85610fbc5e72f67e650cd252c9416863f30b6da649ec0c38a"},
+    {file = "onepassword_sdk-0.1.2-cp39-cp39-manylinux_2_32_x86_64.whl", hash = "sha256:d0391a7d00b426cb0147264fa421436cfe9465b4cbe08468f6e8b23f735db1f9"},
+    {file = "onepassword_sdk-0.1.2-cp39-cp39-win_amd64.whl", hash = "sha256:505d5a4e16e59da19578014dbc598d7ecda4fe50f2b61ef45f20719bd0a0ccc0"},
+    {file = "onepassword_sdk-0.1.2.tar.gz", hash = "sha256:029ba2e03accc9ffe762414721bc29fd153103afa972d361c1a67d75678d9a5f"},
+]
 
 [package.dependencies]
-pydantic = "*"
-
-[package.source]
-type = "git"
-url = "https://github.com/1Password/onepassword-sdk-python.git"
-reference = "v0.1.1"
-resolved_reference = "713e09f287bdb0661514aab82e5673839dfeb845"
+pydantic = ">=2.5"
 
 [[package]]
 name = "packaging"
@@ -4168,15 +4180,15 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 type = ["pytest-mypy"]
 
 [extras]
-all = ["azure-identity", "azure-keyvault-secrets", "boto3", "hvac", "python-tss-sdk"]
+all = ["azure-identity", "azure-keyvault-secrets", "boto3", "hvac", "onepassword-sdk", "python-tss-sdk"]
 aws = ["boto3"]
 azure = ["azure-identity", "azure-keyvault-secrets"]
 hashicorp = ["hvac"]
 nautobot = ["nautobot"]
-onepassword = ["onepassword"]
+onepassword = ["onepassword-sdk"]
 thycotic = ["python-tss-sdk"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.13"
-content-hash = "a96760da04ecce37ddf0bd886b0aef4b00a72ba405a39fc547f3e4c3d0883a66"
+content-hash = "04bed3774f58ea3b31f28b315231a276230bbc555daf6f64cb05f7c5b246099c"

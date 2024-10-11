@@ -1,27 +1,34 @@
+"""1Password Secrets Provider for Nautobot."""
+
 import asyncio
-import os
+
 from django import forms
 from django.conf import settings
 from nautobot.core.forms import BootstrapMixin
 from nautobot.extras.secrets import SecretsProvider, exceptions
+
 try:
     from onepassword.client import Client
 except ImportError:
     Client = None
+
+from nautobot_secrets_providers import __version__
+
+__all__ = ("OnePasswordSecretsProvider",)
 
 
 async def get_secret_from_vault(vault, item, field, token, section=None):
     """Get a secret from a 1Password vault.
 
     Args:
-        vault (string): 1Password Vault where the secret is located.
-        item (string): 1Password Item where the secret is located.
-        field (string): 1Password secret field name.
-        token (string): 1Password Service Account token.
-        section (string, optional): 1Password Item Section for the secret. Defaults to None.
+        vault (str): 1Password Vault where the secret is located.
+        item (str): 1Password Item where the secret is located.
+        field (str): 1Password secret field name.
+        token (str): 1Password Service Account token.
+        section (str, optional): 1Password Item Section for the secret. Defaults to None.
 
     Returns:
-        promise: Value from the secret.
+        (str): Value from the secret.
     """
     client = await Client.authenticate(
         auth=token, integration_name="nautobot-secrets-providers", integration_version=__version__
@@ -86,7 +93,7 @@ class OnePasswordSecretsProvider(SecretsProvider):
         # This is only required for 1Password therefore not defined in
         # `required_settings` for the app config.
         plugin_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
-        if "1password" not in plugin_settings:
+        if "one_password" not in plugin_settings:
             raise exceptions.SecretProviderError(secret, cls, "1Password is not configured!")
 
         parameters = secret.rendered_parameters(obj=obj)
