@@ -27,5 +27,4 @@ PLUGINS_CONFIG = {
     - `token` (optional) The 1Password Service Account Token to be used by the above vault.
 
 !!! note
-    The Service Account token need to have access to the Vault that it is configured for.
-    Per 1Password policy "You can't grant a service account access to your built-in Personal, Private, or Employee vault, or your default Shared vault."
+    The Service Account token needs to have access to the Vault that it is configured for. Per 1Password policy "You can't grant a service account access to your built-in Personal, Private, or Employee vault, or your default Shared vault."
