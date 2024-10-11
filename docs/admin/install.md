@@ -52,6 +52,17 @@ The HashiCorp Vault provider requires the `hvac` library. This can easily be ins
 pip install nautobot-secrets-providers[hashicorp]
 ```
 
+#### 1Password Vault
+
+The 1Password Vault provider requires the `onepassword-sdk` library. THis can easily be installed along witht he app using the following command.
+
+```no-highlight
+pip install nautobot-secrets-providers[onepassword]
+```
+
+!!! note
+    The 1Password Vault requires a minimum version of Python 3.9.
+
 ### Access Requirements
 
 There are no special access requirements to install the app.

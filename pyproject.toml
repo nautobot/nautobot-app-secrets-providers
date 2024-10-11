@@ -62,7 +62,7 @@ griffe = "1.1.1"
 towncrier = "~23.6.0"
 to-json-schema = "*"
 jsonschema = "*"
-moto = "~2.2.11"
+moto = "~4.2.14"
 pyOpenSSL = "23.2.0"
 requests-mock = "1.9.3"
 
