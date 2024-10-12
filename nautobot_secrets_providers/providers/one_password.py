@@ -1,7 +1,6 @@
 """1Password Secrets Provider for Nautobot."""
 
-import asyncio
-
+from asgiref.sync import async_to_sync
 from django import forms
 from django.conf import settings
 from nautobot.core.forms import BootstrapMixin
@@ -16,7 +15,7 @@ from nautobot_secrets_providers import __version__
 
 __all__ = ("OnePasswordSecretsProvider",)
 
-
+@async_to_sync
 async def get_secret_from_vault(vault, item, field, token, section=None):
     """Get a secret from a 1Password vault.
 
@@ -100,12 +99,10 @@ class OnePasswordSecretsProvider(SecretsProvider):
         parameters = secret.rendered_parameters(obj=obj)
         vault = parameters["vault"]
 
-        return asyncio.run(
-            get_secret_from_vault(
+        return get_secret_from_vault(
                 vault=vault,
                 item=parameters["item"],
                 field=parameters["field"],
                 token=cls.get_token(secret, vault=vault),
                 section=parameters.get("section", None),
             )
-        )
