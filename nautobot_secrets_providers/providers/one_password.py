@@ -15,6 +15,7 @@ from nautobot_secrets_providers import __version__
 
 __all__ = ("OnePasswordSecretsProvider",)
 
+
 @async_to_sync
 async def get_secret_from_vault(vault, item, field, token, section=None):
     """Get a secret from a 1Password vault.
@@ -100,9 +101,9 @@ class OnePasswordSecretsProvider(SecretsProvider):
         vault = parameters["vault"]
 
         return get_secret_from_vault(
-                vault=vault,
-                item=parameters["item"],
-                field=parameters["field"],
-                token=cls.get_token(secret, vault=vault),
-                section=parameters.get("section", None),
-            )
+            vault=vault,
+            item=parameters["item"],
+            field=parameters["field"],
+            token=cls.get_token(secret, vault=vault),
+            section=parameters.get("section", None),
+        )
