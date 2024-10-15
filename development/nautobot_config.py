@@ -163,5 +163,11 @@ PLUGINS_CONFIG = {
                 },
             }
         },
+        "one_password": {
+            "vaults": {},
+            "token": os.getenv(
+                "OP_SERVICE_ACCOUNT_TOKEN",
+            ),
+        },
     },
 }

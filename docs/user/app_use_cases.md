@@ -12,7 +12,8 @@ This document describes common use-cases and scenarios for this App.
 
 ---
 
-![Screenshot of plugin home page](../images/secrets-providers-home.png "App Home page")
+![Screenshot of plugin home page](../images/light/secrets-providers-home.png#only-light "App Home page")
+![Screenshot of plugin home page](../images/dark/secrets-providers-home.png#only-dark "App Home page")
 
 ---
 
@@ -33,3 +34,8 @@ This document describes common use-cases and scenarios for this App.
 ---
 
 ![Screenshot of secret using Azure Key Vault](../images/azure-key-vault-secrets-provider-add.png "Secret using Azure Key Vault")
+
+---
+
+![Screenshot of secret using 1Password](../images/light/1password-vault-secrets-provider-add.png#only-light "Secret using 1Password")
+![Screenshot of secret using 1Password](../images/dark/1password-vault-secrets-provider-add.png#only-dark "Secret using 1Password")

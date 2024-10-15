@@ -112,6 +112,7 @@ nav:
       - Install and Configure: "admin/install.md"
       - Provider Setup:
           - "admin/providers/index.md"
+          - 1Password: "admin/providers/onepassword_setup.md"
           - AWS: "admin/providers/aws_setup.md"
           - Azure: "admin/providers/azure_setup.md"
           - Delinea/Thycotic: "admin/providers/delinea_setup.md"
