@@ -79,7 +79,6 @@ all = [
 aws = ["boto3"]
 azure = ["azure-identity", "azure-keyvault-secrets"]
 hashicorp = ["hvac"]
-nautobot = ["nautobot"]
 thycotic = ["python-tss-sdk"]
 onepassword = ["onepassword-sdk"]
 
