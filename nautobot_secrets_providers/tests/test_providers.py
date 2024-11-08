@@ -17,9 +17,11 @@ from nautobot_secrets_providers.providers import (
     AWSSecretsManagerSecretsProvider,
     AWSSystemsManagerParameterStore,
     HashiCorpVaultSecretsProvider,
+    OnePasswordSecretsProvider,
 )
 from nautobot_secrets_providers.providers.choices import HashicorpKVVersionChoices
 from nautobot_secrets_providers.providers.hashicorp import vault_choices
+from nautobot_secrets_providers.providers.one_password import vault_choices as one_password_vault_choices
 
 # Use the proper swappable User model
 User = get_user_model()
@@ -709,3 +711,110 @@ class AWSSystemsManagerParameterStoreTestCase(SecretsProviderTestCase):
             self.provider.get_value_for_secret(self.secret)
         exc = err.exception
         self.assertIn("ParameterVersionNotFound", exc.message)
+
+
+class OnePasswordSecretsProviderTestCase(SecretsProviderTestCase):
+    """Tests for OnePasswordSecretsProvider."""
+
+    provider = OnePasswordSecretsProvider
+
+    def setUp(self):
+        super().setUp()
+
+        # The secret we be using.
+        self.secret = Secret.objects.create(
+            name="hello-onepassword",
+            provider=self.provider.slug,
+            parameters={
+                "vault": "example",
+                "item": "location",
+                "section": "section",
+                "field": "value",
+            },
+        )
+        self.secret2 = Secret.objects.create(
+            name="hello-onepassword-2",
+            provider=self.provider.slug,
+            parameters={
+                "vault": "example_2",
+                "item": "location",
+                "field": "value",
+            },
+        )
+
+        self.plugin_config = {
+            "nautobot_secrets_providers": {
+                "one_password": {
+                    "vaults": {
+                        "example": {"token": "nautobot"},
+                        "example_2": {},
+                    },
+                    "token": "another",
+                }
+            }
+        }
+
+    @patch("nautobot_secrets_providers.providers.one_password.get_secret_from_vault", return_value="world")
+    def test_retrieve_success(self, get_secret_from_vault):
+        """Retrieve a secret successfully."""
+        with get_secret_from_vault:
+            with self.settings(PLUGINS_CONFIG=self.plugin_config):
+                response = self.provider.get_value_for_secret(self.secret)
+                self.assertEqual("world", response)
+                response2 = self.provider.get_value_for_secret(self.secret2)
+                self.assertEqual("world", response2)
+
+    def test_multiple_valid_settings(self):
+        # Test with a configuration passed in
+        multiple_plugins_config = {
+            "nautobot_secrets_providers": {
+                "one_password": {
+                    "vaults": {
+                        "example": {"token": "nautobot"},
+                        "example_2": {},
+                    },
+                    "token": "another_token",
+                }
+            }
+        }
+
+        invalid_plugins_config = {
+            "nautobot_secrets_providers": {
+                "one_password": {
+                    "vaults": {
+                        "example": {},
+                    },
+                }
+            }
+        }
+
+        with self.settings(PLUGINS_CONFIG=multiple_plugins_config):
+            token = self.provider.get_token(self.secret, "example")
+            self.assertEqual(
+                token,
+                settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["one_password"]["vaults"]["example"]["token"],
+            )
+            token = self.provider.get_token(self.secret, "example_2")
+            self.assertEqual(
+                token,
+                settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["one_password"]["token"],
+            )
+
+        with self.settings(PLUGINS_CONFIG=invalid_plugins_config):
+            with self.assertRaises(exceptions.SecretProviderError):
+                self.provider.get_token(self.secret, "example")
+
+    def test_vault_choices(self):
+        multiple_plugins_config = {
+            "nautobot_secrets_providers": {
+                "one_password": {
+                    "vaults": {
+                        "Example": {"token": "nautobot"},
+                        "Example 2": {"token": "nautobot"},
+                    }
+                }
+            }
+        }
+        with self.settings(PLUGINS_CONFIG=multiple_plugins_config):
+            choices = one_password_vault_choices()
+            self.assertEqual(choices, [("Example", "Example"), ("Example 2", "Example 2")])
