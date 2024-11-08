@@ -4220,11 +4220,10 @@ all = ["azure-identity", "azure-keyvault-secrets", "boto3", "hvac", "onepassword
 aws = ["boto3"]
 azure = ["azure-identity", "azure-keyvault-secrets"]
 hashicorp = ["hvac"]
-nautobot = ["nautobot"]
 onepassword = ["onepassword-sdk"]
 thycotic = ["python-tss-sdk"]
 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.13"
-content-hash = "04bed3774f58ea3b31f28b315231a276230bbc555daf6f64cb05f7c5b246099c"
+content-hash = "cf77b62e61344c212170351c5019b45704ae6466f0f4498a40bd17f233de2fcb"
