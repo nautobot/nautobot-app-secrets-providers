@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nautobot-secrets-providers"
-version = "3.2.1a0"
+version = "3.2.1a1"
 description = "Nautobot Secrets Providers App"
 authors = ["Network to Code, LLC <info@networktocode.com>"]
 license = "Apache-2.0"
@@ -37,6 +37,7 @@ boto3 = { version = "^1.19.5", optional = true }
 hvac = { version = ">=0.11.0, <1.1.0", optional = true }
 python-tss-sdk = {version = "~1.2.0", optional = true}
 onepassword-sdk = {version = "^0.1.2", python = ">=3.9", optional = true}
+pyaim = {version = "^1.5.3", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 coverage = "*"
@@ -75,12 +76,14 @@ all = [
     "hvac",
     "onepassword-sdk",
     "python-tss-sdk",
+    "pyaim",
 ]
 aws = ["boto3"]
 azure = ["azure-identity", "azure-keyvault-secrets"]
 hashicorp = ["hvac"]
 thycotic = ["python-tss-sdk"]
 onepassword = ["onepassword-sdk"]
+cyberark = ["pyaim"]
 
 [tool.pylint.master]
 # Include the pylint_django plugin to avoid spurious warnings about Django patterns
