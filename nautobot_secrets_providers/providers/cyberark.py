@@ -88,7 +88,6 @@ class CyberArkCLIPasswordSDKSecretsProvider(SecretsProvider):
             max_value=30000,
             min_value=0,
             help_text=r"Enter the secret's Policy ID",
-            empty_value=None,
         )
         reason = forms.CharField(
             required=False,
@@ -102,14 +101,12 @@ class CyberArkCLIPasswordSDKSecretsProvider(SecretsProvider):
             max_value=300,
             min_value=0,
             help_text=r"Enter the secret's Query Format",
-            empty_value=None,
         )
         connport = forms.IntegerField(
             required=False,
             max_value=65535,
             min_value=1,
             help_text=r"Enter the secret's Connection Port",
-            empty_value=None,
         )
         #sendhash = forms.BooleanField(
         #    required=False,
