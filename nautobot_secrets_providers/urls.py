@@ -7,7 +7,6 @@ from nautobot.apps.urls import NautobotUIViewSetRouter
 
 from nautobot_secrets_providers import views
 
-
 router = NautobotUIViewSetRouter()
 
 # Here is an example of how to register a viewset, you will want to replace views.NautobotSecretsProvidersUIViewSet with your viewset
