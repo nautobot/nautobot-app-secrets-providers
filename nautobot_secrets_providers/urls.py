@@ -7,6 +7,10 @@ from nautobot.apps.urls import NautobotUIViewSetRouter
 
 from nautobot_secrets_providers import views
 
+# Uncomment the following line if you have views to import
+# from nautobot_secrets_providers import views
+
+
 app_name = "nautobot_secrets_providers"
 router = NautobotUIViewSetRouter()
 
