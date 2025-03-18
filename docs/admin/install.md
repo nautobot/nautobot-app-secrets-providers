@@ -63,6 +63,14 @@ pip install nautobot-secrets-providers[onepassword]
 !!! note
     The 1Password Vault requires a minimum version of Python 3.9.
 
+#### Keeper
+
+The Keeper provider requires the `keeper-secrets-manager-core` library. This can easily be installed along with the app using the following command:
+
+```no-highlight
+pip install nautobot-secrets-providers[keeper]
+```
+
 ### Access Requirements
 
 There are no special access requirements to install the app.
