@@ -1,15 +1,16 @@
 """Nautobot development configuration file."""
+
 import os
 import sys
 
 from nautobot.core.settings import *  # noqa: F403  # pylint: disable=wildcard-import,unused-wildcard-import
-from nautobot.core.settings_funcs import is_truthy, parse_redis_connection
+from nautobot.core.settings_funcs import is_truthy
 
 #
 # Debug
 #
 
-DEBUG = is_truthy(os.getenv("NAUTOBOT_DEBUG", False))
+DEBUG = is_truthy(os.getenv("NAUTOBOT_DEBUG", "false"))
 _TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"
 
 if DEBUG and not _TESTING:
@@ -47,9 +48,10 @@ DATABASES = {
         "PASSWORD": os.getenv("NAUTOBOT_DB_PASSWORD", ""),  # Database password
         "HOST": os.getenv("NAUTOBOT_DB_HOST", "localhost"),  # Database server
         "PORT": os.getenv(
-            "NAUTOBOT_DB_PORT", default_db_settings[nautobot_db_engine]["NAUTOBOT_DB_PORT"]
+            "NAUTOBOT_DB_PORT",
+            default_db_settings[nautobot_db_engine]["NAUTOBOT_DB_PORT"],
         ),  # Database port, default to postgres
-        "CONN_MAX_AGE": int(os.getenv("NAUTOBOT_DB_TIMEOUT", 300)),  # Database timeout
+        "CONN_MAX_AGE": int(os.getenv("NAUTOBOT_DB_TIMEOUT", "300")),  # Database timeout
         "ENGINE": nautobot_db_engine,
     }
 }
@@ -63,16 +65,8 @@ if DATABASES["default"]["ENGINE"] == "django.db.backends.mysql":
 #
 
 # The django-redis cache is used to establish concurrent locks using Redis.
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": parse_redis_connection(redis_database=0),
-        "TIMEOUT": 300,
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        },
-    }
-}
+# Inherited from nautobot.core.settings
+# CACHES = {....}
 
 #
 # Celery settings are not defined here because they can be overloaded with
@@ -133,30 +127,39 @@ PLUGINS = ["nautobot_secrets_providers"]
 
 PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
-        "hashicorp_vault": {
-            "url": os.environ.get("VAULT_URL"),
-            "token": os.environ.get("VAULT_TOKEN"),
-        },
-        "thycotic": {  # https://github.com/thycotic/python-tss-sdk
+        "delinea": {
             "base_url": os.getenv("SECRET_SERVER_BASE_URL"),
-            "cloud_based": is_truthy(os.getenv("SECRET_SERVER_IS_CLOUD_BASED", "False")),
-            # tenant: required when cloud_based == True
-            "tenant": os.getenv("SECRET_SERVER_TENANT", ""),
-            # Setup thycotic authorizer
-            # Username | Password | Token | Domain | Authorizer
-            #   def    |   def    |   *   |   -    | PasswordGrantAuthorizer
-            #   def    |   def    |   *   |  def   | DomainPasswordGrantAuthorizer
-            #    -     |    -     |  def  |   *    | AccessTokenAuthorizer
-            #   def    |    -     |  def  |   *    | AccessTokenAuthorizer
-            #    -     |   def    |  def  |   *    | AccessTokenAuthorizer
-            "username": os.getenv("SECRET_SERVER_USERNAME", ""),
-            "password": os.getenv("SECRET_SERVER_PASSWORD", ""),
-            "token": os.getenv("SECRET_SERVER_TOKEN", ""),
-            "domain": os.getenv("SECRET_SERVER_DOMAIN", ""),
-            # ca_bundle_path: (optional) Path to trusted certificates file.
-            #     This must be set as environment variable.
-            #     see: https://docs.python-requests.org/en/master/user/advanced/
             "ca_bundle_path": os.getenv("REQUESTS_CA_BUNDLE", ""),
+            "cloud_based": is_truthy(os.getenv("SECRET_SERVER_IS_CLOUD_BASED", "False")),
+            "domain": os.getenv("SECRET_SERVER_DOMAIN", ""),
+            "password": os.getenv("SECRET_SERVER_PASSWORD", ""),
+            "tenant": os.getenv("SECRET_SERVER_TENANT", ""),
+            "token": os.getenv("SECRET_SERVER_TOKEN", ""),
+            "username": os.getenv("SECRET_SERVER_USERNAME", ""),
+        },
+        "hashicorp_vault": {
+            # "url": os.environ.get("HASHICORP_VAULT_URL"),
+            # "token": os.environ.get("HASHICORP_VAULT_TOKEN"),
+            "vaults": {
+                "hashicorp_approle": {
+                    "url": os.environ.get("HASHICORP_VAULT_URL"),
+                    "auth_method": "approle",
+                    "role_id": os.getenv("NAUTOBOT_HASHICORP_VAULT_ROLE_ID"),
+                    "secret_id": os.getenv("NAUTOBOT_HASHICORP_VAULT_SECRET_ID"),
+                },
+                "hashicorp_v1_custom_mount": {
+                    "url": os.environ.get("HASHICORP_VAULT_URL"),
+                    "token": os.environ.get("HASHICORP_VAULT_TOKEN"),
+                    "kv_version": "v1",
+                    "default_mount_point": "secret_kv",
+                },
+            }
+        },
+        "one_password": {
+            "vaults": {},
+            "token": os.getenv(
+                "OP_SERVICE_ACCOUNT_TOKEN",
+            ),
         },
     },
 }

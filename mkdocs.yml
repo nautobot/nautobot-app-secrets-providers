@@ -1,8 +1,8 @@
 ---
 dev_addr: "127.0.0.1:8001"
-edit_uri: "edit/main/nautobot-app-secrets-providers/docs"
+edit_uri: "edit/main/docs"
 site_dir: "nautobot_secrets_providers/static/nautobot_secrets_providers/docs"
-site_name: "Nautobot's Secrets Providers App Documentation"
+site_name: "Secrets Providers Documentation"
 site_url: "https://docs.nautobot.com/projects/secrets-providers/en/latest/"
 repo_url: "https://github.com/nautobot/nautobot-app-secrets-providers"
 copyright: "Copyright &copy; The Authors"
@@ -72,6 +72,8 @@ extra:
       link: "https://twitter.com/networktocode"
       name: "Network to Code Twitter"
 markdown_extensions:
+  - "markdown_version_annotations":
+      admonition_tag: "???"
   - "admonition"
   - "toc":
       permalink: true
@@ -89,7 +91,6 @@ markdown_extensions:
   - "footnotes"
 plugins:
   - "search"
-  - "mkdocs-version-annotations"
   - "mkdocstrings":
       default_handler: "python"
       handlers:
@@ -102,11 +103,41 @@ watch:
 
 nav:
   - Overview: "index.md"
+  - User Guide:
+      - App Overview: "user/app_overview.md"
+      - Getting Started: "user/app_getting_started.md"
+      - Using the App: "user/app_use_cases.md"
+      - Frequently Asked Questions: "user/faq.md"
   - Administrator Guide:
       - Install and Configure: "admin/install.md"
+      - Provider Setup:
+          - "admin/providers/index.md"
+          - 1Password: "admin/providers/onepassword_setup.md"
+          - AWS: "admin/providers/aws_setup.md"
+          - Azure: "admin/providers/azure_setup.md"
+          - Delinea/Thycotic: "admin/providers/delinea_setup.md"
+          - HashiCorp: "admin/providers/hashicorp_setup.md"
+      - Upgrade: "admin/upgrade.md"
       - Uninstall: "admin/uninstall.md"
       - Compatibility Matrix: "admin/compatibility_matrix.md"
+      - Release Notes:
+          - "admin/release_notes/index.md"
+          - v3.2: "admin/release_notes/version_3.2.md"
+          - v3.1: "admin/release_notes/version_3.1.md"
+          - v3.0: "admin/release_notes/version_3.0.md"
+          - v2.0: "admin/release_notes/version_2.0.md"
+          - v1.4: "admin/release_notes/version_1.4.md"
+          - v1.3: "admin/release_notes/version_1.3.md"
+          - v1.2: "admin/release_notes/version_1.2.md"
+          - v1.1: "admin/release_notes/version_1.1.md"
+          - v1.0: "admin/release_notes/version_1.0.md"
   - Developer Guide:
+      - Extending the App: "dev/extending.md"
       - Contributing to the App: "dev/contributing.md"
       - Development Environment: "dev/dev_environment.md"
+      - Release Checklist: "dev/release_checklist.md"
+      - Code Reference:
+          - "dev/code_reference/index.md"
+          - Package: "dev/code_reference/package.md"
+          - Providers: "dev/code_reference/providers.md"
   - Nautobot Docs Home ↗︎: "https://docs.nautobot.com"

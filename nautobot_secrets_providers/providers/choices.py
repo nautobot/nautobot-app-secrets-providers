@@ -1,15 +1,16 @@
-"""Choices for providers."""
+"""Choices for Secrets Providers App."""
+
 from nautobot.core.choices import ChoiceSet
 
 
-class ThycoticSecretChoices(ChoiceSet):
-    """Choices for Thycotic Secret Server Result."""
+class DelineaSecretChoices(ChoiceSet):
+    """Choices for Delinea Secret Server Result."""
 
-    SECRET_TOKEN = "token"  # nosec
-    SECRET_PASSWORD = "password"  # nosec
-    SECRET_USERNAME = "username"  # nosec
-    SECRET_URL = "url"  # nosec
-    SECRET_NOTES = "notes"  # nosec
+    SECRET_TOKEN = "token"  # noqa: S105
+    SECRET_PASSWORD = "password"  # noqa: S105
+    SECRET_USERNAME = "username"  # noqa: S105
+    SECRET_URL = "url"  # noqa: S105
+    SECRET_NOTES = "notes"  # noqa: S105
 
     CHOICES = (
         (SECRET_TOKEN, "Token"),

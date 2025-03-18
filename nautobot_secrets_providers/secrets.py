@@ -7,12 +7,12 @@ Please see the README for how to install those.
 
 from nautobot_secrets_providers import providers
 
-
 # Iterate over included secrets providers and only publish them if their `is_available` flag is True
 # (meaning their dependent library is installed).
 secrets_providers = []
 
-for provider in providers.__all__:
+for provider_name in providers.__all__:
+    provider = getattr(providers, provider_name)  # pylint: disable=invalid-name
     # Don't publish multiple times.
     if provider in secrets_providers:
         continue

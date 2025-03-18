@@ -10,10 +10,8 @@ except (ImportError, ModuleNotFoundError):
     boto3 = None
 
 from django import forms
-
 from nautobot.core.forms import BootstrapMixin
-from nautobot.extras.secrets import exceptions, SecretsProvider
-
+from nautobot.extras.secrets import SecretsProvider, exceptions
 
 __all__ = ("AWSSecretsManagerSecretsProvider", "AWSSystemsManagerParameterStore")
 
@@ -83,6 +81,9 @@ class AWSSecretsManagerSecretsProvider(SecretsProvider):
                 # We can't find the resource that you asked for.
                 # Deal with the exception here, and/or rethrow at your discretion.
                 raise exceptions.SecretValueNotFoundError(secret, cls, str(err))
+            else:
+                # We got an error that isn't defined above
+                raise exceptions.SecretProviderError(secret, cls, str(err))
         else:
             # Decrypts secret using the associated KMS CMK.
             # Depending on whether the secret is a string or binary, one of these fields will be populated.
