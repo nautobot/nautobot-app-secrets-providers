@@ -70,7 +70,7 @@ towncrier = ">=23.6.0,<=24.8.0"
 to-json-schema = "*"
 jsonschema = "*"
 moto = "~4.2.14"
-pyOpenSSL = "23.2.0"
+pyOpenSSL = "24.3.0"
 requests-mock = "1.9.3"
 
 [tool.poetry.extras]
