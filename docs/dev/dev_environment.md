@@ -138,18 +138,18 @@ This assumes you are logged into the AWS Console.
 - Navigate to AWS Console
 - Navigate to AWS Secrets Manager
 - Click "Store a new secret"
-  - Select “Other type of secrets”
-  - Use Secret key/value
-  - Enter `hello=world`
-  - Use "DefaultEncryptionKey" for now
-  - Click "Next"
-  - Under "Secret name" fill out `hello`
-  - Click "Next"
-  - Under "Configure automatic rotation"
-    - Leave it as "Disable automatic rotation"
-  - On "Store a new secret"
-    - Copy the sample code (see below)
-  - Click "Store"
+    - Select “Other type of secrets”
+    - Use Secret key/value
+    - Enter `hello=world`
+    - Use "DefaultEncryptionKey" for now
+    - Click "Next"
+    - Under "Secret name" fill out `hello`
+    - Click "Next"
+    - Under "Configure automatic rotation"
+        - Leave it as "Disable automatic rotation"
+    - On "Store a new secret"
+        - Copy the sample code (see below)
+    - Click "Store"
 - END
 
 ##### Install the AWS CLI
@@ -179,8 +179,8 @@ You may use an existing AWS access key or create a new one. For these instructio
 
 - Navigate to AWS Console
 - Click your username
-  - Click "My security credentials"
-  - Click "create access key"
+    - Click "My security credentials"
+    - Click "create access key"
 - Save your "Access key ID" and "Secret access key" for use when configuring the AWS CLI
 
 Now configure the CLI:
