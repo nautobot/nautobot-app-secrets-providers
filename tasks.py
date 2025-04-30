@@ -872,9 +872,9 @@ def unittest(  # noqa: PLR0913
     if not skip_docs_build:
         build_and_check_docs(context)
     if coverage:
-        command = f"coverage run --module nautobot.core.cli test {label}"
+        command = f"coverage run --module nautobot.core.cli --config=nautobot_secrets_providers/tests/nautobot_config.py test {label}"
     else:
-        command = f"nautobot-server test {label}"
+        command = f"nautobot-server --config=nautobot_secrets_providers/tests/nautobot_config.py test {label}"
 
     if keepdb:
         command += " --keepdb"

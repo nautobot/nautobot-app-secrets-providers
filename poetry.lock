@@ -3097,24 +3097,6 @@ pyyaml = "*"
 extra = ["pygments (>=2.19.1)"]
 
 [[package]]
-name = "pyopenssl"
-version = "24.3.0"
-description = "Python wrapper module around the OpenSSL library"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "pyOpenSSL-24.3.0-py3-none-any.whl", hash = "sha256:e474f5a473cd7f92221cc04976e48f4d11502804657a08a989fb3be5514c904a"},
-    {file = "pyopenssl-24.3.0.tar.gz", hash = "sha256:49f7a019577d834746bc55c5fce6ecbcec0f2b4ec5ce1cf43a9a173b8138bb36"},
-]
-
-[package.dependencies]
-cryptography = ">=41.0.5,<45"
-
-[package.extras]
-docs = ["sphinx (!=5.2.0,!=5.2.0.post0,!=7.2.5)", "sphinx_rtd_theme"]
-test = ["pretend", "pytest (>=3.0.1)", "pytest-rerunfailures"]
-
-[[package]]
 name = "python-crontab"
 version = "3.2.0"
 description = "Python Crontab API"
@@ -4361,4 +4343,4 @@ thycotic = ["python-tss-sdk"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.13"
-content-hash = "3f9d88ff31dd0e0603083ce713c5931fcf484776975cb5728e9bea41d6af2f9f"
+content-hash = "d11fffed764ca5536a1e46cb16fc03bbf8ae40206637a71df44de6559fc53dd8"
