@@ -60,5 +60,4 @@ PLUGINS_CONFIG = {
 ![Select Secret Configuration](../../images/light/hashicorp_multiple_vaults.png#only-light)
 ![Select Secret Configuration](../../images/dark/hashicorp_multiple_vaults.png#only-dark)
 
-!!! note
-    If using this option, you should not have any keys except `vaults` under `hashicorp_vault`.
+> **Important** If using this option, you should not have any keys except `vaults` under `hashicorp_vault`.

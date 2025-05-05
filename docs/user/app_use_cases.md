@@ -1,12 +1,16 @@
 # Using the App
 
-This document describes common use-cases and scenarios for this App.
+The Nautobot Secrets Provider app is used for integrating secrets into Nautobot and its automated workflows using third-party vendors to safely store and retrieve secrets or other sensitive information.
 
 ## General Usage
 
-## Use-cases and common workflows
+The overall design philosophy of Nautobot is to not permanently store any passwords or otherwise sensitive information, and to instead leverage existing tools designed specifically for this purpose in order to integrate them into various automations and workflows.
 
-## Screenshots
+This app enables support for various common vendors and integrates the secret retrieval process seamlessly into Nautobot.
+
+## Supported Vendor Screenshots
+
+### General Config
 
 ![Screenshot of installed apps](../images/light/secrets-providers-installed-apps.png#only-light "App landing page")
 ![Screenshot of installed apps](../images/dark/secrets-providers-installed-apps.png#only-dark "App landing page")

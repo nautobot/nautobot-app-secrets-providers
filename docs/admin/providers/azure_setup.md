@@ -12,7 +12,7 @@ No configuration is needed within Nautobot for this provider to operate. Instead
 
 The recommended method is to use a [Service Principal with Secret](https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python#service-principal-with-secret). This method requires three environment variables to be set within the Nautobot environment:
 
-```
+```python
 AZURE_TENANT_ID=''
 AZURE_CLIENT_ID=''
 AZURE_CLIENT_SECRET=''
@@ -22,7 +22,7 @@ AZURE_CLIENT_SECRET=''
 
 You can also use a [Service Principal with Certificate](https://learn.microsoft.com/en-us/python/api/overview/azure/identity-readme?view=azure-python#service-principal-with-certificate), which has these environment variables:
 
-```
+```python
 AZURE_TENANT_ID=''
 AZURE_CLIENT_ID=''
 AZURE_CLIENT_CERTIFICATE_PATH=''

@@ -2,13 +2,12 @@
 
 This document is intended for app maintainers and outlines the steps to perform when releasing a new version of the app.
 
-!!! important
-    Before starting, make sure your **local** `develop`, `main`, and (if applicable) the current LTM branch are all up to date with upstream!
+> **Important** Before starting, make sure your **local** `develop`, `main`, and (if applicable) the current LTM branch are all up to date with upstream!
 
-    ```
-    git fetch
-    git switch develop && git pull # and repeat for main/ltm
-    ```
+```shell
+git fetch
+git switch develop && git pull # and repeat for main/ltm
+```
 
 Choose your own adventure:
 
@@ -22,12 +21,12 @@ Choose your own adventure:
 
 Every minor version release should refresh `poetry.lock`, so that it lists the most recent stable release of each package. To do this:
 
-0. Run `poetry update --dry-run` to have Poetry automatically tell you what package updates are available and the versions it would upgrade to. This requires an existing environment created from the lock file (i.e. via `poetry install`).
-1. Review each requirement's release notes for any breaking or otherwise noteworthy changes.
-2. Run `poetry update <package>` to update the package versions in `poetry.lock` as appropriate.
-3. If a required package requires updating to a new release not covered in the version constraints for a package as defined in `pyproject.toml`, (e.g. `Django ~3.1.7` would never install `Django >=4.0.0`), update it manually in `pyproject.toml`.
-4. Run `poetry install` to install the refreshed versions of all required packages.
-5. Run all tests (`poetry run invoke tests`) and check that the UI and API function as expected.
+1. Run `poetry update --dry-run` to have Poetry automatically tell you what package updates are available and the versions it would upgrade to. This requires an existing environment created from the lock file (i.e. via `poetry install`).
+2. Review each requirement's release notes for any breaking or otherwise noteworthy changes.
+3. Run `poetry update <package>` to update the package versions in `poetry.lock` as appropriate.
+4. If a required package requires updating to a new release not covered in the version constraints for a package as defined in `pyproject.toml`, (e.g. `Django ~3.1.7` would never install `Django >=4.0.0`), update it manually in `pyproject.toml`.
+5. Run `poetry install` to install the refreshed versions of all required packages.
+6. Run all tests (`poetry run invoke tests`) and check that the UI and API function as expected.
 
 ### Update Documentation
 
@@ -35,16 +34,13 @@ If there are any changes to the compatibility matrix (such as a bump in the mini
 
 Commit any resulting changes from the following sections to the documentation before proceeding with the release.
 
-!!! tip
-    Fire up the documentation server in your development environment with `poetry run mkdocs serve`! This allows you to view the documentation site locally (the link is in the output of the command) and automatically rebuilds it as you make changes.
+> **Tip** Fire up the documentation server in your development environment with `poetry run mkdocs serve`! This allows you to view the documentation site locally (the link is in the output of the command) and automatically rebuilds it as you make changes.
 
 ### Verify the Installation and Upgrade Steps
 
 Follow the [installation instructions](../admin/install.md) to perform a new production installation of the app. If possible, also test the [upgrade process](../admin/upgrade.md) from the previous released version.
 
 The goal of this step is to walk through the entire install process *as documented* to make sure nothing there needs to be changed or updated, to catch any errors or omissions in the documentation, and to ensure that it is current with each release.
-
----
 
 ## All Releases from `develop`
 
@@ -63,36 +59,36 @@ The new version must be a valid semver string or a valid bump rule: `patch`, `mi
 
 Display the current version with no arguments:
 
-```no-highlight
-> poetry version
+```shell
+➜ poetry version
 nautobot-secrets-providers 1.0.0-beta.2
 ```
 
 Bump pre-release versions using `prerelease`:
 
-```no-highlight
-> poetry version prerelease
+```shell
+➜ poetry version prerelease
 Bumping version from 1.0.0-beta.2 to 1.0.0-beta.3
 ```
 
 For major versions, use `major`:
 
-```no-highlight
-> poetry version major
+```shell
+➜ poetry version major
 Bumping version from 1.0.0-beta.2 to 1.0.0
 ```
 
 For patch versions, use `minor`:
 
-```no-highlight
-> poetry version minor
+```shell
+➜ poetry version minor
 Bumping version from 1.0.0 to 1.1.0
 ```
 
 And lastly, for patch versions, you guessed it, use `patch`:
 
-```no-highlight
-> poetry version patch
+```shell
+➜ poetry version patch
 Bumping version from 1.1.0 to 1.1.1
 ```
 
@@ -116,8 +112,7 @@ Commit `git commit -m "Release v1.4.2"` and `git push` the staged changes.
 
 Submit a pull request titled `Release v1.4.2` to merge your release branch into `main`. Copy the documented release notes into the pull request's body.
 
-!!! important
-    Do not squash merge this branch into `main`. Make sure to select `Create a merge commit` when merging in GitHub.
+> **Important** Do not squash merge this branch into `main`. Make sure to select `Create a merge commit` when merging in GitHub.
 
 Once CI has completed on the PR, merge it.
 
@@ -125,15 +120,15 @@ Once CI has completed on the PR, merge it.
 
 Draft a [new release](https://github.com/nautobot/nautobot-app-secrets-providers/releases/new) with the following parameters.
 
-* **Tag:** Input current version (e.g. `v1.4.2`) and select `Create new tag: v1.4.2 on publish`
-* **Target:** `main`
-* **Title:** Version and date (e.g. `v1.4.2 - 2024-04-02`)
+- **Tag:** Input current version (e.g. `v1.4.2`) and select `Create new tag: v1.4.2 on publish`
+- **Target:** `main`
+- **Title:** Version and date (e.g. `v1.4.2 - 2024-04-02`)
 
 Click "Generate Release Notes" and edit the auto-generated content as follows:
 
 - Change the entries generated by GitHub to only the usernames of the contributors. e.g. `* Updated dockerfile by @nautobot_user in https://github.com/nautobot/nautobot-app-secrets-providers/pull/123` -> `* @nautobot_user`.
-    - This should give you the list for the new `Contributors` section.
-    - Make sure there are no duplicated entries.
+  - This should give you the list for the new `Contributors` section.
+  - Make sure there are no duplicated entries.
 - Replace the content of the `What's Changed` section with the description of changes from the release PR (what towncrier generated).
 - If it exists, leave the `New Contributors` list as it is.
 
@@ -166,20 +161,19 @@ Create a new branch from `main` called `release-1.4.2-to-develop` and use `poetr
 
 For example, if you just released `v1.4.2`:
 
-```no-highlight
-> git switch -c release-1.4.2-to-develop main
+```shell
+➜ git switch -c release-1.4.2-to-develop main
 Switched to a new branch 'release-1.4.2-to-develop'
 
-> poetry version prepatch
+➜ poetry version prepatch
 Bumping version from 1.4.2 to 1.4.3a1
 
-> git add pyproject.toml && git commit -m "Bump version"
+➜ git add pyproject.toml && git commit -m "Bump version"
 
-> git push
+➜ git push
 ```
 
-!!! important
-    Do not squash merge this branch into `develop`. Make sure to select `Create a merge commit` when merging in GitHub.
+> **Important** Do not squash merge this branch into `develop`. Make sure to select `Create a merge commit` when merging in GitHub.
 
 Open a new PR from `release-1.4.2-to-develop` against `develop`, wait for CI to pass, and merge it.
 
@@ -190,7 +184,6 @@ At this stage, the CI should be running or finished for the `v1.4.2` tag and a p
 Documentation should also have been built for the tag on ReadTheDocs and if you're reading this page online, refresh it and look for the new version in the little version fly-out menu down at the bottom right of the page.
 
 All done!
-
 
 ## LTM Releases
 

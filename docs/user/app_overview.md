@@ -2,8 +2,7 @@
 
 This document provides an overview of the App including critical information and import considerations when applying it to your Nautobot environment.
 
-!!! note
-    Throughout this documentation, the terms "app" and "plugin" will be used interchangeably.
+> **Note** Throughout this documentation, the terms "app" and "plugin" will be used interchangeably.
 
 ## Description
 

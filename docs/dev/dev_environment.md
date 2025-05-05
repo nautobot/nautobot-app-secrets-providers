@@ -24,8 +24,7 @@ Using **Invoke** these configuration options can be overridden using [several me
 
 ### Docker Development Environment
 
-!!! tip
-    This is the recommended option for development.
+> **Tip** This is the recommended option for development.
 
 This project is managed by [Python Poetry](https://python-poetry.org/) and has a few requirements to setup your development environment:
 
@@ -61,7 +60,7 @@ nautobot_secrets_providers:
   local: true
 ```
 
-3. Run the following commands:
+4. Run the following commands:
 
 ```shell
 poetry self add poetry-plugin-shell
@@ -75,7 +74,7 @@ nautobot-server migrate
 
 > If you want to develop on the latest develop branch of Nautobot, run the following command: `poetry add --optional git+https://github.com/nautobot/nautobot@develop`. After the `@` symbol must match either a branch or a tag.
 
-4. You can now run nautobot-server commands as you would from the [Nautobot documentation](https://nautobot.readthedocs.io/en/latest/) for example to start the development server:
+5. You can now run nautobot-server commands as you would from the [Nautobot documentation](https://nautobot.readthedocs.io/en/latest/) for example to start the development server:
 
 ```shell
 nautobot-server runserver 0.0.0.0:8080 --insecure
@@ -101,7 +100,7 @@ Each command can be executed with `invoke <command>`. All commands support the a
 
 #### Local Development Environment
 
-```
+```shell
   build            Build all docker images.
   debug            Start Nautobot and its dependencies in debug mode.
   destroy          Destroy all containers and volumes.
@@ -112,7 +111,7 @@ Each command can be executed with `invoke <command>`. All commands support the a
 
 #### Utility
 
-```
+```shell
   cli              Launch a bash shell inside the running Nautobot container.
   create-user      Create a new user in django (default: admin), will prompt for password.
   makemigrations   Run Make Migration in Django.
@@ -121,7 +120,7 @@ Each command can be executed with `invoke <command>`. All commands support the a
 
 #### Testing
 
-```
+```shell
   ruff             Run ruff to perform code formatting and/or linting.
   pylint           Run pylint code analysis.
   markdownlint     Run pymarkdown linting.
@@ -160,14 +159,14 @@ Next, install the [AWS CLI](https://aws.amazon.com/cli/).
 
 On MacOS, this can be done using `brew install awscli`:
 
-```
+```shell
 brew install awscli
 ```
 
 On Linux, you will need to run a `curl` command (This assumes x86. Please see the docs for [AWS CLI on
 Linux](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html) for ARM and other options):
 
-```
+```shell
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install
@@ -194,7 +193,7 @@ Now configure the CLI:
 
 Example:
 
-```no-highlight
+```shell
 $ aws configure
 AWS Access Key ID [None]: AKIAIOSFODNN7EXAMPLE
 AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
@@ -208,7 +207,7 @@ Now you are ready to use the sample code to retrieve your secret from AWS Secret
 
 Make sure that the `boto3` client is installed:
 
-```no-highlight
+```shell
 poetry install --extras aws
 ```
 
@@ -285,7 +284,7 @@ if __name__ == "__main__":
 
 Run it with `python aws_secrets.py`:
 
-```
+```shell
 $ python aws_secrets.py
 Secret = {"hello":"world"}.
 ```
@@ -296,13 +295,13 @@ Note that this blob is JSON and will also need to be decoded if you want to extr
 
 Make sure that the `hvac` client is installed:
 
-```no-highlight
+```shell
 poetry install --extras hashicorp
 ```
 
 ##### Start Services with Docker
 
-```no-highlight
+```shell
 invoke start
 ```
 
@@ -310,7 +309,7 @@ invoke start
 
 This will allow you to easily run the CLI command from within the container:
 
-```no-highlight
+```shell
 alias vault="docker exec -it nautobot_secrets_providers_vault_1 vault"
 ```
 
@@ -361,15 +360,13 @@ In [4]: client.secrets.kv.read_secret(path="hello")["data"]["data"]["hello"]
 Out[4]: 'world'
 ```
 
-
 ## Project Overview
 
 This project provides the ability to develop and manage the Nautobot server locally (with supporting services being *Dockerized*) or by using only Docker containers to manage Nautobot. The main difference between the two environments is the ability to debug and use **pdb** when developing locally. Debugging with **pdb** within the Docker container is more complicated, but can still be accomplished by either entering into the container (via `docker exec`) or attaching your IDE to the container and running the Nautobot service manually within the container.
 
 The upside to having the Nautobot service handled by Docker rather than locally is that you do not have to manage the Nautobot server. The [Docker logs](#docker-logs) provide the majority of the information you will need to help troubleshoot, while getting started quickly and not requiring you to perform several manual steps and remembering to have the Nautobot server running in a separate terminal while you develop.
 
-!!! note
-	The local environment still uses Docker containers for the supporting services (Postgres, Redis, and RQ Worker), but the Nautobot server is handled locally by you, the developer.
+> **Note** The local environment still uses Docker containers for the supporting services (Postgres, Redis, and RQ Worker), but the Nautobot server is handled locally by you, the developer.
 
 Follow the directions below for the specific development environment that you choose.
 
@@ -404,7 +401,7 @@ cp development/creds.example.env development/creds.env
 
 The first thing you need to do is build the necessary Docker image for Nautobot that installs the specific `nautobot_ver`. The image is used for Nautobot and the Celery worker service used by Docker Compose.
 
-```bash
+```shell
 ➜ invoke build
 ... <omitted for brevity>
 #14 exporting to image
@@ -419,7 +416,7 @@ The first thing you need to do is build the necessary Docker image for Nautobot 
 
 Next, you need to start up your Docker containers.
 
-```bash
+```shell
 ➜ invoke start
 Starting Nautobot in detached mode...
 Running docker-compose command "up --detach"
@@ -440,7 +437,7 @@ Docker Compose is now in the Docker CLI, try `docker compose up`
 
 This will start all of the Docker containers used for hosting Nautobot. You should see the following containers running after `invoke start` is finished.
 
-```bash
+```shell
 ➜ docker ps
 ****CONTAINER ID   IMAGE                            COMMAND                  CREATED          STATUS          PORTS                                       NAMES
 ee90fbfabd77   nautobot-secrets-providers/nautobot:3.0.0-py3.12  "nautobot-server rqw…"   16 seconds ago   Up 13 seconds                                               nautobot_secrets_providers_worker_1
@@ -455,23 +452,21 @@ Once the containers are fully up, you should be able to open up a web browser, a
 - The Nautobot homepage at [http://localhost:8080](http://localhost:8080)
 - A live version of the documentation at [http://localhost:8001](http://localhost:8001)
 
-!!! note
-	Sometimes the containers take a minute to fully spin up. If the page doesn't load right away, wait a minute and try again.
+> **Note** Sometimes the containers take a minute to fully spin up. If the page doesn't load right away, wait a minute and try again.
 
 ### Invoke - Creating a Superuser
 
 The Nautobot development image will automatically provision a super user when specifying the following variables within `creds.env` which is the default when copying `creds.example.env` to `creds.env`.
 
-- `NAUTOBOT_CREATE_SUPERUSER=true`
-- `NAUTOBOT_SUPERUSER_API_TOKEN=0123456789abcdef0123456789abcdef01234567`
-- `NAUTOBOT_SUPERUSER_PASSWORD=admin`
+- NAUTOBOT_CREATE_SUPERUSER=true
+- NAUTOBOT_SUPERUSER_API_TOKEN=0123456789abcdef0123456789abcdef01234567
+- NAUTOBOT_SUPERUSER_PASSWORD=admin
 
-!!! note
-	The default username is **admin**, but can be overridden by specifying **NAUTOBOT_SUPERUSER_USERNAME**.
+> **Note** The default username is **admin**, but can be overridden by specifying **NAUTOBOT_SUPERUSER_USERNAME**.
 
 If you need to create additional superusers, run the follow commands.
 
-```bash
+```shell
 ➜ invoke createsuperuser
 Running docker-compose command "ps --services --filter status=running"
 Running docker-compose command "exec nautobot nautobot-server createsuperuser --username admin"
@@ -487,7 +482,7 @@ Superuser created successfully.
 
 The last command to know for now is `invoke stop`.
 
-```bash
+```shell
 ➜ invoke stop
 Stopping Nautobot...
 Running docker-compose command "down"
@@ -514,12 +509,11 @@ Removing nautobot_secrets_providers_nautobot_1 ... done
 Removing network nautobot_secrets_providers_default
 ```
 
-This will safely shut down all of your running Docker containers for this project. When you are ready to spin containers back up, it is as simple as running `invoke start` again [as seen previously](#invoke-starting-the-development-environment).
+This will safely shut down all of your running Docker containers for this project. When you are ready to spin containers back up, it is as simple as running `invoke start` again [as seen previously](#invoke---starting-the-development-environment).
 
-!!! warning
-	If you're wanting to reset the database and configuration settings, you can use the `invoke destroy` command, but **you will lose any data stored in those containers**, so make sure that is what you want to do.
+> **Warning** If you're wanting to reset the database and configuration settings, you can use the `invoke destroy` command, but **you will lose any data stored in those containers**, so make sure that is what you want to do.
 
-### Real-Time Updates? How Cool!
+### Real-Time Updates
 
 Your environment should now be fully setup, all necessary Docker containers are created and running, and you're logged into Nautobot in your web browser. Now what?
 
@@ -527,27 +521,23 @@ Now you can start developing your app in the project folder!
 
 The magic here is the root directory is mounted inside your Docker containers when built and ran, so **any** changes made to the files in here are directly updated to the Nautobot app code running in Docker. This means that as you modify the code in your app folder, the changes will be instantly updated in Nautobot.
 
-!!! warning
-	There are a few exceptions to this, as outlined in the section [To Rebuild or Not To Rebuild](#to-rebuild-or-not-to-rebuild).
+> **Warning** There are a few exceptions to this, as outlined in the section [To Rebuild or Not To Rebuild](#to-rebuild-or-not-to-rebuild).
 
 The back-end Django process is setup to automatically reload itself (it only takes a couple of seconds) every time a file is updated (saved). So for example, if you were to update one of the files like `tables.py`, then save it, the changes will be visible right away in the web browser!
 
-!!! note
-	You may get connection refused while Django reloads, but it should be refreshed fairly quickly.
+> **Note** You may get connection refused while Django reloads, but it should be refreshed fairly quickly.
 
 ### Docker Logs
 
 When trying to debug an issue, one helpful thing you can look at are the logs within the Docker containers.
 
-```bash
-➜ docker logs <name of container> -f
+```shell
+docker logs <name of container> -f
 ```
 
-!!! note
-	The `-f` tag will keep the logs open, and output them in realtime as they are generated.
+> **Note** The `-f` tag will keep the logs open, and output them in realtime as they are generated.
 
-!!! info
-    Want to limit the log output even further? Use the `--tail <#>` command line argument in conjunction with `-f`.
+Want to limit the log output even further? Use the `--tail <#>` command line argument in conjunction with `-f`.
 
 So for example, our app is named `nautobot-secrets-providers`, the command would most likely be `docker logs nautobot_secrets_providers_nautobot_1 -f`. You can find the name of all running containers via `docker ps`.
 
@@ -565,10 +555,10 @@ To add environment variables to your containers, thus allowing Nautobot to use t
 
 To get new environment variables to take effect, you will need stop any running images, rebuild the images, then restart them. This can easily be done with 3 commands:
 
-```bash
-➜ invoke stop
-➜ invoke build
-➜ invoke start
+```shell
+invoke stop
+invoke build
+invoke start
 ```
 
 Once completed, the new/updated environment variables should now be live.
@@ -577,34 +567,36 @@ Once completed, the new/updated environment variables should now be live.
 
 If you want your app to leverage another available Nautobot app or another Python package, you can easily add them into your Docker environment.
 
-```bash
-➜ poetry add <package_name>
+```shell
+poetry shell
+poetry add <package_name>
 ```
 
 Once the dependencies are resolved, stop the existing containers, rebuild the Docker image, and then start all containers again.
 
-```bash
-➜ invoke stop
-➜ invoke build
-➜ invoke start
+```shell
+invoke stop
+invoke build
+invoke start
 ```
 
 ### Installing Additional Nautobot Apps
 
 Let's say for example you want the new app you're creating to integrate into Slack. To do this, you will want to integrate into the existing Nautobot ChatOps App.
 
-```bash
-➜ poetry add nautobot-chatops
+```shell
+poetry shell
+poetry add nautobot-chatops
 ```
 
 Once you activate the virtual environment via Poetry, you then tell Poetry to install the new app.
 
 Before you continue, you'll need to update the file `development/nautobot_config.py` accordingly with the name of the new app under `PLUGINS` and any relevant settings as necessary for the app under `PLUGINS_CONFIG`. Since you're modifying the underlying OS (not just Django files), you need to rebuild the image. This is a similar process to updating environment variables, which was explained earlier.
 
-```bash
-➜ invoke stop
-➜ invoke build
-➜ invoke start
+```shell
+invoke stop
+invoke build
+invoke start
 ```
 
 Once the containers are up and running, you should now see the new app installed in your Nautobot instance.
@@ -656,46 +648,46 @@ Or set the `INVOKE_NAUTOBOT_SECRETS_PROVIDERS_NAUTOBOT_VER` variable.
 
 To drop into a Django shell for Nautobot (in the Docker container) run:
 
-```bash
-➜ invoke nbshell
+```shell
+invoke nbshell
 ```
 
 This is the same as running:
 
-```bash
-➜ invoke cli
-➜ nautobot-server nbshell
+```shell
+invoke cli
+nautobot-server nbshell
 ```
 
 ### iPython Shell Plus
 
 Django also has a more advanced shell that uses iPython and that will automatically import all the models:
 
-```bash
-➜ invoke shell-plus
+```shell
+invoke shell-plus
 ```
 
 This is the same as running:
 
-```bash
-➜ invoke cli
-➜ nautobot-server shell_plus
+```shell
+invoke cli
+nautobot-server shell_plus
 ```
 
 ### Tests
 
 To run tests against your code, you can run all of the tests that the CI runs against any new PR with:
 
-```bash
-➜ invoke tests
+```shell
+invoke tests
 ```
 
 To run an individual test, you can run any or all of the following:
 
-```bash
-➜ invoke unittest
-➜ invoke ruff
-➜ invoke pylint
+```shell
+invoke unittest
+invoke ruff
+invoke pylint
 ```
 
 ### App Configuration Schema
@@ -704,13 +696,13 @@ In the package source, there is the `nautobot_secrets_providers/app-config-schem
 
 If you make changes to `PLUGINS_CONFIG` or the configuration schema, you can run the following command to validate the schema:
 
-```bash
+```shell
 invoke validate-app-config
 ```
 
 To generate the `app-config-schema.json` file based on the current `PLUGINS_CONFIG` configuration, run the following command:
 
-```bash
+```shell
 invoke generate-app-config-schema
 ```
 
