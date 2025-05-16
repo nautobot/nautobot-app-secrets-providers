@@ -39,3 +39,8 @@ This document describes common use-cases and scenarios for this App.
 
 ![Screenshot of secret using 1Password](../images/light/1password-vault-secrets-provider-add.png#only-light "Secret using 1Password")
 ![Screenshot of secret using 1Password](../images/dark/1password-vault-secrets-provider-add.png#only-dark "Secret using 1Password")
+
+---
+
+![Screenshot of secret using Bitwarden](../images/light/bitwarden-add.png#only-light "Secret using Bitwarden")
+![Screenshot of secret using Bitwarden](../images/dark/bitwarden-vault-secrets-provider-add.png#only-dark "Secret using Bitwarden")
