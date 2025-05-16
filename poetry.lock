@@ -323,6 +323,7 @@ description = "A Bitwarden Client for python"
 optional = true
 python-versions = ">=3.0"
 groups = ["main"]
+markers = "extra == \"all\" or extra == \"bitwarden\""
 files = [
     {file = "bitwarden_sdk-1.0.0-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:c9a18970ea1434954668df44a16bc3eb04e3dfca32140fae7fc8efc4b22a7220"},
     {file = "bitwarden_sdk-1.0.0-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:671a4862ec48e6a07c6823925d28022a6c1bb5376ea068823a2f1a8616abf612"},
@@ -1150,6 +1151,7 @@ description = "Various utilities for working with date and datetime objects"
 optional = true
 python-versions = "*"
 groups = ["main"]
+markers = "extra == \"all\" or extra == \"bitwarden\""
 files = [
     {file = "dateutils-0.6.12-py2.py3-none-any.whl", hash = "sha256:f33b6ab430fa4166e7e9cb8b21ee9f6c9843c48df1a964466f52c79b2a8d53b3"},
     {file = "dateutils-0.6.12.tar.gz", hash = "sha256:03dd90bcb21541bd4eb4b013637e4f1b5f944881c46cc6e4b67a6059e370e3f1"},
@@ -4003,7 +4005,7 @@ files = [
     {file = "pytz-2025.1-py2.py3-none-any.whl", hash = "sha256:89dd22dca55b46eac6eda23b2d72721bf1bdfef212645d81513ef5d03038de57"},
     {file = "pytz-2025.1.tar.gz", hash = "sha256:c2db42be2a2518b28e65f9207c4d05e6ff547d1efa4086469ef855e4ab70178e"},
 ]
-markers = {dev = "python_version == \"3.8\""}
+markers = {main = "extra == \"all\" or extra == \"bitwarden\"", dev = "python_version == \"3.8\""}
 
 [[package]]
 name = "pyuwsgi"
@@ -5309,9 +5311,10 @@ test = ["big-O", "importlib-resources ; python_version < \"3.9\"", "jaraco.funct
 type = ["pytest-mypy"]
 
 [extras]
-all = ["azure-identity", "azure-keyvault-secrets", "boto3", "hvac", "onepassword-sdk", "python-tss-sdk"]
+all = ["azure-identity", "azure-keyvault-secrets", "bitwarden-sdk", "boto3", "hvac", "onepassword-sdk", "python-tss-sdk"]
 aws = ["boto3"]
 azure = ["azure-identity", "azure-keyvault-secrets"]
+bitwarden = ["bitwarden-sdk"]
 hashicorp = ["hvac"]
 onepassword = ["onepassword-sdk"]
 thycotic = ["python-tss-sdk"]
@@ -5319,4 +5322,4 @@ thycotic = ["python-tss-sdk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.8,<3.13"
-content-hash = "776820d40c6775763ecdd3c8ac23c7579335b92136e6f8cc312cd81d1276fbbd"
+content-hash = "7528c24c55f898a2dcd5e394f8bed9b802058a21358ec1e625fb4af8690b4760"
