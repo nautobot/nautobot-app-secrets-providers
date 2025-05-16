@@ -82,6 +82,7 @@ mkdocs-glightbox = "~0.5.2"
 all = [
     "azure-identity",
     "azure-keyvault-secrets",
+    "bitwarden-sdk",
     "boto3",
     "hvac",
     "onepassword-sdk",
@@ -89,6 +90,7 @@ all = [
 ]
 aws = ["boto3"]
 azure = ["azure-identity", "azure-keyvault-secrets"]
+bitwarden = ["bitwarden-sdk"]
 hashicorp = ["hvac"]
 thycotic = ["python-tss-sdk"]
 onepassword = ["onepassword-sdk"]
