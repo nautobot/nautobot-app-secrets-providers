@@ -509,7 +509,7 @@ Removing nautobot_secrets_providers_nautobot_1 ... done
 Removing network nautobot_secrets_providers_default
 ```
 
-This will safely shut down all of your running Docker containers for this project. When you are ready to spin containers back up, it is as simple as running `invoke start` again [as seen previously](#invoke---starting-the-development-environment).
+This will safely shut down all of your running Docker containers for this project. When you are ready to spin containers back up, it is as simple as running `invoke start` again [as seen previously](#start-services-with-docker).
 
 > **Warning** If you're wanting to reset the database and configuration settings, you can use the `invoke destroy` command, but **you will lose any data stored in those containers**, so make sure that is what you want to do.
 

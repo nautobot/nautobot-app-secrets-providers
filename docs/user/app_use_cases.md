@@ -27,8 +27,8 @@ This app enables support for various common vendors and integrates the secret re
 
 ---
 
-![Screenshot of secret using AWS Systems Manager](../images/light/aws-secrets-manager-systems-provider-add.png#only-light "Secret using AWS Systems Manager")
-![Screenshot of secret using AWS Systems Manager](../images/dark/aws-secrets-manager-systems-provider-add.png#only-dark "Secret using AWS Systems Manager")
+![Screenshot of secret using AWS Systems Manager](../images/light/aws-systems-manager-secrets-provider-add.png#only-light "Secret using AWS Systems Manager")
+![Screenshot of secret using AWS Systems Manager](../images/dark/aws-systems-manager-secrets-provider-add.png#only-dark "Secret using AWS Systems Manager")
 
 ---
 
