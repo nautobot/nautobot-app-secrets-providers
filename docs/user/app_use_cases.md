@@ -48,5 +48,5 @@ This document describes common use-cases and scenarios for this App.
 
 ---
 
-![Screenshot of secret using Bitwarden](../images/light/bitwarden-add.png#only-light "Secret using Bitwarden"){ .on-glb }
+![Screenshot of secret using Bitwarden](../images/light/bitwarden-vault-secrets-provider-add.png#only-light "Secret using Bitwarden"){ .on-glb }
 ![Screenshot of secret using Bitwarden](../images/dark/bitwarden-vault-secrets-provider-add.png#only-dark "Secret using Bitwarden"){ .on-glb }
