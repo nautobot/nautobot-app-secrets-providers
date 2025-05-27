@@ -30,5 +30,5 @@ PLUGINS_CONFIG = {
 
 - `token` - (required) The 1Password Service Account Token to be used globally when it is not specified by a vault.
 - `vaults` (required) Each 1Password Vault that is supported by this app will be listed inside this dictionary.
-  - `<vault_name>` (required) The name of the vault needs to be placed as a key inside the `vaults` dictionary.
-    - `token` (optional) The 1Password Service Account Token to be used by the above vault, if overriding the global `token`.
+    - `<vault_name>` (required) The name of the vault needs to be placed as a key inside the `vaults` dictionary.
+        - `token` (optional) The 1Password Service Account Token to be used by the above vault, if overriding the global `token`.

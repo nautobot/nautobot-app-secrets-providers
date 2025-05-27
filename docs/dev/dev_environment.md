@@ -37,6 +37,7 @@ Once you have Poetry and Docker installed you can run the following commands to 
 ```shell
 poetry shell
 poetry install
+invoke build
 invoke start
 ```
 
@@ -123,6 +124,7 @@ Each command can be executed with `invoke <command>`. All commands support the a
 ```
   ruff             Run ruff to perform code formatting and/or linting.
   pylint           Run pylint code analysis.
+  markdownlint     Run pymarkdown linting.
   tests            Run all tests for this app.
   unittest         Run Django unit tests for the app.
 ```
@@ -136,18 +138,18 @@ This assumes you are logged into the AWS Console.
 - Navigate to AWS Console
 - Navigate to AWS Secrets Manager
 - Click "Store a new secret"
-  - Select “Other type of secrets”
-  - Use Secret key/value
-  - Enter `hello=world`
-  - Use "DefaultEncryptionKey" for now
-  - Click "Next"
-  - Under "Secret name" fill out `hello`
-  - Click "Next"
-  - Under "Configure automatic rotation"
-    - Leave it as "Disable automatic rotation"
-  - On "Store a new secret"
-    - Copy the sample code (see below)
-  - Click "Store"
+    - Select “Other type of secrets”
+    - Use Secret key/value
+    - Enter `hello=world`
+    - Use "DefaultEncryptionKey" for now
+    - Click "Next"
+    - Under "Secret name" fill out `hello`
+    - Click "Next"
+    - Under "Configure automatic rotation"
+        - Leave it as "Disable automatic rotation"
+    - On "Store a new secret"
+        - Copy the sample code (see below)
+    - Click "Store"
 - END
 
 ##### Install the AWS CLI
@@ -177,8 +179,8 @@ You may use an existing AWS access key or create a new one. For these instructio
 
 - Navigate to AWS Console
 - Click your username
-  - Click "My security credentials"
-  - Click "create access key"
+    - Click "My security credentials"
+    - Click "create access key"
 - Save your "Access key ID" and "Secret access key" for use when configuring the AWS CLI
 
 Now configure the CLI:
@@ -388,7 +390,7 @@ This project is set up with a number of **Invoke** tasks consumed as simple CLI 
 
 ### Copy the credentials file for Nautobot
 
-First, you need to create the `development/creds.env` file - it stores a bunch of private information such as passwords and tokens for your local Nautobot install. You can make a copy of the `development/creds.example.env` and modify it to suit you.
+First, you may create/overwrite the `development/creds.env` file - it stores a bunch of private information such as passwords and tokens for your local Nautobot install. You can make a copy of the `development/creds.example.env` and modify it to suit you.
 
 ```shell
 cp development/creds.example.env development/creds.env
