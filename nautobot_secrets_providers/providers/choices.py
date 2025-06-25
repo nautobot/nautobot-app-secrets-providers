@@ -31,3 +31,15 @@ class HashicorpKVVersionChoices(ChoiceSet):
         (KV_VERSION_1, "V1"),
         (KV_VERSION_2, "V2"),
     )
+
+
+class KeeperTypeChoices(ChoiceSet):
+    """Choices for Keeper type."""
+
+    PASSWORD = "password"
+    USERNAME = "username"
+
+    CHOICES = (
+        (PASSWORD, "password"),  # nosec B105
+        (USERNAME, "username"),
+    )
