@@ -15,6 +15,14 @@ try:
 except (ImportError, ModuleNotFoundError):
     keeper = None
 
+# try:
+#     from keepercommander import api, subfolder
+#     # from keepercommander import api, vault, vault_extensions, generator, subfolder, record, shared_folder
+#     # subfolder. find_folders, try_resolve_path, get_folder_path, contained_folders
+#     from keepercommander.__main__ import get_params_from_config
+# except (ImportError, ModuleNotFoundError):
+#     keeper = None
+
 from django import forms
 from django.conf import settings
 
