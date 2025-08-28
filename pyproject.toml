@@ -13,7 +13,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -28,7 +27,7 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.13"
+python = ">=3.9.2,<3.13"
 # Used for local development
 nautobot = "^2.0.0"
 azure-identity = { version = "^1.15.0", optional = true }
@@ -71,6 +70,7 @@ to-json-schema = "*"
 jsonschema = "*"
 moto = "~4.2.14"
 requests-mock = "1.9.3"
+djlint = ">=1.36.4,<2.0.0"
 
 [tool.poetry.extras]
 all = [
@@ -281,3 +281,12 @@ showcontent = true
 directory = "housekeeping"
 name = "Housekeeping"
 showcontent = true
+
+[tool.djlint]
+ignore = "H005,H006,H008,H011,H012,H013,H014,H015,H016,H019,H020,H021,H022,H023,H025,H026,H030,H031,H037"
+max_line_length = 1000
+preserve_blank_lines = true
+max_attribute_length = 1000
+line_break_after_multiline_tag = false
+profile="django"
+extend_exclude = "docs/,nautobot_dev_example/static/"
