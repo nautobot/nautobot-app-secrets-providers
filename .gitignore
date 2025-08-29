@@ -303,6 +303,9 @@ development/*.txt
 # Invoke overrides
 invoke.yml
 
+# Docker compose override
+docker-compose.override.yml
+
 # Docs
 public
 /compose.yaml
