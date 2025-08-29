@@ -23,7 +23,7 @@ packages = [
 ]
 include = [
     # Poetry by default will exclude files that are in .gitignore
-    "nautobot_secrets_providers/static/nautobot_secrets_providers/docs/**/*",
+    { path = "nautobot_secrets_providers/static/nautobot_secrets_providers/docs/**/*", format = ["sdist", "wheel"] }
 ]
 
 [tool.poetry.dependencies]
@@ -40,7 +40,8 @@ onepassword-sdk = {version = "^0.1.2", python = ">=3.9", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 coverage = "*"
-django-debug-toolbar = "*"
+# Currently pinned to 5.2.0 due to https://github.com/django-commons/django-debug-toolbar/issues/2168
+django-debug-toolbar = "~5.2.0"
 invoke = "*"
 ipython = "*"
 pylint = "*"
@@ -49,6 +50,11 @@ pylint-nautobot = "*"
 ruff = "~0.8.6"
 yamllint = "*"
 toml = "*"
+# Python implementation of markdownlint
+pymarkdownlnt = [
+    {version = "0.9.26", python = "~3.8.0"},
+    {version = "~0.9.29", python = ">=3.9,<3.13"},
+]
 Markdown = "*"
 # Render custom markdown for version added/changed/remove notes
 markdown-version-annotations = "1.0.1"
@@ -65,8 +71,8 @@ towncrier = "~24.8.0"
 to-json-schema = "*"
 jsonschema = "*"
 moto = "~4.2.14"
-pyOpenSSL = "24.3.0"
 requests-mock = "1.9.3"
+djlint = ">=1.36.4,<2.0.0"
 
 [tool.poetry.extras]
 all = [
@@ -153,6 +159,74 @@ convention = "google"
     "S"
 ]
 
+[tool.coverage.run]
+disable_warnings = ["already-imported"]
+relative_files = true
+omit = [
+    # Skip Tests
+    "*/tests/*",
+]
+include = [
+    "nautobot_secrets_providers/*",
+]
+
+[tool.pymarkdown]
+# Seems to be not support for whitelisting rules: https://github.com/jackdewinter/pymarkdown/issues/1396
+plugins.md001.enabled = false
+plugins.md002.enabled = false
+plugins.md003.enabled = false
+plugins.md004.enabled = false
+plugins.md005.enabled = false
+plugins.md006.enabled = false
+plugins.md007.enabled = false
+plugins.md008.enabled = false
+plugins.md009.enabled = false
+plugins.md010.enabled = false
+plugins.md011.enabled = false
+plugins.md012.enabled = false
+plugins.md013.enabled = false
+plugins.md014.enabled = false
+plugins.md015.enabled = false
+plugins.md016.enabled = false
+plugins.md017.enabled = false
+plugins.md018.enabled = false
+plugins.md019.enabled = false
+plugins.md020.enabled = false
+plugins.md021.enabled = false
+plugins.md022.enabled = false
+plugins.md023.enabled = false
+plugins.md024.enabled = false
+plugins.md025.enabled = false
+plugins.md026.enabled = false
+plugins.md027.enabled = false
+plugins.md028.enabled = false
+plugins.md029.enabled = false
+plugins.md030.enabled = false
+plugins.md031.enabled = false
+plugins.md032.enabled = true # blanks-around-lists
+plugins.md033.enabled = false
+plugins.md034.enabled = false
+plugins.md035.enabled = false
+plugins.md036.enabled = false
+plugins.md037.enabled = false
+plugins.md038.enabled = false
+plugins.md039.enabled = false
+plugins.md040.enabled = false
+plugins.md041.enabled = false
+plugins.md042.enabled = false
+plugins.md043.enabled = false
+plugins.md044.enabled = false
+plugins.md045.enabled = false
+plugins.md046.enabled = false
+plugins.md047.enabled = false
+plugins.md048.enabled = false
+plugins.md049.enabled = false
+plugins.md050.enabled = false
+plugins.pml100.enabled = false
+plugins.pml101.enabled = true # list-anchored-indent
+plugins.pml102.enabled = false
+plugins.pml103.enabled = false
+
 [build-system]
 requires = ["poetry_core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
@@ -209,3 +283,12 @@ showcontent = true
 directory = "housekeeping"
 name = "Housekeeping"
 showcontent = true
+
+[tool.djlint]
+ignore = "H005,H006,H008,H011,H012,H013,H014,H015,H016,H019,H020,H021,H022,H023,H025,H026,H030,H031,H037"
+max_line_length = 1000
+preserve_blank_lines = true
+max_attribute_length = 1000
+line_break_after_multiline_tag = false
+profile="django"
+extend_exclude = "docs/,nautobot_secrets_providers/static/"
