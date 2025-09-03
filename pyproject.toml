@@ -285,9 +285,5 @@ showcontent = true
 
 [tool.djlint]
 ignore = "H005,H006,H008,H011,H012,H013,H014,H015,H016,H019,H020,H021,H022,H023,H025,H026,H030,H031,H037"
-max_line_length = 1000
-preserve_blank_lines = true
-max_attribute_length = 1000
-line_break_after_multiline_tag = false
 profile="django"
 extend_exclude = "docs/,nautobot_secrets_providers/static/"
