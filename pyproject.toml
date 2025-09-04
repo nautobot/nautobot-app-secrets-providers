@@ -13,10 +13,10 @@ classifiers = [
     "Intended Audience :: Developers",
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 packages = [
     { include = "nautobot_secrets_providers" },
@@ -70,6 +70,7 @@ jsonschema = "*"
 moto = "~4.2.14"
 requests-mock = "1.9.3"
 djlint = ">=1.36.4,<2.0.0"
+djhtml = ">=3.0.8,<4.0.0"
 
 [tool.poetry.extras]
 all = [
