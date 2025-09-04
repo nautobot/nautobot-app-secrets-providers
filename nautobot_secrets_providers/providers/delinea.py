@@ -100,7 +100,7 @@ class DelineaSecretServerSecretsProviderBase(SecretsProvider):
         )
 
     @staticmethod
-    def query_delinea_secret_server(  # pylint: disable=too-many-boolean-expressions,too-many-locals,too-many-branches,too-many-arguments
+    def query_delinea_secret_server(  # pylint: disable=too-many-boolean-expressions,too-many-locals,too-many-branches,too-many-arguments,too-many-positional-arguments
         secret,
         base_url,
         ca_bundle_path=None,
