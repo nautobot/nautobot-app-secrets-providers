@@ -35,7 +35,6 @@ description = "A simple, easy to use, unified manner of accessing program proper
 optional = false
 python-versions = ">=3.9.0"
 groups = ["dev"]
-markers = "python_version <= \"3.12\""
 files = [
     {file = "application_properties-0.9.0-py3-none-any.whl", hash = "sha256:2f3d4cba46c4807c0dad5df632c379f1676d2c3b1a45a962f4f4527ce2713c97"},
     {file = "application_properties-0.9.0.tar.gz", hash = "sha256:98a623210f82c2ca3911b19ba00bddedf15a84133ad8aad03b317e9e1ce56666"},
@@ -596,7 +595,6 @@ description = "A tool for printing data in a columnar format."
 optional = false
 python-versions = "*"
 groups = ["dev"]
-markers = "python_version <= \"3.12\""
 files = [
     {file = "Columnar-1.4.1-py3-none-any.whl", hash = "sha256:8efb692a7e6ca07dcc8f4ea889960421331a5dffa8e5af81f0a67ad8ea1fc798"},
     {file = "Columnar-1.4.1.tar.gz", hash = "sha256:c3cb57273333b2ff9cfaafc86f09307419330c97faa88dcfe23df05e6fbb9c72"},
@@ -3112,7 +3110,6 @@ description = "JSON5 serializer and parser for Python 3 written in Cython."
 optional = false
 python-versions = "~=3.7"
 groups = ["dev"]
-markers = "python_version <= \"3.12\""
 files = [
     {file = "pyjson5-1.6.9-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:bd84d94e8422e14292f1acc8edcc7deaee313eb7475c113ba77a16c0ac384160"},
     {file = "pyjson5-1.6.9-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:f4a3215d5ecab101e0e9752d4aec6935ab45a82f6f0282283307bbab495c9677"},
@@ -3349,7 +3346,6 @@ description = "A GitHub Flavored Markdown compliant Markdown linter."
 optional = false
 python-versions = ">=3.9.0"
 groups = ["dev"]
-markers = "python_version <= \"3.12\""
 files = [
     {file = "pymarkdownlnt-0.9.32-py3-none-any.whl", hash = "sha256:7e825418925efb6ff3125484dd634c7f0af7ef0a26e2823ea781d8d5b6554a34"},
     {file = "pymarkdownlnt-0.9.32.tar.gz", hash = "sha256:c7e1f333780ddef8decd28f575f9ab1211075d52115992d1651c4a0fd236bb1d"},
@@ -4246,7 +4242,6 @@ description = "A lil' TOML parser"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
-markers = "python_version <= \"3.12\""
 files = [
     {file = "tomli-2.2.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:678e4fa69e4575eb77d103de3df8a895e1591b48e740211bd1067378c69e8249"},
     {file = "tomli-2.2.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:023aa114dd824ade0100497eb2318602af309e5a55595f76b626d6d9f3b7b0a6"},
@@ -4301,7 +4296,6 @@ description = "List processing tools and functional utilities"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
-markers = "python_version <= \"3.12\""
 files = [
     {file = "toolz-1.0.0-py3-none-any.whl", hash = "sha256:292c8f1c4e7516bf9086f8850935c799a874039c8bcf959d47b600e4c44a6236"},
     {file = "toolz-1.0.0.tar.gz", hash = "sha256:2c86e3d9a04798ac556793bced838816296a2f085017664e4995cb40a1047a02"},
@@ -4376,7 +4370,6 @@ files = [
     {file = "typing_extensions-4.15.0-py3-none-any.whl", hash = "sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548"},
     {file = "typing_extensions-4.15.0.tar.gz", hash = "sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466"},
 ]
-markers = {dev = "python_version <= \"3.12\""}
 
 [[package]]
 name = "typing-inspection"
@@ -4581,4 +4574,4 @@ thycotic = ["python-tss-sdk"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.14"
-content-hash = "e9d9d7e3a13d1d86d91d79b0c2d0aa89313ac7c2d3487305813cb763911abfdc"
+content-hash = "3a13912016858dc1585d93f245c59b241b45c2d2da29ad01062e80f82f9dc3b2"
