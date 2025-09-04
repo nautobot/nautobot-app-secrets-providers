@@ -70,7 +70,6 @@ jsonschema = "*"
 moto = "~4.2.14"
 requests-mock = "1.9.3"
 djlint = ">=1.36.4,<2.0.0"
-djhtml = ">=3.0.8,<4.0.0"
 
 [tool.poetry.extras]
 all = [
