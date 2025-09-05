@@ -814,6 +814,26 @@ def ruff(context, action=None, target=None, fix=False, output_format="concise"):
         raise Exit(code=exit_code)
 
 
+@task(
+    help={
+        "target": "File or directory to inspect, repeatable (default: all files in the project will be inspected)",
+    },
+    iterable=["target"],
+)
+def djlint(context, target=None):
+    """Run djlint to lint Django templates."""
+    if not target:
+        target = ["."]
+
+    command = "djlint --lint "
+
+    command += " ".join(target)
+
+    exit_code = 0 if run_command(context, command, warn=True) else 1
+    if exit_code != 0:
+        raise Exit(code=exit_code)
+
+
 @task
 def yamllint(context):
     """Run yamllint to validate formatting adheres to NTC defined YAML standards.
@@ -930,6 +950,8 @@ def tests(context, failfast=False, keepdb=False, lint_only=False):
     # Sorted loosely from fastest to slowest
     print("Running ruff...")
     ruff(context)
+    print("Running djlint...")
+    djlint(context)
     print("Running yamllint...")
     yamllint(context)
     print("Running markdownlint...")

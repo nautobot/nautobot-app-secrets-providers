@@ -39,7 +39,8 @@ onepassword-sdk = {version = "^0.1.2", python = ">=3.9", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 coverage = "*"
-django-debug-toolbar = "*"
+# Currently pinned to 5.2.0 due to https://github.com/django-commons/django-debug-toolbar/issues/2168
+django-debug-toolbar = "~5.2.0"
 invoke = "*"
 ipython = "*"
 pylint = "*"
@@ -67,6 +68,7 @@ to-json-schema = "*"
 jsonschema = "*"
 moto = "~4.2.14"
 requests-mock = "1.9.3"
+djlint = ">=1.36.4,<2.0.0"
 
 [tool.poetry.extras]
 all = [
@@ -277,3 +279,8 @@ showcontent = true
 directory = "housekeeping"
 name = "Housekeeping"
 showcontent = true
+
+[tool.djlint]
+ignore = "H005,H006,H008,H011,H012,H013,H014,H015,H016,H019,H020,H021,H022,H023,H025,H026,H030,H031,H037"
+profile="django"
+extend_exclude = "docs/,nautobot_secrets_providers/static/"
