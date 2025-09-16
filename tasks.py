@@ -251,19 +251,20 @@ def _get_docker_nautobot_version(context, nautobot_ver=None, python_ver=None):
             "Generally intended to be used in CI and not for local development. (default: disabled)"
         ),
         "constrain_python_ver": (
-            "When using `constrain_nautobot_ver`, further constrain the nautobot version "
-            "to python_ver so that poetry doesn't complain about python version incompatibilities. "
+            "Target Python version to constrain resolution. Accepts X.Y or X.Y.Z. "
+            "Example: --constrain-python-ver=3.9.3 "
+            "This helps avoid poetry complaints about Python incompatibilities. "
             "Generally intended to be used in CI and not for local development. (default: disabled)"
         ),
     }
 )
-def lock(context, check=False, constrain_nautobot_ver=False, constrain_python_ver=False):
-    """Generate poetry.lock file."""
+def lock(context, check=False, constrain_nautobot_ver=False, constrain_python_ver=""):
+    """Generate poetry.lock; optionally constrain Nautobot and/or Python (with patch)."""
     if constrain_nautobot_ver:
         docker_nautobot_version = _get_docker_nautobot_version(context)
         command = f"poetry add --lock nautobot@{docker_nautobot_version}"
         if constrain_python_ver:
-            command += f" --python {context.nautobot_secrets_providers.python_ver}"
+            command += f" --python {constrain_python_ver}"
         try:
             output = run_command(context, command, hide=True)
             print(output.stdout, end="")
@@ -272,10 +273,10 @@ def lock(context, check=False, constrain_nautobot_ver=False, constrain_python_ve
             print("Unable to add Nautobot dependency with version constraint, falling back to git branch.")
             command = f"poetry add --lock git+https://github.com/nautobot/nautobot.git#{context.nautobot_secrets_providers.nautobot_ver}"
             if constrain_python_ver:
-                command += f" --python {context.nautobot_secrets_providers.python_ver}"
+                command += f" --python {constrain_python_ver}"
             run_command(context, command)
     else:
-        command = f"poetry {'check' if check else 'lock --no-update'}"
+        command = f"poetry {'check' if check else 'lock'}"
         run_command(context, command)
 
 
@@ -773,11 +774,12 @@ def pylint(context):
 def autoformat(context):
     """Run code autoformatting."""
     ruff(context, action=["format"], fix=True)
+    djhtml(context)
 
 
 @task(
     help={
-        "action": "Available values are `['lint', 'format']`. Can be used multiple times. (default: `['lint', 'format']`)",
+        "action": "Available values are `['lint', 'format']`. Can be used multiple times. (default: `--action lint --action format`)",
         "target": "File or directory to inspect, repeatable (default: all files in the project will be inspected)",
         "fix": "Automatically fix selected actions. May not be able to fix all issues found. (default: False)",
         "output_format": "See https://docs.astral.sh/ruff/settings/#output-format for details. (default: `concise`)",
@@ -826,7 +828,10 @@ def djlint(context, target=None):
         target = ["."]
 
     command = "djlint --lint "
+<<<<<<< HEAD
 
+=======
+>>>>>>> c8f7250 (Cookie updated by NetworkToCode Cookie Drift Manager Tool)
     command += " ".join(target)
 
     exit_code = 0 if run_command(context, command, warn=True) else 1
@@ -834,6 +839,26 @@ def djlint(context, target=None):
         raise Exit(code=exit_code)
 
 
+<<<<<<< HEAD
+=======
+@task(
+    help={
+        "check": "Run djhtml in check mode.",
+    },
+)
+def djhtml(context, check=False):
+    """Run djhtml to format Django HTML templates."""
+    command = "djhtml -t 4 nautobot_secrets_providers/templates/"
+
+    if check:
+        command += " --check"
+
+    exit_code = 0 if run_command(context, command, warn=True) else 1
+    if exit_code != 0:
+        raise Exit(code=exit_code)
+
+
+>>>>>>> c8f7250 (Cookie updated by NetworkToCode Cookie Drift Manager Tool)
 @task
 def yamllint(context):
     """Run yamllint to validate formatting adheres to NTC defined YAML standards.
