@@ -130,10 +130,7 @@ Each command can be executed with `invoke <command>`. All commands support the a
   tests            Run all tests for this app.
   unittest         Run Django unit tests for the app.
   djlint           Run djlint to perform django template linting.
-<<<<<<< HEAD
-=======
   djhtml           Run djhtml to perform django template formatting.
->>>>>>> c8f7250 (Cookie updated by NetworkToCode Cookie Drift Manager Tool)
 ```
 
 ### Developing Against Secrets Backends

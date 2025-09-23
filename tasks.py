@@ -828,10 +828,6 @@ def djlint(context, target=None):
         target = ["."]
 
     command = "djlint --lint "
-<<<<<<< HEAD
-
-=======
->>>>>>> c8f7250 (Cookie updated by NetworkToCode Cookie Drift Manager Tool)
     command += " ".join(target)
 
     exit_code = 0 if run_command(context, command, warn=True) else 1
@@ -839,8 +835,6 @@ def djlint(context, target=None):
         raise Exit(code=exit_code)
 
 
-<<<<<<< HEAD
-=======
 @task(
     help={
         "check": "Run djhtml in check mode.",
@@ -858,7 +852,6 @@ def djhtml(context, check=False):
         raise Exit(code=exit_code)
 
 
->>>>>>> c8f7250 (Cookie updated by NetworkToCode Cookie Drift Manager Tool)
 @task
 def yamllint(context):
     """Run yamllint to validate formatting adheres to NTC defined YAML standards.
