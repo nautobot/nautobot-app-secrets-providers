@@ -1,1 +1,0 @@
-Removed `nautobot` "extra" from packaging as it's a required dependency.
