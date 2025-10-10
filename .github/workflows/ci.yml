@@ -9,7 +9,6 @@ on: # yamllint disable-line rule:truthy rule:comments
       - "main"
       - "develop"
       - "next-3.0"
-      - "u/bryanculver-bump-next-3.0-for-pre-release" # TODO: Remove after validating CI
     tags:
       - "v*"
   pull_request: ~
