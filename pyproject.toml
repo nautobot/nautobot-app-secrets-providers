@@ -28,17 +28,13 @@ include = [
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
 # Used for local development
-<<<<<<< HEAD
-nautobot = ">=2.4.2,<3.0.0"
+nautobot = ">=2.4.20,<3.0.0"
 azure-identity = { version = "^1.15.0", optional = true }
 azure-keyvault-secrets = { version = "^4.8.0", optional = true }
 boto3 = { version = "^1.19.5", optional = true }
 hvac = { version = ">=0.11.0, <1.1.0", optional = true }
 python-tss-sdk = {version = "~1.2.0", optional = true}
 onepassword-sdk = {version = "^0.1.2", python = ">=3.9", optional = true}
-=======
-nautobot = ">=2.4.20,<3.0.0"
->>>>>>> 00830af (Cookie updated by NetworkToCode Cookie Drift Manager Tool)
 
 [tool.poetry.group.dev.dependencies]
 coverage = "*"

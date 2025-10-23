@@ -8,12 +8,6 @@ on: # yamllint disable-line rule:truthy rule:comments
     branches:
       - "main"
       - "develop"
-<<<<<<< HEAD
-      - "next-2.0"
-    tags:
-      - "v*"
-=======
->>>>>>> 00830af (Cookie updated by NetworkToCode Cookie Drift Manager Tool)
   pull_request: ~
 
 env:
