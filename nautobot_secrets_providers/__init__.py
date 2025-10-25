@@ -19,7 +19,6 @@ class NautobotSecretsProvidersConfig(NautobotAppConfig):
     base_url = "secrets-providers"
     required_settings = []
     default_settings = {}
-    caching_config = {}
     docs_view_name = "plugins:nautobot_secrets_providers:docs"
     searchable_models = []
 
