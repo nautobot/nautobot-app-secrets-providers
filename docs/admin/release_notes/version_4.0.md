@@ -8,7 +8,14 @@ This document describes all new features and changes in the release. The format 
 - Major features or milestones
 - Changes to compatibility with Nautobot and/or other apps, libraries etc.
 
-## [v4.0.0a1 (2025-10-09)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v4.0.0a1)
+<!-- towncrier release notes start -->
+## [v4.0.0a2 (2025-10-30)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v4.0.0a2)
+
+### Housekeeping
+
+- [#192](https://github.com/nautobot/nautobot-app-secrets-providers/issues/192) - Build and package the docs during release.
+
+## [v4.0.0a1 (2025-10-28)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v4.0.0a1)
 
 ### Added
 
