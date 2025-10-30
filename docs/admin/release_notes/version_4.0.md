@@ -15,7 +15,7 @@ This document describes all new features and changes in the release. The format 
 
 - [#192](https://github.com/nautobot/nautobot-app-secrets-providers/issues/192) - Build and package the docs during release.
 
-## [v4.0.0a1 (2025-10-09)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v4.0.0a1)
+## [v4.0.0a1 (2025-10-28)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v4.0.0a1)
 
 ### Added
 
