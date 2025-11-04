@@ -15,4 +15,5 @@ class SecretsProvidersHomeView(LoginRequiredMixin, TemplateView):
         """Inject `secrets_providers` into template context."""
         ctx = super().get_context_data(**kwargs)
         ctx["secrets_providers"] = secrets.secrets_providers
+        ctx["title"] = "Secrets Providers Home"
         return ctx
