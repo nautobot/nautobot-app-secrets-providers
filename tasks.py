@@ -52,7 +52,7 @@ namespace = Collection("nautobot_secrets_providers")
 namespace.configure(
     {
         "nautobot_secrets_providers": {
-            "nautobot_ver": "2.4.20",
+            "nautobot_ver": "next",  # TODO: Change to 3.0.0 after v3.0.0 is released
             "project_name": "nautobot-secrets-providers",
             "python_ver": "3.12",
             "local": False,
