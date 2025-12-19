@@ -11,7 +11,7 @@ class SecretsProvidersHomeView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         """Inject `secrets_providers` into template context."""
-        from nautobot_secrets_providers import secrets
+        from nautobot_secrets_providers import secrets  # pylint: disable=import-outside-toplevel
 
         ctx = super().get_context_data(**kwargs)
         ctx["secrets_providers"] = secrets.secrets_providers
