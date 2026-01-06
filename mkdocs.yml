@@ -116,6 +116,7 @@ nav:
           - 1Password: "admin/providers/onepassword_setup.md"
           - AWS: "admin/providers/aws_setup.md"
           - Azure: "admin/providers/azure_setup.md"
+          - Bitwarden: "admin/providers/bitwarden_setup.md"
           - Delinea/Thycotic: "admin/providers/delinea_setup.md"
           - HashiCorp: "admin/providers/hashicorp_setup.md"
       - Upgrade: "admin/upgrade.md"

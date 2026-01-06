@@ -36,12 +36,16 @@ The Azure Key Vault provider requires the `azure-identity` and `azure-keyvault-s
 pip install nautobot-secrets-providers[azure]
 ```
 
+#### Bitwarden Secrets Manager
+
+The Bitwarden Secrets Manager provider requires the 
+
 #### Delinea/Thycotic Secret Server
 
-The Delinea/Thycotic Secret Server provider requires the `python-tss-sdk` library. This can easily be installed along with the app using the following command:
+The Delinea/Thycotic Secret Server provider requires the `bitwarden-sdk` library. This can easily be installed along with the app using the following command:
 
 ```no-highlight
-pip install nautobot-secrets-providers[thycotic]
+pip install nautobot-secrets-providers[bitwarden]
 ```
 
 #### HashiCorp Vault
