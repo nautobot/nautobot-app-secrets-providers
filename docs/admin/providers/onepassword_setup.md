@@ -6,8 +6,7 @@ Requires a minimum of Python3.9
 
 You must create a Service Account for the 1Password vault/vaults you are trying to access. You can follow the [Getting Started with Service Accounts](https://developer.1password.com/docs/service-accounts/get-started/) to assist with creating the Service Account.
 
-!!! note
-    The Service Account token needs to have access to the Vault that it is configured for. Per 1Password policy "You can't grant a service account access to your built-in Personal, Private, or Employee vault, or your default Shared vault."
+> **Important** The Service Account token needs to have access to the Vault that it is configured for. Per 1Password policy, "You can't grant a service account access to your built-in Personal, Private, or Employee vault, or your default Shared vault."
 
 ## Configuration
 

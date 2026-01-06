@@ -23,7 +23,7 @@ We highly recommend you defer to using environment variables for your deployment
 
 This is an example based on our recommended deployment pattern in the section above (method 3) that uses [environment variables](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#environment-variables). You will need to set these in the environment prior to starting Nautobot:
 
-```no-highlight
+```shell
 export AWS_ACCESS_KEY_ID=foo      # The access key for your AWS account.
 export AWS_SECRET_ACCESS_KEY=bar  # The secret key for your AWS account.
 ```

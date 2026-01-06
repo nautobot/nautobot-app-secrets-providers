@@ -7,8 +7,7 @@ Here you will find detailed instructions on how to **install** and **configure**
 - The app is compatible with Nautobot 3.0.0 and higher.
 - Databases supported: PostgreSQL, MySQL
 
-!!! note
-    Please check the [dedicated page](compatibility_matrix.md) for a full compatibility matrix and the deprecation policy.
+> **Note** Please check the [dedicated page](compatibility_matrix.md) for a full compatibility matrix and the deprecation policy.
 
 Before you proceed, you must have **at least one** of the dependent libaries installed as detailed below.
 
@@ -24,7 +23,7 @@ For this app to operate you must install at least one of the dependent libraries
 
 AWS Secrets Manager and Systems Manager Parameter Store are supported. Both providers require the `boto3` library. This can be easily installed along with the app using the following command:
 
-```no-highlight
+```shell
 pip install nautobot-secrets-providers[aws]
 ```
 
@@ -32,7 +31,7 @@ pip install nautobot-secrets-providers[aws]
 
 The Azure Key Vault provider requires the `azure-identity` and `azure-keyvault-secrets` libraries. This can be easily installed along with the app using the following command:
 
-```no-highlight
+```shell
 pip install nautobot-secrets-providers[azure]
 ```
 
@@ -40,7 +39,7 @@ pip install nautobot-secrets-providers[azure]
 
 The Delinea/Thycotic Secret Server provider requires the `python-tss-sdk` library. This can easily be installed along with the app using the following command:
 
-```no-highlight
+```shell
 pip install nautobot-secrets-providers[thycotic]
 ```
 
@@ -48,7 +47,7 @@ pip install nautobot-secrets-providers[thycotic]
 
 The HashiCorp Vault provider requires the `hvac` library. This can easily be installed along with the app using the following command:
 
-```no-highlight
+```shell
 pip install nautobot-secrets-providers[hashicorp]
 ```
 
@@ -56,12 +55,11 @@ pip install nautobot-secrets-providers[hashicorp]
 
 The 1Password Vault provider requires the `onepassword-sdk` library. This can easily be installed along with the app using the following command.
 
-```no-highlight
+```shell
 pip install nautobot-secrets-providers[onepassword]
 ```
 
-!!! note
-    The 1Password Vault requires a minimum version of Python 3.9.
+> **Note** The 1Password Vault requires a minimum version of Python 3.9.
 
 ### Access Requirements
 
@@ -69,8 +67,7 @@ There are no special access requirements to install the app.
 
 ## Install Guide
 
-!!! note
-    Apps can be installed from the [Python Package Index](https://pypi.org/) or locally. See the [Nautobot documentation](https://docs.nautobot.com/projects/core/en/stable/user-guide/administration/installation/app-install/) for more details. The pip package name for this app is [`nautobot-secrets-providers`](https://pypi.org/project/nautobot-secrets-providers/).
+> **Note** Apps can be installed from the [Python Package Index](https://pypi.org/) or locally. See the [Nautobot documentation](https://docs.nautobot.com/projects/core/en/stable/user-guide/administration/installation/app-install/) for more details. The pip package name for this app is [`nautobot-secrets-providers`](https://pypi.org/project/nautobot-secrets-providers/).
 
 The app is available as a Python package via PyPI and can be installed with `pip`:
 

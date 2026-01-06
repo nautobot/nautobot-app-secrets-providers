@@ -16,6 +16,6 @@ Remove the configuration you added in `nautobot_config.py` from `PLUGINS` & `PLU
 
 ## Uninstall the package
 
-```bash
-$ pip3 uninstall nautobot-secrets-providers
+```shell
+pip3 uninstall nautobot-secrets-providers
 ```
