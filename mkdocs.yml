@@ -46,12 +46,6 @@ theme:
 extra_css:
   - "assets/extra.css"
 
-# needed for RTD version flyout menu
-# jquery is not (yet) injected by RTD automatically and it might be dropped
-# as a dependency in the future
-extra_javascript:
-  - "https://code.jquery.com/jquery-3.6.0.min.js"
-
 extra:
   generator: false
   ntc_sponsor: true
@@ -79,6 +73,7 @@ markdown_extensions:
       permalink: true
   - "attr_list"
   - "md_in_html"
+  - "pymdownx.details"
   - "pymdownx.highlight":
       anchor_linenums: true
   - "pymdownx.inlinehilite"
@@ -101,6 +96,12 @@ plugins:
 watch:
   - "README.md"
 
+validation:
+  omitted_files: "warn"
+  absolute_links: "warn"
+  unrecognized_links: "warn"
+  anchors: "warn"
+
 nav:
   - Overview: "index.md"
   - User Guide:
@@ -122,6 +123,7 @@ nav:
       - Compatibility Matrix: "admin/compatibility_matrix.md"
       - Release Notes:
           - "admin/release_notes/index.md"
+          - v4.0: "admin/release_notes/version_4.0.md"
           - v3.2: "admin/release_notes/version_3.2.md"
           - v3.1: "admin/release_notes/version_3.1.md"
           - v3.0: "admin/release_notes/version_3.0.md"
@@ -135,6 +137,7 @@ nav:
       - Extending the App: "dev/extending.md"
       - Contributing to the App: "dev/contributing.md"
       - Development Environment: "dev/dev_environment.md"
+      - Release Checklist: "dev/release_checklist.md"
       - Code Reference:
           - "dev/code_reference/index.md"
           - Package: "dev/code_reference/package.md"

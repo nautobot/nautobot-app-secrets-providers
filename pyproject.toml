@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nautobot-secrets-providers"
-version = "3.2.0"
+version = "4.0.0"
 description = "Nautobot Secrets Providers App"
 authors = ["Network to Code, LLC <info@networktocode.com>"]
 license = "Apache-2.0"
@@ -13,24 +13,23 @@ classifiers = [
     "Intended Audience :: Developers",
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 packages = [
     { include = "nautobot_secrets_providers" },
 ]
 include = [
     # Poetry by default will exclude files that are in .gitignore
-    "nautobot_secrets_providers/static/nautobot_secrets_providers/docs/**/*",
+    { path = "nautobot_secrets_providers/static/nautobot_secrets_providers/docs/**/*", format = ["sdist", "wheel"] }
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.13"
+python = ">=3.10,<3.14"
 # Used for local development
-nautobot = "^2.0.0"
+nautobot = ">=3.0.0,<4.0.0"
 azure-identity = { version = "^1.15.0", optional = true }
 azure-keyvault-secrets = { version = "^4.8.0", optional = true }
 boto3 = { version = "^1.19.5", optional = true }
@@ -40,32 +39,40 @@ onepassword-sdk = {version = "^0.1.2", python = ">=3.9", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 coverage = "*"
-django-debug-toolbar = "*"
+# Currently pinned to 5.2.0 due to https://github.com/django-commons/django-debug-toolbar/issues/2168
+django-debug-toolbar = "~5.2.0"
 invoke = "*"
 ipython = "*"
 pylint = "*"
-pylint-django = "*"
-pylint-nautobot = "*"
-ruff = "0.5.5"
+pylint-django = ">=2.5.4"
+pylint-nautobot = ">=0.3.1"
+ruff = "~0.8.6"
 yamllint = "*"
 toml = "*"
+# Python implementation of markdownlint
+pymarkdownlnt = "~0.9.30"
 Markdown = "*"
-# Render custom markdown for version added/changed/remove notes
-markdown-version-annotations = "1.0.1"
-# Rendering docs to HTML
-mkdocs = "1.6.0"
-# Material for MkDocs theme
-mkdocs-material = "9.5.32"
-# Automatic documentation from sources, for MkDocs
-mkdocstrings = "0.25.2"
-mkdocstrings-python = "1.10.8"
-griffe = "1.1.1"
-towncrier = "~23.6.0"
+towncrier = ">=23.6.0,<=24.8.0"
 to-json-schema = "*"
 jsonschema = "*"
 moto = "~4.2.14"
-pyOpenSSL = "23.2.0"
 requests-mock = "1.9.3"
+djlint = ">=1.36.4,<2.0.0"
+djhtml = ">=3.0.8,<4.0.0"
+tomli = { version = "*", markers = "python_version < '3.11'" }  # tomli is included in the stdlib as of Python 3.11
+
+[tool.poetry.group.docs.dependencies]
+# Render custom markdown for version added/changed/remove notes
+markdown-version-annotations = "1.0.1"
+# Rendering docs to HTML
+mkdocs = "1.6.1"
+# Material for MkDocs theme
+mkdocs-material = "9.5.50"
+# Automatic documentation from sources, for MkDocs
+mkdocstrings = "0.27.0"
+mkdocstrings-python = "1.13.0"
+mkdocs-autorefs = "1.2.0"
+griffe = "1.1.1"
 
 [tool.poetry.extras]
 all = [
@@ -79,7 +86,6 @@ all = [
 aws = ["boto3"]
 azure = ["azure-identity", "azure-keyvault-secrets"]
 hashicorp = ["hvac"]
-nautobot = ["nautobot"]
 thycotic = ["python-tss-sdk"]
 onepassword = ["onepassword-sdk"]
 
@@ -94,7 +100,11 @@ no-docstring-rgx = "^(_|test_|Meta$)"
 
 [tool.pylint.messages_control]
 disable = """,
-    line-too-long
+    line-too-long,
+    too-many-positional-arguments,
+    nb-warn-dunder-filter-field,
+    nb-no-search-function,
+    nb-no-char-filter-q,
 """
 
 [tool.pylint.miscellaneous]
@@ -106,7 +116,7 @@ notes = """,
 
 [tool.pylint-nautobot]
 supported_nautobot_versions = [
-    "2.0.0"
+    "3"
 ]
 
 [tool.ruff]
@@ -153,17 +163,39 @@ convention = "google"
     "S"
 ]
 
+[tool.coverage.run]
+disable_warnings = ["already-imported"]
+relative_files = true
+omit = [
+    # Skip Tests
+    "*/tests/*",
+]
+include = [
+    "nautobot_secrets_providers/*",
+]
+
+[tool.pymarkdown]
+plugins.selectively_enable_rules = true
+plugins.blanks-around-lists.enabled = true
+plugins.list-anchored-indent.enabled = true
+extensions.front-matter.enabled = true
+
 [build-system]
-requires = ["poetry_core>=1.0.0"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.towncrier]
 package = "nautobot_secrets_providers"
 directory = "changes"
-filename = "docs/admin/release_notes/version_X.Y.md"
+filename = "docs/admin/release_notes/version_4.0.md"
 template = "development/towncrier_template.j2"
 start_string = "<!-- towncrier release notes start -->"
 issue_format = "[#{issue}](https://github.com/nautobot/nautobot-app-secrets-providers/issues/{issue})"
+
+[[tool.towncrier.type]]
+directory = "breaking"
+name = "Breaking Changes"
+showcontent = true
 
 [[tool.towncrier.type]]
 directory = "security"
@@ -209,3 +241,8 @@ showcontent = true
 directory = "housekeeping"
 name = "Housekeeping"
 showcontent = true
+
+[tool.djlint]
+ignore = "H005,H006,H008,H011,H012,H013,H014,H015,H016,H019,H020,H021,H022,H023,H025,H026,H030,H031,H037"
+profile="django"
+extend_exclude = "docs/,nautobot_secrets_providers/static/"
