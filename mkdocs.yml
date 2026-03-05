@@ -118,6 +118,7 @@ nav:
           - Azure: "admin/providers/azure_setup.md"
           - Delinea/Thycotic: "admin/providers/delinea_setup.md"
           - HashiCorp: "admin/providers/hashicorp_setup.md"
+          - Password Manager Pro: "admin/providers/password_manager_pro_setup.md"
       - Upgrade: "admin/upgrade.md"
       - Uninstall: "admin/uninstall.md"
       - Compatibility Matrix: "admin/compatibility_matrix.md"

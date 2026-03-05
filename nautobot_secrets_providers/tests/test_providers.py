@@ -18,6 +18,7 @@ from nautobot_secrets_providers.providers import (
     AWSSystemsManagerParameterStore,
     HashiCorpVaultSecretsProvider,
     OnePasswordSecretsProvider,
+    PasswordManagerProSecretsProvider,
 )
 from nautobot_secrets_providers.providers.choices import HashicorpKVVersionChoices
 from nautobot_secrets_providers.providers.hashicorp import vault_choices
@@ -818,3 +819,94 @@ class OnePasswordSecretsProviderTestCase(SecretsProviderTestCase):
         with self.settings(PLUGINS_CONFIG=multiple_plugins_config):
             choices = one_password_vault_choices()
             self.assertEqual(choices, [("Example", "Example"), ("Example 2", "Example 2")])
+
+
+class PasswordManagerProSecretsProviderTestCase(SecretsProviderTestCase):
+    """Tests for PasswordManagerProSecretsProvider."""
+
+    provider = PasswordManagerProSecretsProvider
+
+    def setUp(self):
+        super().setUp()
+
+        # Test secret
+        self.secret = Secret.objects.create(
+            name="hello-pmp",
+            provider=self.provider.slug,
+            parameters={
+                "resource_id": "1001",
+                "account_id": "2001",
+            },
+        )
+
+        self.plugin_config = {
+            "nautobot_secrets_providers": {
+                "password_manager_pro": {
+                    "base_url": "https://pmp.local",
+                    "token": "fake-token",
+                    "verify_ssl": False,
+                }
+            }
+        }
+
+    @patch("nautobot_secrets_providers.providers.password_manager_pro.requests.get")
+    def test_retrieve_success(self, mock_get):
+        """Retrieve a secret successfully."""
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {
+            "operation": {
+                "Details": {
+                    "PASSWORD": "world",
+                }
+            }
+        }
+        with self.settings(PLUGINS_CONFIG = self.plugin_config):
+            result = self.provider.get_value_for_secret(self.secret)
+
+        self.assertEqual(result, "world")
+
+    @patch("nautobot_secrets_providers.providers.password_manager_pro.requests.get")
+    def test_password_not_found(self, mock_get):
+        """ Try and failt to retrieve a secret that doesn't exist."""
+
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {
+            "operation": {
+                "Details": {
+                    "PASSWORD": None,
+                }
+            }
+        }
+        with self.settings(PLUGINS_CONFIG = self.plugin_config):
+            with self.assertRaises(exceptions.SecretValueNotFoundError):
+                self.provider.get_value_for_secret(self.secret)
+
+    @patch("nautobot_secrets_providers.providers.password_manager_pro.requests.get")
+    def test_api_failure(self, mock_get):
+        """Try and fail to retrieve a secret due to an API failure."""
+
+        mock_get.side_effect = Exception("API Failure")
+
+        with self.settings(PLUGINS_CONFIG = self.plugin_config):
+            with self.assertRaises(exceptions.SecretValueNotFoundError):
+                self.provider.get_value_for_secret(self.secret)
+
+    def test_missing_plugin_config(self):
+        """Fail when plugin configuration is missing."""
+
+        with self.settings(PLUGINS_CONFIG={}):
+            with self.assertRaises(exceptions.SecretParametersError):
+                self.provider.get_value_for_secret(self.secret)
+
+    def test_missing_parameters(self):
+        """Fail when required parameters are missing."""
+
+        bad_secret = Secret.objects.create(
+            name="bad-secret",
+            provider=self.provider.slug,
+            parameters={},
+        )
+
+        with self.settings(PLUGINS_CONFIG = self.plugin_config):
+            with self.assertRaises(exceptions.SecretParametersError):
+                self.provider.get_value_for_secret(bad_secret)
