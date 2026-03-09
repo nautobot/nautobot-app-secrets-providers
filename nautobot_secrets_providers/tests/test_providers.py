@@ -821,21 +821,21 @@ class OnePasswordSecretsProviderTestCase(SecretsProviderTestCase):
             self.assertEqual(choices, [("Example", "Example"), ("Example 2", "Example 2")])
 
 
-class PasswordManagerProSecretsProviderTestCase(SecretsProviderTestCase):
+class PasswordManagerProSecretsProviderTestCase(TestCase):
     """Tests for PasswordManagerProSecretsProvider."""
 
     provider = PasswordManagerProSecretsProvider
 
     def setUp(self):
+        """Create a secret for use with testing."""
         super().setUp()
 
-        # Test secret
         self.secret = Secret.objects.create(
             name="hello-pmp",
             provider=self.provider.slug,
             parameters={
-                "resource_id": "1001",
-                "account_id": "2001",
+                "resource_name": "server01",
+                "account_name": "admin",
             },
         )
 
@@ -849,64 +849,70 @@ class PasswordManagerProSecretsProviderTestCase(SecretsProviderTestCase):
             }
         }
 
-    @patch("nautobot_secrets_providers.providers.password_manager_pro.requests.get")
-    def test_retrieve_success(self, mock_get):
+    @requests_mock.Mocker()
+    def test_retrieve_success(self, mock):
         """Retrieve a secret successfully."""
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "operation": {
-                "Details": {
-                    "PASSWORD": "world",
-                }
-            }
-        }
-        with self.settings(PLUGINS_CONFIG = self.plugin_config):
+        mock.get(
+            "https://pmp.local/restapi/json/v1/resources/getResourceIdAccountId?RESOURCENAME=server01&ACCOUNTNAME=admin",
+            json={"operation": {"Details": {"RESOURCE ID": "1001", "ACCOUNT ID": "2001"}}},
+        )
+        mock.get(
+            "https://pmp.local/restapi/json/v1/resources/1001/accounts/2001/password",
+            json={"operation": {"Details": {"PASSWORD": "world"}}},
+        )
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
             result = self.provider.get_value_for_secret(self.secret)
 
         self.assertEqual(result, "world")
 
-    @patch("nautobot_secrets_providers.providers.password_manager_pro.requests.get")
-    def test_password_not_found(self, mock_get):
-        """ Try and failt to retrieve a secret that doesn't exist."""
+    @requests_mock.Mocker()
+    def test_password_not_found(self, mock):
+        """Fail to retrieve a secret if password is None."""
+        mock.get(
+            "https://pmp.local/restapi/json/v1/resources/getResourceIdAccountId?RESOURCENAME=server01&ACCOUNTNAME=admin",
+            json={"operation": {"Details": {"RESOURCE ID": "1001", "ACCOUNT ID": "2001"}}},
+        )
+        mock.get(
+            "https://pmp.local/restapi/json/v1/resources/1001/accounts/2001/password",
+            json={"operation": {"Details": {"PASSWORD": None}}},
+        )
 
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            "operation": {
-                "Details": {
-                    "PASSWORD": None,
-                }
-            }
-        }
-        with self.settings(PLUGINS_CONFIG = self.plugin_config):
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
             with self.assertRaises(exceptions.SecretValueNotFoundError):
                 self.provider.get_value_for_secret(self.secret)
 
-    @patch("nautobot_secrets_providers.providers.password_manager_pro.requests.get")
-    def test_api_failure(self, mock_get):
-        """Try and fail to retrieve a secret due to an API failure."""
+    @requests_mock.Mocker()
+    def test_api_failure(self, mock):
+        """Raise SecretParametersError on API failure."""
+        mock.get(
+            "https://pmp.local/restapi/json/v1/resources/getResourceIdAccountId?RESOURCENAME=server01&ACCOUNTNAME=admin",
+            status_code=500,
+        )
 
-        mock_get.side_effect = Exception("API Failure")
-
-        with self.settings(PLUGINS_CONFIG = self.plugin_config):
-            with self.assertRaises(exceptions.SecretValueNotFoundError):
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretParametersError):
                 self.provider.get_value_for_secret(self.secret)
 
     def test_missing_plugin_config(self):
-        """Fail when plugin configuration is missing."""
-
+        """Raise SecretParametersError if plugin config missing."""
         with self.settings(PLUGINS_CONFIG={}):
             with self.assertRaises(exceptions.SecretParametersError):
                 self.provider.get_value_for_secret(self.secret)
 
     def test_missing_parameters(self):
-        """Fail when required parameters are missing."""
-
+        """Raise SecretParametersError if secret parameters are missing."""
         bad_secret = Secret.objects.create(
             name="bad-secret",
             provider=self.provider.slug,
-            parameters={},
+            parameters={
+                "resource_name": "",
+                "account_name": "",
+            },
         )
 
-        with self.settings(PLUGINS_CONFIG = self.plugin_config):
-            with self.assertRaises(exceptions.SecretParametersError):
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretParametersError) as err:
                 self.provider.get_value_for_secret(bad_secret)
+
+        self.assertIn("Resource name and account name must be provided", str(err.exception))

@@ -3,17 +3,13 @@
 import requests
 from django import forms
 from django.conf import settings
-from django.core.cache import cache
 from nautobot.extras.secrets import SecretsProvider, exceptions
 
 __all__ = ("PasswordManagerProSecretsProvider",)
 
 
 class PasswordManagerProSecretsProvider(SecretsProvider):
-    """
-    Secrets Provider that retrieves secrets from Password Manager Pro via HTTP GET,
-    using connection config from PLUGINS_CONFIG and token from environment.
-    """
+    """Secrets Provider that retrieves secrets from Password Manager Pro via HTTP GET, using connection config from PLUGINS_CONFIG and token from environment."""
 
     slug = "password-manager-pro"
     name = "Password Manager Pro Provider"
@@ -21,162 +17,95 @@ class PasswordManagerProSecretsProvider(SecretsProvider):
     is_available = True
 
     class ParametersForm(forms.Form):
-        """Required parameters to retrieve a secret from PMP."""
+        """Plain text input for resource and account names."""
 
-        resource_id = forms.CharField(
-            label="Resource",
+        resource_name = forms.CharField(
+            label="Resource Name",
             required=True,
-            widget=forms.Select(
-                attrs={
-                    "class": "form-control nautobot-select2",
-                    "data-placeholder": "Select or type resource...",
-                }
-            ),
+            widget=forms.TextInput(attrs={"class": "form-control"}),
         )
-
-        account_id = forms.CharField(
-            label="Account",
+        account_name = forms.CharField(
+            label="Account Name",
             required=True,
-            widget=forms.Select(
-                attrs={
-                    "class": "form-control nautobot-select2",
-                    "data-placeholder": "Select or type account...",
-                }
-            ),
+            widget=forms.TextInput(attrs={"class": "form-control"}),
         )
 
     @classmethod
     def _get_plugin_config(cls, secret):
-        """Retrieve PMP plugin config from settings."""
+        """Retrieve plugin config from Nautobot settings."""
         try:
             config = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["password_manager_pro"]
         except KeyError:
-            raise exceptions.SecretParametersError(secret, cls, "Password Manager Pro is not configured")
-        if not config.get("base_url") or not config.get("token"):
-            raise exceptions.SecretParametersError(secret, cls, "Missing base_url or token in config")
+            raise exceptions.SecretParametersError(secret, cls, "Password Manager Pro plugin not configured")
+
+        if "base_url" not in config or "token" not in config:
+            raise exceptions.SecretParametersError(
+                secret, cls, "Password Manager Pro config requires 'base_url' and 'token'"
+            )
+
         return config
 
     @classmethod
-    def _get_resources(cls, secret):
-        """Return dict of resource_name -> resource_id."""
+    def _get_resource_account_ids(cls, secret, resource_name, account_name):
+        """Helper to get resource and account IDs based on names."""
         config = cls._get_plugin_config(secret)
-        url = f"{config['base_url'].rstrip('/')}/restapi/json/v1/resources"
+        url = f"{config['base_url'].rstrip('/')}/restapi/json/v1/resources/getResourceIdAccountId?RESOURCENAME={resource_name}&ACCOUNTNAME={account_name}"
         headers = {"APP_AUTHTOKEN": config["token"]}
+
         try:
             r = requests.get(url, headers=headers, verify=config.get("verify_ssl", True), timeout=10)
             r.raise_for_status()
         except requests.RequestException as exc:
-            raise exceptions.SecretParametersError(secret, cls, f"Failed to fetch resources: {exc}") from exc
+            raise exceptions.SecretParametersError(secret, cls, f"Failed to fetch resource/account IDs: {exc}") from exc
 
         try:
             data = r.json()
         except ValueError:
             raise exceptions.SecretParametersError(secret, cls, "Response is not valid JSON")
 
-        resources = {}
-        operation = data.get("operation", [])
-        for detail in operation.get("Details", []):
-            try:
-                resources[detail["RESOURCE NAME"]] = detail["RESOURCE ID"]
-            except KeyError:
-                continue
-        return resources
-
-    @classmethod
-    def _get_accounts(cls, secret, resource_id):
-        """Return dict of account_name -> account_id for given resource."""
-        config = cls._get_plugin_config(secret)
-        url = f"{config['base_url'].rstrip('/')}/restapi/json/v1/resources/{resource_id}/accounts"
-        headers = {"APP_AUTHTOKEN": config["token"]}
-        try:
-            r = requests.get(url, headers=headers, verify=config.get("verify_ssl", True), timeout=10)
-            r.raise_for_status()
-        except requests.RequestException as exc:
-            raise exceptions.SecretParametersError(secret, cls, f"Failed to fetch accounts: {exc}") from exc
-
-        try:
-            data = r.json()
-        except ValueError:
-            raise exceptions.SecretParametersError(secret, cls, "Response is not valid JSON")
-
-        operation = data.get("operation", [])
-        details = operation.get("Details")
-        if not details:
-            return {}
-
-        accounts = {}
-        for acc in details.get("ACCOUNT LIST", []):
-            name = acc.get("ACCOUNT NAME")
-            acc_id = acc.get("ACCOUNT ID")
-            if name and acc_id:
-                accounts[name] = acc_id
-        return accounts
-
-    @classmethod
-    def _get_all_resources_with_accounts(cls, secret):
-        """Return nested dict of all resources and their accounts, cached for 5 minutes."""
-        cache_key = "pmp_resources_accounts"
-        cached = cache.get(cache_key)
-        if cached:
-            return cached
-
-        all_resources = {}
-        for resource_name, resource_id in cls._get_resources(secret).items():
-            accounts = cls._get_accounts(secret, resource_id)
-            all_resources[resource_name] = {"resource_id": resource_id, "accounts": accounts}
-
-        cache.set(cache_key, all_resources, 300)
-        return all_resources
+        operation = data.get("operation", {})
+        details = operation.get("Details", {})
+        resource_id = details.get("RESOURCE ID")
+        account_id = details.get("ACCOUNT ID")
+        if not resource_id or not account_id:
+            raise exceptions.SecretParametersError(secret, cls, "Resource or account not found in response")
+        return resource_id, account_id
 
     @classmethod
     def _get_secret_value(cls, secret, resource_id, account_id):
-        """Fetch the password for a given resource/account."""
+        """Helper to get the secret value based on resource and account IDs."""
         config = cls._get_plugin_config(secret)
         url = f"{config['base_url'].rstrip('/')}/restapi/json/v1/resources/{resource_id}/accounts/{account_id}/password"
         headers = {"APP_AUTHTOKEN": config["token"]}
+
         try:
             r = requests.get(url, headers=headers, verify=config.get("verify_ssl", True), timeout=10)
             r.raise_for_status()
         except requests.RequestException as exc:
-            raise exceptions.SecretValueNotFoundError(secret, cls, f"Failed to retrieve secret: {exc}") from exc
+            raise exceptions.SecretParametersError(secret, cls, f"Failed to fetch secret value: {exc}") from exc
 
         try:
             data = r.json()
         except ValueError:
-            raise exceptions.SecretValueNotFoundError(secret, cls, "Response is not valid JSON")
+            raise exceptions.SecretParametersError(secret, cls, "Response is not valid JSON")
 
-        operation = data.get("operation", [])
-        password = operation.get("Details", {}).get("PASSWORD")
-        if not password:
+        operation = data.get("operation", {})
+        details = operation.get("Details", {})
+        password = details.get("PASSWORD")
+        if password is None or password == "":
             raise exceptions.SecretValueNotFoundError(secret, cls, "Password not found in response")
+
         return password
 
     @classmethod
     def get_value_for_secret(cls, secret, obj=None, **kwargs):
-        """Retrieve the secret value based on selected resource and account."""
-        params = secret.rendered_parameters(obj=obj)
-        resource_id = params.get("resource_id")
-        account_id = params.get("account_id")
-        if not resource_id or not account_id:
-            raise exceptions.SecretParametersError(secret, cls, "Both resource and account must be selected.")
+        """Get the secret value from Password Manager Pro based on resource and account names."""
+        parameters = secret.rendered_parameters(obj=obj)
+        resource_name = parameters["resource_name"]
+        account_name = parameters["account_name"]
+
+        if not resource_name or not account_name:
+            raise exceptions.SecretParametersError(secret, cls, "Resource name and account name must be provided")
+
+        resource_id, account_id = cls._get_resource_account_ids(secret, resource_name, account_name)
         return cls._get_secret_value(secret, resource_id, account_id)
-
-    @classmethod
-    def get_parameter_choices(cls, secret, parameter_name, obj=None, **kwargs):
-        """Return choices for resource_id and account_id parameters."""
-        all_resources = cls._get_all_resources_with_accounts(secret)
-
-        if parameter_name == "resource_id":
-            return [(v["resource_id"], name) for name, v in all_resources.items()]
-
-        if parameter_name == "account_id":
-            params = secret.rendered_parameters(obj=obj)
-            resource_id = params.get("resource_id")
-            if not resource_id:
-                return []
-            resource_name = next((n for n, v in all_resources.items() if v["resource_id"] == resource_id), None)
-            if not resource_name:
-                return []
-            return [(acc_id, acc_name) for acc_name, acc_id in all_resources[resource_name]["accounts"].items()]
-
-        return []
