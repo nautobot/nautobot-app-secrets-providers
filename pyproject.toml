@@ -1,12 +1,7 @@
 [tool.poetry]
 name = "nautobot-secrets-providers"
-<<<<<<< HEAD
 version = "4.0.1a0"
 description = "Nautobot Secrets Providers App"
-=======
-version = "0.1.0a0"
-description = "Nautobot App that provides direct integrations with Enterprise secrets management systems. Provides patterns to securely fetch secrets for use by other Nautobot Apps and Nautobot Jobs."
->>>>>>> aba8cce (Cookie updated targeting develop by NetworkToCode Cookie Drift Manager Tool)
 authors = ["Network to Code, LLC <info@networktocode.com>"]
 license = "Apache-2.0"
 readme = "README.md"
