@@ -65,8 +65,8 @@ class PasswordManagerProSecretsProvider(SecretsProvider):
 
         operation = data.get("operation", {})
         details = operation.get("Details", {})
-        resource_id = details.get("RESOURCE ID")
-        account_id = details.get("ACCOUNT ID")
+        resource_id = details.get("RESOURCEID")
+        account_id = details.get("ACCOUNTID")
         if not resource_id or not account_id:
             raise exceptions.SecretParametersError(secret, cls, "Resource or account not found in response")
         return resource_id, account_id
