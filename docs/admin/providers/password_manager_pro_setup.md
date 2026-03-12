@@ -18,7 +18,7 @@ PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
         "password_manager_pro": {
             "base_url": "https://pmp.example.com:8383",
-            "token": os.environ.get("PMP_API_TOKEN"),
+            "token": "PMP_API_TOKEN",
             "verify_ssl": True,
         },
     },
@@ -26,5 +26,5 @@ PLUGINS_CONFIG = {
 ```
 
 - `base_url` - (required) Base URL to access Password Manager Pro
-- `token` (required) API token for Password Manager Pro
+- `token` (required) Env Variable name for API token from Password Manager Pro
 - `verify_ssl` (optional) SSL Verification, default is True 

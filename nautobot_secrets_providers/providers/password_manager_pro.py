@@ -1,5 +1,5 @@
 """Password Manager Pro Secrets Provider for Nautobot."""
-
+import os
 import requests
 from django import forms
 from django.conf import settings
@@ -50,7 +50,8 @@ class PasswordManagerProSecretsProvider(SecretsProvider):
         """Helper to get resource and account IDs based on names."""
         config = cls._get_plugin_config(secret)
         url = f"{config['base_url'].rstrip('/')}/restapi/json/v1/resources/getResourceIdAccountId?RESOURCENAME={resource_name}&ACCOUNTNAME={account_name}"
-        headers = {"APP_AUTHTOKEN": config["token"]}
+        token = os.getenv(config["token"])
+        headers = {"APP_AUTHTOKEN": token}
 
         try:
             r = requests.get(url, headers=headers, verify=config.get("verify_ssl", True), timeout=10)
@@ -76,7 +77,8 @@ class PasswordManagerProSecretsProvider(SecretsProvider):
         """Helper to get the secret value based on resource and account IDs."""
         config = cls._get_plugin_config(secret)
         url = f"{config['base_url'].rstrip('/')}/restapi/json/v1/resources/{resource_id}/accounts/{account_id}/password"
-        headers = {"APP_AUTHTOKEN": config["token"]}
+        token = os.getenv(config["token"])
+        headers = {"APP_AUTHTOKEN": token}
 
         try:
             r = requests.get(url, headers=headers, verify=config.get("verify_ssl", True), timeout=10)
