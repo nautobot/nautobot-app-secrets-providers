@@ -1,5 +1,7 @@
 """Password Manager Pro Secrets Provider for Nautobot."""
+
 import os
+
 import requests
 from django import forms
 from django.conf import settings
