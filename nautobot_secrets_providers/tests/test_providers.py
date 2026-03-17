@@ -854,7 +854,7 @@ class PasswordManagerProSecretsProviderTestCase(TestCase):
         """Retrieve a secret successfully."""
         mock.get(
             "https://pmp.local/restapi/json/v1/resources/getResourceIdAccountId?RESOURCENAME=server01&ACCOUNTNAME=admin",
-            json={"operation": {"Details": {"RESOURCE ID": "1001", "ACCOUNT ID": "2001"}}},
+            json={"operation": {"Details": {"RESOURCEID": "1001", "ACCOUNTID": "2001"}}},
         )
         mock.get(
             "https://pmp.local/restapi/json/v1/resources/1001/accounts/2001/password",
@@ -871,7 +871,7 @@ class PasswordManagerProSecretsProviderTestCase(TestCase):
         """Fail to retrieve a secret if password is None."""
         mock.get(
             "https://pmp.local/restapi/json/v1/resources/getResourceIdAccountId?RESOURCENAME=server01&ACCOUNTNAME=admin",
-            json={"operation": {"Details": {"RESOURCE ID": "1001", "ACCOUNT ID": "2001"}}},
+            json={"operation": {"Details": {"RESOURCEID": "1001", "ACCOUNTID": "2001"}}},
         )
         mock.get(
             "https://pmp.local/restapi/json/v1/resources/1001/accounts/2001/password",
