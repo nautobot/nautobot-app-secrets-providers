@@ -37,8 +37,8 @@ class PasswordManagerProSecretsProvider(SecretsProvider):
         """Retrieve plugin config from Nautobot settings."""
         try:
             config = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]["password_manager_pro"]
-        except KeyError:
-            raise exceptions.SecretParametersError(secret, cls, "Password Manager Pro plugin not configured")
+        except KeyError as exc:
+            raise exceptions.SecretParametersError(secret, cls, "Password Manager Pro plugin not configured") from exc
 
         if "base_url" not in config or "token" not in config:
             raise exceptions.SecretParametersError(
@@ -63,8 +63,8 @@ class PasswordManagerProSecretsProvider(SecretsProvider):
 
         try:
             data = r.json()
-        except ValueError:
-            raise exceptions.SecretParametersError(secret, cls, "Response is not valid JSON")
+        except ValueError as exc:
+            raise exceptions.SecretParametersError(secret, cls, "Response is not valid JSON") from exc
 
         operation = data.get("operation", {})
         details = operation.get("Details", {})
@@ -90,8 +90,8 @@ class PasswordManagerProSecretsProvider(SecretsProvider):
 
         try:
             data = r.json()
-        except ValueError:
-            raise exceptions.SecretParametersError(secret, cls, "Response is not valid JSON")
+        except ValueError as exc:
+            raise exceptions.SecretParametersError(secret, cls, "Response is not valid JSON") from exc
 
         operation = data.get("operation", {})
         details = operation.get("Details", {})
