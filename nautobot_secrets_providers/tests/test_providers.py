@@ -18,6 +18,7 @@ from nautobot_secrets_providers.providers import (
     AWSSystemsManagerParameterStore,
     HashiCorpVaultSecretsProvider,
     OnePasswordSecretsProvider,
+    PasswordManagerProSecretsProvider,
 )
 from nautobot_secrets_providers.providers.choices import HashicorpKVVersionChoices
 from nautobot_secrets_providers.providers.hashicorp import vault_choices
@@ -818,3 +819,100 @@ class OnePasswordSecretsProviderTestCase(SecretsProviderTestCase):
         with self.settings(PLUGINS_CONFIG=multiple_plugins_config):
             choices = one_password_vault_choices()
             self.assertEqual(choices, [("Example", "Example"), ("Example 2", "Example 2")])
+
+
+class PasswordManagerProSecretsProviderTestCase(TestCase):
+    """Tests for PasswordManagerProSecretsProvider."""
+
+    provider = PasswordManagerProSecretsProvider
+
+    def setUp(self):
+        """Create a secret for use with testing."""
+        super().setUp()
+
+        self.secret = Secret.objects.create(
+            name="hello-pmp",
+            provider=self.provider.slug,
+            parameters={
+                "resource_name": "server01",
+                "account_name": "admin",
+            },
+        )
+
+        self.plugin_config = {
+            "nautobot_secrets_providers": {
+                "password_manager_pro": {
+                    "base_url": "https://pmp.local",
+                    "token": "fake-token",
+                    "verify_ssl": False,
+                }
+            }
+        }
+
+    @requests_mock.Mocker()
+    def test_retrieve_success(self, mock):
+        """Retrieve a secret successfully."""
+        mock.get(
+            "https://pmp.local/restapi/json/v1/resources/getResourceIdAccountId?RESOURCENAME=server01&ACCOUNTNAME=admin",
+            json={"operation": {"Details": {"RESOURCEID": "1001", "ACCOUNTID": "2001"}}},
+        )
+        mock.get(
+            "https://pmp.local/restapi/json/v1/resources/1001/accounts/2001/password",
+            json={"operation": {"Details": {"PASSWORD": "world"}}},
+        )
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            result = self.provider.get_value_for_secret(self.secret)
+
+        self.assertEqual(result, "world")
+
+    @requests_mock.Mocker()
+    def test_password_not_found(self, mock):
+        """Fail to retrieve a secret if password is None."""
+        mock.get(
+            "https://pmp.local/restapi/json/v1/resources/getResourceIdAccountId?RESOURCENAME=server01&ACCOUNTNAME=admin",
+            json={"operation": {"Details": {"RESOURCEID": "1001", "ACCOUNTID": "2001"}}},
+        )
+        mock.get(
+            "https://pmp.local/restapi/json/v1/resources/1001/accounts/2001/password",
+            json={"operation": {"Details": {"PASSWORD": None}}},
+        )
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretValueNotFoundError):
+                self.provider.get_value_for_secret(self.secret)
+
+    @requests_mock.Mocker()
+    def test_api_failure(self, mock):
+        """Raise SecretParametersError on API failure."""
+        mock.get(
+            "https://pmp.local/restapi/json/v1/resources/getResourceIdAccountId?RESOURCENAME=server01&ACCOUNTNAME=admin",
+            status_code=500,
+        )
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretParametersError):
+                self.provider.get_value_for_secret(self.secret)
+
+    def test_missing_plugin_config(self):
+        """Raise SecretParametersError if plugin config missing."""
+        with self.settings(PLUGINS_CONFIG={}):
+            with self.assertRaises(exceptions.SecretParametersError):
+                self.provider.get_value_for_secret(self.secret)
+
+    def test_missing_parameters(self):
+        """Raise SecretParametersError if secret parameters are missing."""
+        bad_secret = Secret.objects.create(
+            name="bad-secret",
+            provider=self.provider.slug,
+            parameters={
+                "resource_name": "",
+                "account_name": "",
+            },
+        )
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretParametersError) as err:
+                self.provider.get_value_for_secret(bad_secret)
+
+        self.assertIn("Resource name and account name must be provided", str(err.exception))

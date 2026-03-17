@@ -5,6 +5,7 @@ from .azure import AzureKeyVaultSecretsProvider
 from .delinea import DelineaSecretServerSecretsProviderId, DelineaSecretServerSecretsProviderPath
 from .hashicorp import HashiCorpVaultSecretsProvider
 from .one_password import OnePasswordSecretsProvider
+from .password_manager_pro import PasswordManagerProSecretsProvider
 
 __all__ = (
     "AWSSecretsManagerSecretsProvider",
@@ -14,4 +15,5 @@ __all__ = (
     "DelineaSecretServerSecretsProviderPath",
     "HashiCorpVaultSecretsProvider",
     "OnePasswordSecretsProvider",
+    "PasswordManagerProSecretsProvider",
 )
