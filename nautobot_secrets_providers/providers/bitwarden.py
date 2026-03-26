@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
+from functools import partial
 from typing import Any
 
 import requests
@@ -345,6 +346,72 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         return is_truthy(verify_ssl_setting)
 
     @staticmethod
+    def _validate_secret_id(secret_id: str, raise_exc):
+        """Validate the secret ID format and raise via `raise_exc` on error.
+
+        `raise_exc` is a callable that accepts a single string message and
+        returns or raises an exception appropriate for the caller's context.
+        """
+        if not isinstance(secret_id, str) or not re.fullmatch(r"[A-Za-z0-9-]+", secret_id):
+            raise raise_exc("Invalid secret_id format.")
+
+    @classmethod
+    def _check_credentials(cls, base_url, username, password, raise_exc):
+        """Ensure credentials are present; raise via `raise_exc` if any are missing."""
+        missing = [
+            name
+            for name, value in [
+                ("BW_CLI_URL", base_url),
+                ("BW_CLI_USER", username),
+                ("BW_CLI_PASSWORD", password),
+            ]
+            if not value
+        ]
+        if missing:
+            raise raise_exc(f"Missing Bitwarden configuration: {', '.join(missing)}")
+
+    @classmethod
+    def _request_item_payload(cls, url: str, auth: tuple, verify, raise_exc):
+        """Perform GET -> JSON -> success-check for Bitwarden item endpoints.
+
+        `raise_exc` should be a callable accepting a single message string and
+        producing an exception appropriate for the caller.
+        Returns the `data` object from the Bitwarden payload on success.
+        """
+        # If a CA bundle path is returned, ensure the file exists before use.
+        if isinstance(verify, str):
+            if not Path(verify).exists():
+                raise raise_exc(f"CA bundle not found at: {verify}")
+
+        if not verify:
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+        try:
+            username, password = auth
+            response = requests.get(url, auth=(str(username), str(password)), timeout=REQUEST_TIMEOUT, verify=verify)
+        except requests.exceptions.SSLError as err:
+            raise raise_exc(
+                "Unable to verify the Bitwarden CLI TLS certificate. "
+                "Set BW_CLI_CA_BUNDLE to a trusted CA bundle path or set BW_CLI_VERIFY_SSL=false for development.",
+            ) from err
+        except requests.RequestException as err:  # pragma: no cover - network error path
+            raise raise_exc(f"Unable to reach Bitwarden CLI server: {err}") from err
+
+        if response.status_code != 200:
+            raise raise_exc(f"Bitwarden CLI returned {response.status_code}: {response.text}")
+
+        try:
+            payload = response.json()
+        except ValueError as err:
+            raise raise_exc("Bitwarden CLI returned invalid JSON.") from err
+
+        if not payload.get("success"):
+            message = payload.get("message") or "Bitwarden CLI reported failure."
+            raise raise_exc(message)
+
+        return payload.get("data") or {}
+
+    @staticmethod
     def _read_parameters(secret, obj=None) -> tuple[str, str, str]:
         """Read and validate parameters from the `Secret` instance.
 
@@ -366,70 +433,19 @@ class BitwardenCLISecretsProvider(SecretsProvider):
     def _fetch_item(cls, secret, secret_id: str) -> dict[str, Any]:
         """Fetch the raw Bitwarden item JSON from the CLI server.
 
-        Credentials are loaded via `_get_credentials()` so callers do not need
-        to pass them explicitly. The method validates the `secret_id` format
-        and TLS settings. On network, TLS, or response errors a
-        `SecretProviderError` is raised with a user-facing message.
+        Uses `_load_env_settings` for credential validation and the shared
+        `_request_item_payload` helper to perform the HTTP and JSON work.
         """
-        # Basic validation to avoid path-injection and ensure reasonable format
-        if not isinstance(secret_id, str) or not re.fullmatch(r"[A-Za-z0-9-]+", secret_id):
-            raise exceptions.SecretProviderError(secret, cls, "Invalid secret_id format.")
+        # Validate secret_id format and raise provider-specific error on failure
+        raise_exc = partial(exceptions.SecretProviderError, secret, cls)
+        cls._validate_secret_id(secret_id, raise_exc)
 
-        base_url, username, password = cls._get_credentials()
-        missing = [
-            name
-            for name, value in [
-                ("BW_CLI_URL", base_url),
-                ("BW_CLI_USER", username),
-                ("BW_CLI_PASSWORD", password),
-            ]
-            if not value
-        ]
-        if missing:
-            raise exceptions.SecretProviderError(
-                secret, cls, f"Missing required Bitwarden configuration: {', '.join(missing)}"
-            )
-
+        base_url, username, password = cls._load_env_settings(secret)
         url = f"{str(base_url).rstrip('/')}/object/item/{secret_id}"
         verify = cls._load_tls_settings()
 
-        # If a CA bundle path is returned, ensure the file exists before use.
-        if isinstance(verify, str):
-            if not Path(verify).exists():
-                raise exceptions.SecretProviderError(secret, cls, f"CA bundle not found at: {verify}")
-
-        if not verify:
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-        try:
-            response = requests.get(url, auth=(str(username), str(password)), timeout=REQUEST_TIMEOUT, verify=verify)
-        except requests.exceptions.SSLError as err:
-            raise exceptions.SecretProviderError(
-                secret,
-                cls,
-                "Unable to verify the Bitwarden CLI TLS certificate. "
-                "Set BW_CLI_CA_BUNDLE to a trusted CA bundle path or set BW_CLI_VERIFY_SSL=false for development.",
-            ) from err
-        except requests.RequestException as err:  # pragma: no cover - network error path
-            raise exceptions.SecretProviderError(secret, cls, f"Unable to reach Bitwarden CLI server: {err}") from err
-
-        if response.status_code != 200:
-            raise exceptions.SecretProviderError(
-                secret,
-                cls,
-                f"Bitwarden CLI returned {response.status_code}: {response.text}",
-            )
-
-        try:
-            payload = response.json()
-        except ValueError as err:
-            raise exceptions.SecretProviderError(secret, cls, "Bitwarden CLI returned invalid JSON.") from err
-
-        if not payload.get("success"):
-            message = payload.get("message") or "Bitwarden CLI reported failure."
-            raise exceptions.SecretProviderError(secret, cls, message)
-
-        return payload.get("data") or {}
+        # Delegate request + parse + success-check to shared helper
+        return cls._request_item_payload(url, (username, password), verify, raise_exc)
 
     @staticmethod
     def _read_nested(data: dict[str, Any], path: str) -> Any:
@@ -568,47 +584,16 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         """
         base_url, username, password = cls._get_credentials()
 
-        missing = [
-            name
-            for name, value in [
-                ("BW_CLI_URL", base_url),
-                ("BW_CLI_USER", username),
-                ("BW_CLI_PASSWORD", password),
-            ]
-            if not value
-        ]
-        if missing:
-            raise ValueError(f"Missing Bitwarden configuration: {', '.join(missing)}")
+        # Ensure credentials are present for UI helper context
+        cls._check_credentials(base_url, username, password, ValueError)
 
         # Very small safety check for the provided secret ID to reduce risk of
         # accidental path traversal in downstream services.
-        if not isinstance(secret_id, str) or not re.fullmatch(r"[A-Za-z0-9-]+", secret_id):
-            raise ValueError("Invalid secret_id format.")
+        cls._validate_secret_id(secret_id, ValueError)
 
         url = f"{str(base_url).rstrip('/')}/object/item/{secret_id}"
         verify = cls._load_tls_settings()
 
-        # If a CA bundle path is provided, ensure the file exists before use.
-        if isinstance(verify, str) and not Path(verify).exists():
-            raise ValueError(f"CA bundle not found at: {verify}")
-
-        if not verify:
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-        try:
-            response = requests.get(url, auth=(str(username), str(password)), timeout=REQUEST_TIMEOUT, verify=verify)
-        except requests.RequestException as err:
-            raise ValueError(f"Unable to reach Bitwarden CLI server: {err}") from err
-        if response.status_code != 200:
-            raise ValueError(
-                f"Bitwarden CLI responded with HTTP {response.status_code}; verify item ID, wait for bw server to sync, and check server logs for details."
-            )
-        try:
-            payload = response.json()
-        except ValueError as err:
-            raise ValueError("Bitwarden CLI returned invalid JSON.") from err
-        if not payload.get("success"):
-            message = payload.get("message") or "Bitwarden CLI reported failure."
-            raise ValueError(message)
-        data = payload.get("data") or {}
+        data = cls._request_item_payload(url, (username, password), verify, ValueError)
         fields = data.get("fields") or []
         return [item["name"] for item in fields if item.get("name")]
