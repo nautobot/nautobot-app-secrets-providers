@@ -1,5 +1,8 @@
 """Unit tests for Secrets Providers."""
 
+# Tests in this file are intentionally large; relax the too-many-lines check.
+# pylint: disable=C0302
+
 import os
 from unittest.mock import mock_open, patch
 
@@ -1227,7 +1230,7 @@ class BitwardenCustomFieldNamesViewTestCase(SecretsProviderTestCase):
 
     def test_unauthenticated_request_redirects(self):
         """Unauthenticated requests are redirected to the login page."""
-        from django.test import Client as DjangoClient  # pylint: disable=import-outside-toplevel
+        from django.test import Client as DjangoClient  # pylint: disable=import-outside-toplevel,reimported
 
         anon_client = DjangoClient()
         response = anon_client.get(self.endpoint_url, {"secret_id": self.ITEM_ID})
