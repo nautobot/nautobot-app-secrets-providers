@@ -16,6 +16,11 @@ router = NautobotUIViewSetRouter()
 urlpatterns = [
     path("", views.SecretsProvidersHomeView.as_view(), name="home"),
     path("docs/", RedirectView.as_view(url=static("nautobot_secrets_providers/docs/index.html")), name="docs"),
+    path(
+        "bitwarden/custom-fields/",
+        views.BitwardenCustomFieldNamesView.as_view(),
+        name="bitwarden_custom_fields",
+    ),
 ]
 
 urlpatterns += router.urls

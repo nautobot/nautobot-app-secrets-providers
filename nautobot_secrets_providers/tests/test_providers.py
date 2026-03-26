@@ -4,10 +4,12 @@ import os
 from unittest.mock import mock_open, patch
 
 import boto3
+import requests
 import requests_mock
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase, tag
+from django.urls import reverse
 from hvac import Client as HVACClient
 from moto import mock_secretsmanager, mock_ssm
 from nautobot.extras.models import Secret
@@ -16,6 +18,7 @@ from nautobot.extras.secrets import exceptions
 from nautobot_secrets_providers.providers import (
     AWSSecretsManagerSecretsProvider,
     AWSSystemsManagerParameterStore,
+    BitwardenCLISecretsProvider,
     HashiCorpVaultSecretsProvider,
     OnePasswordSecretsProvider,
 )
@@ -713,6 +716,315 @@ class AWSSystemsManagerParameterStoreTestCase(SecretsProviderTestCase):
         self.assertIn("ParameterVersionNotFound", exc.message)
 
 
+class BitwardenCLISecretsProviderTestCase(SecretsProviderTestCase):
+    """Tests for Bitwarden CLI secrets provider."""
+
+    provider = BitwardenCLISecretsProvider
+
+    def setUp(self):
+        super().setUp()
+        self.secret = Secret.objects.create(
+            name="hello-bitwarden",
+            provider=self.provider.slug,
+            parameters={"secret_id": "f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1", "secret_field": "password"},
+        )
+
+    @patch.dict(
+        os.environ,
+        {
+            "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
+            "BW_CLI_URL": "https://vaultwarden.example",
+            "BW_CLI_USER": "nautobot",
+            "BW_CLI_PASSWORD": "secret",
+        },
+        clear=True,
+    )
+    @requests_mock.Mocker()
+    def test_retrieve_success(self, requests_mocker):
+        """Retrieve a Bitwarden secret successfully."""
+
+        requests_mocker.register_uri(
+            method="GET",
+            url="https://vaultwarden.example/object/item/f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1",
+            status_code=200,
+            json={"success": True, "data": {"login": {"password": "secret-value", "username": "admin"}}},
+        )
+
+        value = self.provider.get_value_for_secret(self.secret)
+
+        self.assertEqual(value, "secret-value")
+        self.assertEqual(len(requests_mocker.request_history), 1)
+        self.assertEqual(
+            requests_mocker.request_history[0].url,
+            "https://vaultwarden.example/object/item/f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1",
+        )
+
+    @patch.dict(
+        os.environ,
+        {
+            "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
+            "BW_CLI_URL": "https://vaultwarden.example",
+            "BW_CLI_USER": "nautobot",
+            "BW_CLI_PASSWORD": "secret",
+        },
+        clear=True,
+    )
+    @requests_mock.Mocker()
+    def test_retrieve_custom_field_success(self, requests_mocker):
+        """Retrieve a named custom field via `custom` + `custom_field_name`."""
+
+        self.secret.parameters["secret_field"] = "custom"
+        self.secret.parameters["custom_field_name"] = "custom_test"
+
+        requests_mocker.register_uri(
+            method="GET",
+            url="https://vaultwarden.example/object/item/f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1",
+            status_code=200,
+            json={
+                "success": True,
+                "data": {
+                    "fields": [
+                        {"name": "custom_test", "value": "custom-value"},
+                    ]
+                },
+            },
+        )
+
+        value = self.provider.get_value_for_secret(self.secret)
+
+        self.assertEqual(value, "custom-value")
+
+    @patch.dict(
+        os.environ,
+        {
+            "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
+            "BW_CLI_URL": "https://vaultwarden.example",
+            "BW_CLI_USER": "nautobot",
+            "BW_CLI_PASSWORD": "secret",
+        },
+        clear=True,
+    )
+    @requests_mock.Mocker()
+    def test_retrieve_custom_field_prefix_success(self, requests_mocker):
+        """Retrieve a named custom field via `custom.<field_name>` syntax."""
+
+        self.secret.parameters["secret_field"] = "custom.custom_test"
+
+        requests_mocker.register_uri(
+            method="GET",
+            url="https://vaultwarden.example/object/item/f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1",
+            status_code=200,
+            json={
+                "success": True,
+                "data": {
+                    "fields": [
+                        {"name": "custom_test", "value": "custom-value-2"},
+                    ]
+                },
+            },
+        )
+
+        value = self.provider.get_value_for_secret(self.secret)
+
+        self.assertEqual(value, "custom-value-2")
+
+    @patch.dict(
+        os.environ,
+        {
+            "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
+            "BW_CLI_URL": "https://vaultwarden.example",
+            "BW_CLI_USER": "nautobot",
+            "BW_CLI_PASSWORD": "secret",
+        },
+        clear=True,
+    )
+    @requests_mock.Mocker()
+    def test_retrieve_identity_field(self, requests_mocker):
+        """Retrieve nested identity field value."""
+
+        self.secret.parameters["secret_field"] = "identity.firstName"
+
+        requests_mocker.register_uri(
+            method="GET",
+            url="https://vaultwarden.example/object/item/f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1",
+            status_code=200,
+            json={"success": True, "data": {"identity": {"firstName": "Max"}}},
+        )
+
+        value = self.provider.get_value_for_secret(self.secret)
+        self.assertEqual(value, "Max")
+
+    @patch.dict(
+        os.environ,
+        {
+            "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
+            "BW_CLI_URL": "https://vaultwarden.example",
+            "BW_CLI_USER": "nautobot",
+            "BW_CLI_PASSWORD": "secret",
+        },
+        clear=True,
+    )
+    @requests_mock.Mocker()
+    def test_retrieve_identity_mapped_field(self, requests_mocker):
+        """Retrieve an identity field using the mapped key (e.g. identity_firstName)."""
+
+        self.secret.parameters["secret_field"] = "identity_firstName"
+
+        requests_mocker.register_uri(
+            method="GET",
+            url="https://vaultwarden.example/object/item/f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1",
+            status_code=200,
+            json={"success": True, "data": {"identity": {"firstName": "Jane"}}},
+        )
+
+        value = self.provider.get_value_for_secret(self.secret)
+        self.assertEqual(value, "Jane")
+
+    @patch.dict(
+        os.environ,
+        {
+            "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
+            "BW_CLI_URL": "https://vaultwarden.example",
+            "BW_CLI_USER": "nautobot",
+            "BW_CLI_PASSWORD": "secret",
+        },
+        clear=True,
+    )
+    @requests_mock.Mocker()
+    def test_retrieve_card_mapped_field(self, requests_mocker):
+        """Retrieve a card field using the mapped key (e.g. card_number)."""
+
+        self.secret.parameters["secret_field"] = "card_number"
+
+        requests_mocker.register_uri(
+            method="GET",
+            url="https://vaultwarden.example/object/item/f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1",
+            status_code=200,
+            json={"success": True, "data": {"card": {"number": "4111111111111111"}}},
+        )
+
+        value = self.provider.get_value_for_secret(self.secret)
+        self.assertEqual(value, "4111111111111111")
+
+    @patch.dict(
+        os.environ,
+        {
+            "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
+            "BW_CLI_URL": "https://vaultwarden.example",
+            "BW_CLI_USER": "nautobot",
+            "BW_CLI_PASSWORD": "secret",
+        },
+        clear=True,
+    )
+    @requests_mock.Mocker()
+    def test_retrieve_login_fido2_field(self, requests_mocker):
+        """Retrieve fido2Credentials via the LOGIN_FIELDS mapping."""
+
+        self.secret.parameters["secret_field"] = "fido2Credentials"
+
+        requests_mocker.register_uri(
+            method="GET",
+            url="https://vaultwarden.example/object/item/f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1",
+            status_code=200,
+            json={"success": True, "data": {"login": {"fido2Credentials": "cred-data"}}},
+        )
+
+        value = self.provider.get_value_for_secret(self.secret)
+        self.assertEqual(value, "cred-data")
+
+    @patch.dict(
+        os.environ,
+        {
+            "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
+            "BW_CLI_URL": "https://vaultwarden.example",
+            "BW_CLI_USER": "nautobot",
+            "BW_CLI_PASSWORD": "secret",
+        },
+        clear=True,
+    )
+    @requests_mock.Mocker()
+    def test_http_error(self, requests_mocker):
+        """Raise provider error on non-200 responses."""
+
+        requests_mocker.register_uri(
+            method="GET",
+            url="https://vaultwarden.example/object/item/f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1",
+            status_code=401,
+            text="Unauthorized",
+        )
+
+        with self.assertRaises(exceptions.SecretProviderError) as err:
+            self.provider.get_value_for_secret(self.secret)
+
+        self.assertIn("401", str(err.exception))
+
+    @patch.dict(
+        os.environ,
+        {
+            "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
+            "BW_CLI_URL": "https://vaultwarden.example",
+            "BW_CLI_USER": "nautobot",
+            "BW_CLI_PASSWORD": "secret",
+        },
+        clear=True,
+    )
+    @patch("nautobot_secrets_providers.providers.bitwarden.requests.get")
+    def test_ssl_error(self, requests_get):
+        """Raise provider error with guidance on TLS verification failures."""
+
+        requests_get.side_effect = requests.exceptions.SSLError("CERTIFICATE_VERIFY_FAILED")
+
+        with self.assertRaises(exceptions.SecretProviderError) as err:
+            self.provider.get_value_for_secret(self.secret)
+
+        self.assertIn("BW_CLI_VERIFY_SSL=false", str(err.exception))
+
+    @patch.dict(
+        os.environ,
+        {
+            "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
+            "BW_CLI_URL": "https://vaultwarden.example",
+            "BW_CLI_USER": "nautobot",
+        },
+        clear=True,
+    )
+    def test_missing_env(self):
+        """Ensure missing environment variables error loudly."""
+
+        with self.assertRaises(exceptions.SecretProviderError) as err:
+            self.provider.get_value_for_secret(self.secret)
+
+        self.assertIn("BW_CLI_PASSWORD", str(err.exception))
+
+    @patch.dict(
+        os.environ,
+        {
+            "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
+            "BW_CLI_URL": "https://vaultwarden.example",
+            "BW_CLI_USER": "nautobot",
+            "BW_CLI_PASSWORD": "secret",
+        },
+        clear=True,
+    )
+    @requests_mock.Mocker()
+    def test_field_not_found(self, requests_mocker):
+        """Raise an error when requested field does not exist."""
+
+        self.secret.parameters["secret_field"] = "card.number"
+
+        requests_mocker.register_uri(
+            method="GET",
+            url="https://vaultwarden.example/object/item/f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1",
+            status_code=200,
+            json={"success": True, "data": {"login": {"password": "x"}}},
+        )
+
+        with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
+            self.provider.get_value_for_secret(self.secret)
+
+        self.assertIn("card.number", str(err.exception))
+
+
 class OnePasswordSecretsProviderTestCase(SecretsProviderTestCase):
     """Tests for OnePasswordSecretsProvider."""
 
@@ -818,3 +1130,191 @@ class OnePasswordSecretsProviderTestCase(SecretsProviderTestCase):
         with self.settings(PLUGINS_CONFIG=multiple_plugins_config):
             choices = one_password_vault_choices()
             self.assertEqual(choices, [("Example", "Example"), ("Example 2", "Example 2")])
+
+
+class BitwardenGetCustomFieldNamesTestCase(SecretsProviderTestCase):
+    """Tests for BitwardenCLISecretsProvider.get_custom_field_names()."""
+
+    provider = BitwardenCLISecretsProvider
+    ITEM_ID = "bb7b4168-9cb9-45ae-b7d0-20743ab4a3e7"
+    BW_ENV = {
+        "BW_CLI_URL": "https://vaultwarden.example",
+        "BW_CLI_USER": "nautobot",
+        "BW_CLI_PASSWORD": "secret",
+    }
+
+    @patch.dict(os.environ, BW_ENV, clear=True)
+    @requests_mock.Mocker()
+    def test_returns_field_names(self, requests_mocker):
+        """Returns list of custom field names from the Bitwarden item."""
+        requests_mocker.get(
+            f"https://vaultwarden.example/object/item/{self.ITEM_ID}",
+            json={
+                "success": True,
+                "data": {
+                    "fields": [
+                        {"name": "custom_test", "value": "val1", "type": 0},
+                        {"name": "custom_hidden", "value": "val2", "type": 1},
+                    ]
+                },
+            },
+        )
+        result = self.provider.get_custom_field_names(self.ITEM_ID)
+        self.assertEqual(result, ["custom_test", "custom_hidden"])
+
+    @patch.dict(os.environ, BW_ENV, clear=True)
+    @requests_mock.Mocker()
+    def test_returns_empty_list_when_no_fields(self, requests_mocker):
+        """Returns empty list when item has no custom fields."""
+        requests_mocker.get(
+            f"https://vaultwarden.example/object/item/{self.ITEM_ID}",
+            json={"success": True, "data": {"fields": []}},
+        )
+        result = self.provider.get_custom_field_names(self.ITEM_ID)
+        self.assertEqual(result, [])
+
+    @patch.dict(os.environ, BW_ENV, clear=True)
+    @requests_mock.Mocker()
+    def test_raises_on_http_error(self, requests_mocker):
+        """Raises ValueError on non-200 HTTP status."""
+        requests_mocker.get(
+            f"https://vaultwarden.example/object/item/{self.ITEM_ID}",
+            status_code=401,
+        )
+        with self.assertRaises(ValueError) as err:
+            self.provider.get_custom_field_names(self.ITEM_ID)
+        self.assertIn("401", str(err.exception))
+
+    @patch.dict(os.environ, BW_ENV, clear=True)
+    @requests_mock.Mocker()
+    def test_raises_on_bitwarden_failure(self, requests_mocker):
+        """Raises ValueError when Bitwarden reports success=false."""
+        requests_mocker.get(
+            f"https://vaultwarden.example/object/item/{self.ITEM_ID}",
+            json={"success": False, "message": "Item not found."},
+        )
+        with self.assertRaises(ValueError) as err:
+            self.provider.get_custom_field_names(self.ITEM_ID)
+        self.assertIn("Item not found", str(err.exception))
+
+    @patch.dict(
+        os.environ,
+        {"BW_CLI_URL": "https://vaultwarden.example", "BW_CLI_USER": "nautobot"},
+        clear=True,
+    )
+    def test_raises_on_missing_configuration(self):
+        """Raises ValueError when required environment variables are missing."""
+        with self.assertRaises(ValueError) as err:
+            self.provider.get_custom_field_names(self.ITEM_ID)
+        self.assertIn("BW_CLI_PASSWORD", str(err.exception))
+
+
+class BitwardenCustomFieldNamesViewTestCase(SecretsProviderTestCase):
+    """Tests for the BitwardenCustomFieldNamesView AJAX endpoint."""
+
+    provider = BitwardenCLISecretsProvider
+    ITEM_ID = "bb7b4168-9cb9-45ae-b7d0-20743ab4a3e7"
+    BW_ENV = {
+        "BW_CLI_URL": "https://vaultwarden.example",
+        "BW_CLI_USER": "nautobot",
+        "BW_CLI_PASSWORD": "secret",
+    }
+
+    @property
+    def endpoint_url(self):
+        """Return the URL for the custom field names AJAX endpoint."""
+        return reverse("plugins:nautobot_secrets_providers:bitwarden_custom_fields")
+
+    def test_unauthenticated_request_redirects(self):
+        """Unauthenticated requests are redirected to the login page."""
+        from django.test import Client as DjangoClient  # pylint: disable=import-outside-toplevel
+
+        anon_client = DjangoClient()
+        response = anon_client.get(self.endpoint_url, {"secret_id": self.ITEM_ID})
+        self.assertIn(response.status_code, [302, 403])
+
+    def test_missing_secret_id_returns_400(self):
+        """Missing secret_id query param returns 400 with error JSON."""
+        response = self.client.get(self.endpoint_url)
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertFalse(data["success"])
+        self.assertIn("secret_id", data["error"])
+
+    def test_invalid_uuid_returns_400(self):
+        """Non-UUID secret_id returns 400 with error JSON."""
+        response = self.client.get(self.endpoint_url, {"secret_id": "not-a-uuid"})
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertFalse(data["success"])
+        self.assertIn("Invalid", data["error"])
+
+    @patch.dict(os.environ, BW_ENV, clear=True)
+    @requests_mock.Mocker()
+    def test_returns_custom_field_names_on_success(self, requests_mocker):
+        """Returns JSON with the list of custom field names on success."""
+        requests_mocker.get(
+            f"https://vaultwarden.example/object/item/{self.ITEM_ID}",
+            json={
+                "success": True,
+                "data": {
+                    "fields": [
+                        {"name": "api_key", "value": "secret-value", "type": 0},
+                        {"name": "token", "value": "another-value", "type": 1},
+                    ]
+                },
+            },
+        )
+        response = self.client.get(self.endpoint_url, {"secret_id": self.ITEM_ID})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["fields"], ["api_key", "token"])
+
+    @patch.dict(os.environ, BW_ENV, clear=True)
+    @requests_mock.Mocker()
+    def test_bitwarden_error_returns_error_json(self, requests_mocker):
+        """Returns success=false JSON when Bitwarden returns an error response."""
+        requests_mocker.get(
+            f"https://vaultwarden.example/object/item/{self.ITEM_ID}",
+            json={"success": False, "message": "Item not found."},
+        )
+        response = self.client.get(self.endpoint_url, {"secret_id": self.ITEM_ID})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertFalse(data["success"])
+        self.assertIn("Item not found", data["error"])
+
+
+class BitwardenParametersFormTestCase(SecretsProviderTestCase):
+    """Tests for BitwardenCLISecretsProvider.ParametersForm behavior and widget rendering."""
+
+    provider = BitwardenCLISecretsProvider
+
+    def _form(self, **data):
+        """Instantiate a bound ParametersForm with the given field values."""
+        return self.provider.ParametersForm(data=data)
+
+    def test_widget_renders_fetch_button(self):
+        """The custom_field_name widget renders the Fetch Fields button and AJAX script."""
+        form = self.provider.ParametersForm()
+        rendered = form.as_p()
+        self.assertIn("bw-fetch-fields-btn", rendered)
+        self.assertIn("bw-fetch-error", rendered)
+        self.assertIn("Fetch Fields from Bitwarden", rendered)
+
+    def test_valid_form_with_custom_field(self):
+        """Form is valid when secret_field is custom and custom_field_name is provided."""
+        form = self._form(secret_id="some-uuid", secret_field="custom", custom_field_name="my_field")
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_invalid_form_missing_custom_field_name(self):
+        """Form is invalid when secret_field is custom but custom_field_name is empty."""
+        form = self._form(secret_id="some-uuid", secret_field="custom", custom_field_name="")
+        self.assertFalse(form.is_valid())
+        self.assertIn("custom_field_name", form.errors)
+
+    def test_valid_form_non_custom_secret_field(self):
+        """Form is valid when secret_field is not custom, regardless of custom_field_name."""
+        form = self._form(secret_id="some-uuid", secret_field="password", custom_field_name="")
+        self.assertTrue(form.is_valid(), form.errors)

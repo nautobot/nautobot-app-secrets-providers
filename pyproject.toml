@@ -37,6 +37,7 @@ boto3 = { version = "^1.19.5", optional = true }
 hvac = { version = ">=0.11.0, <1.1.0", optional = true }
 python-tss-sdk = {version = "~1.2.0", optional = true}
 onepassword-sdk = {version = "^0.1.2", python = ">=3.9", optional = true}
+bitwarden-sdk = {version = "^2.0.0", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 coverage = "*"
@@ -61,6 +62,7 @@ requests-mock = "1.9.3"
 djlint = ">=1.36.4,<2.0.0"
 djhtml = ">=3.0.8,<4.0.0"
 tomli = { version = "*", markers = "python_version < '3.11'" }  # tomli is included in the stdlib as of Python 3.11
+python-dotenv = "^1.2.2"
 
 [tool.poetry.group.docs.dependencies]
 # Render custom markdown for version added/changed/remove notes
@@ -85,12 +87,14 @@ all = [
     "hvac",
     "onepassword-sdk",
     "python-tss-sdk",
+    "bitwarden-sdk",
 ]
 aws = ["boto3"]
 azure = ["azure-identity", "azure-keyvault-secrets"]
 hashicorp = ["hvac"]
 thycotic = ["python-tss-sdk"]
 onepassword = ["onepassword-sdk"]
+vaultwarden = ["bitwarden-sdk"]
 
 [tool.pylint.master]
 # Include the pylint_django plugin to avoid spurious warnings about Django patterns

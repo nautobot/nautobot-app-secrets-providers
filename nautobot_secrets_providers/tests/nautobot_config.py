@@ -28,6 +28,8 @@ DATABASES = {
 if DATABASES["default"]["ENGINE"] == "django.db.backends.mysql":
     DATABASES["default"]["OPTIONS"] = {"charset": "utf8mb4"}
 
+PLUGINS = ["nautobot_secrets_providers"]
+
 PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
         "hashicorp_vault": {

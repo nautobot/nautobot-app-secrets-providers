@@ -11,6 +11,8 @@ x-nautobot-base: &nautobot-base
   env_file:
     - "development.env"
     - "creds.env"
+  volumes:
+    - "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro"
   tty: true
 
 services:
