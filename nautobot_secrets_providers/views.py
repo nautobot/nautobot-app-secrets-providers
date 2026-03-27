@@ -45,7 +45,7 @@ class BitwardenCustomFieldNamesView(LoginRequiredMixin, View):
         except ValueError:
             return JsonResponse({"success": False, "error": "Invalid secret_id format."}, status=400)
         try:
-            field_names = BitwardenCLISecretsProvider.get_custom_field_names(secret_id)
+            info = BitwardenCLISecretsProvider.get_item_info(secret_id)
         except ValueError as err:
             return JsonResponse({"success": False, "error": str(err)})
-        return JsonResponse({"success": True, "fields": field_names})
+        return JsonResponse({"success": True, "fields": info.get("fields", []), "name": info.get("name", "")})

@@ -114,6 +114,12 @@ Notes on locating field names
 - Use the Bitwarden web UI or `bw get item <id>` to inspect available fields and field labels.
 - The Nautobot UI also queries available custom field names (see the provider's view tests for behavior).
 
+UI enhancement: item name display
+
+- When you enter a valid `secret_id` in the Parameters form (or load a page with a pre-filled `secret_id`), Nautobot will perform a quick, non-blocking lookup of the Bitwarden item and append the item's name to the `secret_id` help text. This is useful to confirm you're referencing the expected item before saving.
+- The secret name is shown with a theme-aware green highlight so it remains readable on both light and dark themes. This display is informational only and does not alter the stored secret parameters.
+- The dedicated "Fetch Fields from Bitwarden" button continues to be the explicit action used to populate available custom field names; it remains unchanged.
+
 ## Troubleshooting
 
 - "Bitwarden CLI responded with HTTP <code>": check `BW_CLI_URL`, the `secret_id`, and the CLI server logs.
@@ -123,8 +129,7 @@ Notes on locating field names
 - Use container logs for debugging:
 
 ```bash
-docker compose --project-name nautobot-secrets-providers -f development/docker-compose.base.yml -f development/docker-compose.dev.yml logs bitwarden_cli
-docker compose --project-name nautobot-secrets-providers -f development/docker-compose.base.yml -f development/docker-compose.dev.yml logs nautobot
+invoke logs --tail 100
 ```
 
 ## Security considerations
@@ -192,8 +197,8 @@ labels:
     - "traefik.http.services.bitwarden_cli_api_service.loadbalancer.server.port=8087"
     # Basic auth middleware using htpasswd-style entry provided via env var
     # Ensure BW_CLI_AUTH_STR is exported in the environment used by docker-compose/stack
-    - "traefik.http.middlewares.vaultwarden_test_auth.basicauth.users=${BW_CLI_AUTH_STR}"
-    - "traefik.http.routers.bitwarden_cli_api.middlewares=vaultwarden_test_auth"
+    - "traefik.http.middlewares.bitwarden_cli_auth.basicauth.users=${BW_CLI_AUTH_STR}"
+    - "traefik.http.routers.bitwarden_cli_api.middlewares=bitwarden_cli_auth"
 ```
 
 ### Syncing
@@ -246,6 +251,84 @@ To connect to Vaultwarden when it uses a self-signed certificate, choose one of 
 - **Development/testing only:** set `BW_CLI_VERIFY_SSL=false` to disable TLS certificate verification.
 
 Avoid disabling SSL verification in production.
+
+
+### Example Docker Stack Service Definition
+
+```yaml
+---
+
+# File: .bitwarden-cli/docker-compose.bitwarden_cli-stack.yml
+
+services:
+  bitwarden-cli:
+    image: ppatlabs/bitwarden-cli:latest
+    networks:
+      - t3_proxy  # Overlay network used for Traefik
+    restart: unless-stopped
+    environment:
+      - BW_SESSIONFILE=/data/bw_session.json
+      - NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+    volumes:
+      - bw_cli_data:/data
+      - "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro"
+    entrypoint: ["/usr/local/bin/bitwarden-entrypoint.sh"]
+    command: ["serve", "--hostname=0.0.0.0", "--port=8087"]
+    configs:
+      - source: bitwarden_cli_entrypoint
+        target: /usr/local/bin/bitwarden-entrypoint.sh
+        mode: 0755
+    secrets:
+      - bw_host
+      - bw_user
+      - bw_password
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 20s
+        max_attempts: 6
+        window: 20s
+    labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.bitwarden_cli_api.tls=false"
+        - "traefik.http.routers.bitwarden_cli_api.entrypoints=webhttps"
+        - "traefik.http.routers.bitwarden_cli_api.rule=Host(`bitwarden-cli-api.example.local`)"
+        - "traefik.http.routers.bitwarden_cli_api.service=bitwarden_cli_api_service"
+        - "traefik.http.services.bitwarden_cli_api_service.loadbalancer.server.port=8087"
+        # Basic auth middleware using htpasswd-style entry provided via env var
+        # Ensure BW_CLI_AUTH_STR is exported in the environment used by docker-compose/stack
+        - "traefik.http.middlewares.bitwarden_cli_auth.basicauth.users=${BW_CLI_AUTH_STR}"
+        - "traefik.http.routers.bitwarden_cli_api.middlewares=bitwarden_cli_auth"
+
+volumes:
+  bw_cli_data:
+    driver: local
+
+networks:
+  t3_proxy:       # type overlay for swarm
+    external: true
+    name: t3_proxy
+
+configs:
+  bitwarden_cli_entrypoint:
+    external: true
+    name: bitwarden_cli_entrypoint
+
+secrets:
+  bw_user:
+    external: true
+    name: $SECRET_VAULTWARDEN_BW_USER  # Secret name to allow rolling updates
+  bw_password:
+    external: true
+    name: $SECRET_VAULTWARDEN_BW_PASSWORD
+  bw_host:
+    external: true
+    name: $SECRET_VAULTWARDEN_BW_HOST
+```
+
+
+
 
 ### Example Docker Log Output from `bw serve`:
 

@@ -3,6 +3,7 @@
 # Tests in this file are intentionally large; relax the too-many-lines check.
 # pylint: disable=C0302
 
+import json
 import os
 from unittest.mock import mock_open, patch
 
@@ -11,6 +12,7 @@ import requests
 import requests_mock
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.test import Client, TestCase, tag
 from django.urls import reverse
 from hvac import Client as HVACClient
@@ -1264,7 +1266,8 @@ class BitwardenCustomFieldNamesViewTestCase(SecretsProviderTestCase):
                     "fields": [
                         {"name": "api_key", "value": "secret-value", "type": 0},
                         {"name": "token", "value": "another-value", "type": 1},
-                    ]
+                    ],
+                    "name": "Card Identity",
                 },
             },
         )
@@ -1273,6 +1276,8 @@ class BitwardenCustomFieldNamesViewTestCase(SecretsProviderTestCase):
         data = response.json()
         self.assertTrue(data["success"])
         self.assertEqual(data["fields"], ["api_key", "token"])
+        # The AJAX endpoint should also return the item name for UI display
+        self.assertEqual(data.get("name"), "Card Identity")
 
     @patch.dict(os.environ, BW_ENV, clear=True)
     @requests_mock.Mocker()
@@ -1306,6 +1311,53 @@ class BitwardenParametersFormTestCase(SecretsProviderTestCase):
         self.assertIn("bw-fetch-error", rendered)
         self.assertIn("Fetch Fields from Bitwarden", rendered)
 
+    def test_widget_clears_custom_field_and_shows_warning(self):
+        """The widget JS clears `custom_field_name` for non-custom fields and shows a warning."""
+        form = self.provider.ParametersForm()
+        rendered = form.as_p()
+        # Verify the injected script contains the clearing logic and warning class
+        self.assertIn("customInput.value = ''", rendered)
+        self.assertIn("bw-custom-warning", rendered)
+        # Keep the existing placeholder help text present
+        self.assertIn("Activate Custom field selection to specify this value", rendered)
+
+    def test_model_full_clean_maps_provider_validation_errors(self):
+        """Model full_clean should attach provider form errors to `parameters` and not traceback."""
+        # Construct a Secret whose provider ParametersForm will be invalid
+        bad_params = {"secret_id": "some-uuid", "secret_field": "custom", "custom_field_name": ""}
+        secret = Secret(name="bad-secret", provider=BitwardenCLISecretsProvider.slug, parameters=bad_params)
+
+        with self.assertRaises(ValidationError) as cm:
+            secret.full_clean()
+
+        exc = cm.exception
+        # The ValidationError may appear as a message_dict entry for 'parameters'
+        # or as top-level messages depending on how Django composes errors.
+        if hasattr(exc, "message_dict") and "parameters" in exc.message_dict:
+            msgs = exc.message_dict["parameters"]
+        else:
+            msgs = exc.messages
+
+        self.assertTrue(any("Custom field name is required for 'custom'" in m for m in msgs), msgs)
+
+    def test_model_full_clean_handles_custom_name_with_non_custom_selected(self):
+        """When a custom_field_name is present but a non-custom secret_field is selected,
+        full_clean should raise a ValidationError attached to `parameters` rather than crash.
+        """
+        bad_params = {"secret_id": "some-uuid", "secret_field": "password", "custom_field_name": "PIN"}
+        secret = Secret(name="bad-secret-2", provider=BitwardenCLISecretsProvider.slug, parameters=bad_params)
+
+        with self.assertRaises(ValidationError) as cm:
+            secret.full_clean()
+
+        exc = cm.exception
+        if hasattr(exc, "message_dict") and "parameters" in exc.message_dict:
+            msgs = exc.message_dict["parameters"]
+        else:
+            msgs = exc.messages
+
+        self.assertTrue(any("Selected field must be a Custom Field" in m for m in msgs), msgs)
+
     def test_valid_form_with_custom_field(self):
         """Form is valid when secret_field is custom and custom_field_name is provided."""
         form = self._form(secret_id="some-uuid", secret_field="custom", custom_field_name="my_field")
@@ -1317,7 +1369,57 @@ class BitwardenParametersFormTestCase(SecretsProviderTestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("custom_field_name", form.errors)
 
+
+@tag("integration")
+class SecretAdminEditIntegrationTestCase(SecretsProviderTestCase):
+    """Integration test to simulate admin edit POST flow for Secrets."""
+
+    def setUp(self):
+        super().setUp()
+        # Create an initial secret to edit
+        self.secret = Secret.objects.create(
+            name="admin-edit-secret",
+            provider=BitwardenCLISecretsProvider.slug,
+            parameters={"secret_id": "some-uuid", "secret_field": "password", "custom_field_name": ""},
+        )
+
+    def test_admin_edit_post_triggers_provider_validation_without_traceback(self):
+        """POSTing an update that fails provider validation should not traceback (500).
+
+        This simulates the browser/admin POST to /extras/secrets/<pk>/edit/ with
+        parameters that cause the provider ParametersForm to raise a ValidationError
+        referencing `custom_field_name`.
+        """
+        url = reverse("extras:secret_edit", kwargs={"pk": self.secret.pk})
+
+        # Prepare form data similar to what the admin would submit. The JSONField
+        # `parameters` is posted as a JSON string.
+        new_params = {"secret_id": "some-uuid", "secret_field": "custom", "custom_field_name": ""}
+        form_data = {
+            "name": self.secret.name,
+            "description": self.secret.description,
+            "provider": self.secret.provider,
+            "parameters": json.dumps(new_params),
+            "tags": "",
+        }
+
+        response = self.client.post(url, data=form_data, follow=True)
+
+        # Ensure we did not get a server error
+        self.assertNotEqual(response.status_code, 500)
+
+        # The provider validation message should be present in the response content
+        content = response.content.decode("utf-8", errors="ignore")
+        self.assertIn("Custom field name is required", content)
+
     def test_valid_form_non_custom_secret_field(self):
         """Form is valid when secret_field is not custom, regardless of custom_field_name."""
         form = self._form(secret_id="some-uuid", secret_field="password", custom_field_name="")
         self.assertTrue(form.is_valid(), form.errors)
+
+    def test_invalid_form_custom_name_but_non_custom_selected(self):
+        """Form is invalid when a custom_field_name is provided but a non-custom field is selected."""
+        form = self._form(secret_id="some-uuid", secret_field="password", custom_field_name="my_field")
+        self.assertFalse(form.is_valid())
+        # Validation should report an error on the `secret_field`
+        self.assertIn("secret_field", form.errors)
