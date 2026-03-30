@@ -14,7 +14,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import Client, TestCase, tag
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 from hvac import Client as HVACClient
 from moto import mock_secretsmanager, mock_ssm
 from nautobot.extras.models import Secret
@@ -26,6 +26,14 @@ from nautobot_secrets_providers.providers import (
     BitwardenCLISecretsProvider,
     HashiCorpVaultSecretsProvider,
     OnePasswordSecretsProvider,
+)
+from nautobot_secrets_providers.providers.bitwarden import (
+    BITWARDEN_CACHE_TTL_SECONDS,
+    BITWARDEN_RETRY_BACKOFF,
+    BITWARDEN_RETRY_TOTAL,
+    DEFAULT_BITWARDEN_FIELDS,
+    REQUEST_TIMEOUT,
+    BitwardenCustomFieldNameWidget,
 )
 from nautobot_secrets_providers.providers.choices import HashicorpKVVersionChoices
 from nautobot_secrets_providers.providers.hashicorp import vault_choices
@@ -1587,3 +1595,223 @@ class SecretAdminEditIntegrationTestCase(SecretsProviderTestCase):
         self.assertFalse(form.is_valid())
         # Validation should report an error on the `secret_field`
         self.assertIn("secret_field", form.errors)
+
+
+class BitwardenCoverageTestCase(SecretsProviderTestCase):  # pylint: disable=too-many-public-methods
+    """Additional tests to improve coverage for error paths and edge cases."""
+
+    provider_class = BitwardenCLISecretsProvider
+    secrets_providers = [BitwardenCLISecretsProvider]
+    BW_ENABLED_ENV = {
+        "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
+        "BW_CLI_URL": "https://vaultwarden.example",
+        "BW_CLI_USER": "nautobot",
+        "BW_CLI_PASSWORD": "secret",
+    }
+
+    def setUp(self):
+        """Set up test fixtures."""
+        super().setUp()
+        self.secret = Secret.objects.create(
+            name="coverage-test-secret",
+            provider=BitwardenCLISecretsProvider.slug,
+            parameters={"secret_id": "test-id", "secret_field": "password"},
+        )
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    @patch("nautobot_secrets_providers.providers.bitwarden.BitwardenCLISecretsProvider._build_session")
+    def test_provider_disabled_raises_error(self, mock_build_session):  # pylint: disable=unused-argument
+        """Accessing a secret when provider is disabled should raise SecretProviderError."""
+        # Override the environment variable to disable the provider
+        with patch.dict(os.environ, {"NAUTOBOT_BITWARDEN_CLI_ENABLED": "false"}, clear=False):
+            with self.assertRaises(exceptions.SecretProviderError) as cm:
+                BitwardenCLISecretsProvider.get_value_for_secret(self.secret)
+            self.assertIn("disabled", str(cm.exception).lower())
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_invalid_timeout_falls_back_to_default(self):  # pylint: disable=protected-access
+        """Invalid timeout value should fall back to REQUEST_TIMEOUT."""
+        with self.settings(
+            PLUGINS_CONFIG={"nautobot_secrets_providers": {"bitwarden": {"request_timeout": "not_a_number"}}}
+        ):
+            timeout = BitwardenCLISecretsProvider._get_timeout()  # pylint: disable=protected-access
+            self.assertEqual(timeout, REQUEST_TIMEOUT)
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_invalid_retry_total_falls_back_to_default(self):  # pylint: disable=protected-access
+        """Invalid retry_total should fall back to BITWARDEN_RETRY_TOTAL."""
+        with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {"bitwarden": {"retry_total": "invalid"}}}):
+            total, _ = BitwardenCLISecretsProvider._get_retry_settings()  # pylint: disable=protected-access
+            self.assertEqual(total, BITWARDEN_RETRY_TOTAL)
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_invalid_retry_backoff_falls_back_to_default(self):  # pylint: disable=protected-access
+        """Invalid retry_backoff should fall back to BITWARDEN_RETRY_BACKOFF."""
+        with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {"bitwarden": {"retry_backoff": "invalid"}}}):
+            _, backoff = BitwardenCLISecretsProvider._get_retry_settings()  # pylint: disable=protected-access
+            self.assertEqual(backoff, BITWARDEN_RETRY_BACKOFF)
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_invalid_cache_ttl_falls_back_to_default(self):  # pylint: disable=protected-access
+        """Invalid cache_ttl should fall back to BITWARDEN_CACHE_TTL_SECONDS."""
+        with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {"bitwarden": {"cache_ttl": "not_a_number"}}}):
+            ttl = BitwardenCLISecretsProvider._get_cache_ttl_seconds()  # pylint: disable=protected-access
+            self.assertEqual(ttl, BITWARDEN_CACHE_TTL_SECONDS)
+
+    def test_normalize_base_url_empty_raises_error(self):  # pylint: disable=protected-access
+        """Empty base URL should raise ValueError."""
+        with self.assertRaises(ValueError) as cm:
+            BitwardenCLISecretsProvider._normalize_base_url("", ValueError)  # pylint: disable=protected-access
+        self.assertIn("empty", str(cm.exception).lower())
+
+    def test_normalize_base_url_invalid_scheme_raises_error(self):  # pylint: disable=protected-access
+        """Invalid URL scheme should raise ValueError."""
+        with self.assertRaises(ValueError) as cm:
+            BitwardenCLISecretsProvider._normalize_base_url("ftp://example.com", ValueError)  # pylint: disable=protected-access
+        self.assertIn("http", str(cm.exception).lower())
+
+    def test_normalize_base_url_no_hostname_raises_error(self):  # pylint: disable=protected-access
+        """URL without hostname should raise ValueError."""
+        with self.assertRaises(ValueError) as cm:
+            BitwardenCLISecretsProvider._normalize_base_url("https://", ValueError)  # pylint: disable=protected-access
+        self.assertIn("hostname", str(cm.exception).lower())
+
+    def test_normalize_base_url_adds_https_scheme(self):  # pylint: disable=protected-access
+        """Base URL without scheme should default to https."""
+        result = BitwardenCLISecretsProvider._normalize_base_url("example.com", ValueError)  # pylint: disable=protected-access
+        self.assertTrue(result.startswith("https://"))
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_build_item_url_formats_endpoint_path(self):  # pylint: disable=protected-access
+        """Item URL should be built correctly with endpoint path formatting."""
+        with self.settings(
+            PLUGINS_CONFIG={"nautobot_secrets_providers": {"bitwarden": {"item_endpoint": "api/items/{secret_id}"}}}
+        ):
+            url = BitwardenCLISecretsProvider._build_item_url("https://example.com", "test-id")  # pylint: disable=protected-access
+            self.assertIn("/api/items/test-id", url)
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_get_field_choices_default_fallback(self):  # pylint: disable=protected-access
+        """When configured fields is empty, should fall back to DEFAULT_BITWARDEN_FIELDS."""
+        with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {"bitwarden": {"BITWARDEN_FIELDS": []}}}):
+            choices = BitwardenCLISecretsProvider.get_field_choices()  # pylint: disable=protected-access
+            self.assertEqual(choices, [(f["name"], f["label"]) for f in DEFAULT_BITWARDEN_FIELDS])
+
+    def test_validate_secret_id_invalid_format_raises_error(self):  # pylint: disable=protected-access
+        """Invalid secret_id format should raise via raise_exc."""
+        with self.assertRaises(ValueError) as cm:
+            BitwardenCLISecretsProvider._validate_secret_id("invalid@id!", ValueError)  # pylint: disable=protected-access
+        self.assertIn("format", str(cm.exception).lower())
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    @patch.object(BitwardenCLISecretsProvider, "_build_session")
+    def test_http_error_without_response_body(self, mock_build_session):  # pylint: disable=protected-access
+        """HTTP error without response body should raise appropriate error."""
+        mock_session = MagicMock()
+        mock_build_session.return_value = mock_session
+        error = requests.exceptions.HTTPError()
+        error.response = None
+        mock_session.get.side_effect = error
+
+        with self.assertRaises(ValueError) as cm:
+            BitwardenCLISecretsProvider._request_item_payload(  # pylint: disable=protected-access
+                "https://example.com/api/item", ("user", "pass"), True, ValueError
+            )
+        self.assertIn("error without a response body", str(cm.exception).lower())
+
+    def test_read_nested_returns_none_for_invalid_keys(self):  # pylint: disable=protected-access
+        """Reading invalid keys should return None."""
+        data = {"login": {"password": "secret"}}
+        result = BitwardenCLISecretsProvider._read_nested(data, "login.nonexistent")  # pylint: disable=protected-access
+        self.assertIsNone(result)
+
+    def test_read_nested_returns_none_for_non_dict_access(self):  # pylint: disable=protected-access
+        """Accessing non-dict value as dict should return None."""
+        data = {"login": "string"}
+        result = BitwardenCLISecretsProvider._read_nested(data, "login.password")  # pylint: disable=protected-access
+        self.assertIsNone(result)
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_extract_custom_field_not_found_raises_error(self):  # pylint: disable=protected-access
+        """Missing custom field should raise SecretValueNotFoundError."""
+        data = {"fields": [{"name": "field1", "value": "value1"}]}
+        with self.assertRaises(exceptions.SecretValueNotFoundError) as cm:
+            BitwardenCLISecretsProvider._extract_custom_field(self.secret, data, "nonexistent")  # pylint: disable=protected-access
+        self.assertIn("not found", str(cm.exception).lower())
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_extract_custom_field_with_none_value_raises_error(self):  # pylint: disable=protected-access
+        """Custom field with None value should raise SecretValueNotFoundError."""
+        data = {"fields": [{"name": "field1", "value": None}]}
+        with self.assertRaises(exceptions.SecretValueNotFoundError):
+            BitwardenCLISecretsProvider._extract_custom_field(self.secret, data, "field1")  # pylint: disable=protected-access
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_extract_uri_no_uris_raises_error(self):  # pylint: disable=protected-access
+        """Item without URIs should raise SecretValueNotFoundError."""
+        data = {"login": {"uris": []}}
+        with self.assertRaises(exceptions.SecretValueNotFoundError) as cm:
+            BitwardenCLISecretsProvider._extract_uri(self.secret, data)  # pylint: disable=protected-access
+        self.assertIn("no uris", str(cm.exception).lower())
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_extract_uri_login_has_no_uris_raises_error(self):  # pylint: disable=protected-access
+        """Login without uris field should raise SecretValueNotFoundError."""
+        data = {"login": {}}
+        with self.assertRaises(exceptions.SecretValueNotFoundError):
+            BitwardenCLISecretsProvider._extract_uri(self.secret, data)  # pylint: disable=protected-access
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_extract_ssh_field_no_ssh_key_raises_error(self):  # pylint: disable=protected-access
+        """Item without SSH key should raise SecretValueNotFoundError."""
+        data = {}
+        with self.assertRaises(exceptions.SecretValueNotFoundError) as cm:
+            BitwardenCLISecretsProvider._extract_ssh_field(self.secret, data, "ssh_private_key")  # pylint: disable=protected-access
+        self.assertIn("no ssh key", str(cm.exception).lower())
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_extract_identity_field_no_identity_raises_error(self):  # pylint: disable=protected-access
+        """Item without identity data should raise SecretValueNotFoundError."""
+        data = {}
+        with self.assertRaises(exceptions.SecretValueNotFoundError) as cm:
+            BitwardenCLISecretsProvider._extract_identity_field(self.secret, data, "identity_firstName")  # pylint: disable=protected-access
+        self.assertIn("no identity", str(cm.exception).lower())
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_extract_card_field_no_card_raises_error(self):  # pylint: disable=protected-access
+        """Item without card data should raise SecretValueNotFoundError."""
+        data = {}
+        with self.assertRaises(exceptions.SecretValueNotFoundError) as cm:
+            BitwardenCLISecretsProvider._extract_card_field(self.secret, data, "card_number")  # pylint: disable=protected-access
+        self.assertIn("no card", str(cm.exception).lower())
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_extract_field_returns_none_raises_error(self):  # pylint: disable=protected-access
+        """When extracted field value is None, should raise SecretValueNotFoundError."""
+        data = {"notes": None}
+        with self.assertRaises(exceptions.SecretValueNotFoundError) as cm:
+            BitwardenCLISecretsProvider._extract_field(self.secret, data, "notes", "")  # pylint: disable=protected-access
+        self.assertIn("not set", str(cm.exception).lower())
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_extract_generic_field_returns_none_raises_error(self):  # pylint: disable=protected-access
+        """Generic field extraction returning None should raise error."""
+        data = {"some_field": None}
+        with self.assertRaises(exceptions.SecretValueNotFoundError):
+            BitwardenCLISecretsProvider._extract_field(self.secret, data, "some_field", "")  # pylint: disable=protected-access
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    def test_extract_dotted_path_field_returns_none_raises_error(self):  # pylint: disable=protected-access
+        """Dotted path that returns None should raise error."""
+        data = {"login": {"deep": {"nested": None}}}
+        with self.assertRaises(exceptions.SecretValueNotFoundError):
+            BitwardenCLISecretsProvider._extract_field(self.secret, data, "login.deep.nested", "")  # pylint: disable=protected-access
+
+    def test_widget_handles_no_reverse_match(self):
+        """Widget should handle NoReverseMatch gracefully."""
+        with patch("nautobot_secrets_providers.providers.bitwarden.reverse") as mock_reverse:
+            mock_reverse.side_effect = NoReverseMatch("Test error")
+            widget = BitwardenCustomFieldNameWidget()
+            html = widget.render("test", "value")
+            # Should still render without crashing
+            self.assertIn("fetch", html.lower())
