@@ -201,7 +201,7 @@ _BITWARDEN_FETCH_JS = """\
 
     function setButtonVisibility() {
         var hasId = secretIdInput.value.trim().length > 0;
-        fetchBtn.style.display = hasId ? '' : 'none';
+        fetchBtn.style.display = hasId ? 'inline-block' : 'none';
         if (!hasId) {
             suggestionsDiv.style.display = 'none';
             errorDiv.style.display = 'none';
@@ -289,11 +289,17 @@ _BITWARDEN_FETCH_JS = """\
         // Ignore if closest() isn't available.
     }
 
+    function setTinyFetchButtonStyle() {
+        fetchBtn.style.padding = '4px 10px';
+        fetchBtn.style.fontSize = '13px';
+    }
+
     fetchBtn.addEventListener('click', function () {
         var secretId = secretIdInput.value.trim();
         if (!secretId) { return; }
         fetchBtn.disabled = true;
         fetchBtn.textContent = 'Fetching...';
+        setTinyFetchButtonStyle();
         errorDiv.textContent = '';
         errorDiv.style.display = 'none';
         suggestionsDiv.style.display = 'none';
@@ -303,16 +309,17 @@ _BITWARDEN_FETCH_JS = """\
             .then(function (data) {
                 fetchBtn.disabled = false;
                 fetchBtn.textContent = 'Fetch Fields from Bitwarden';
+                setTinyFetchButtonStyle();
                 if (data && data.success && data.fields && data.fields.length > 0) {
                     fieldList.innerHTML = '';
                     data.fields.forEach(function (fname) {
                         var b = document.createElement('button');
                         b.type = 'button';
-                        b.className = 'btn btn-xs btn-default';
-                        b.style.cssText = 'margin:2px;';
+                        b.className = 'bw-field-button';
                         b.textContent = fname;
                         b.addEventListener('click', function () {
                             customInput.value = fname;
+                            setCustomFieldState();
                             try {
                                 customInput.dispatchEvent(new Event('input', { bubbles: true }));
                                 customInput.dispatchEvent(new Event('change', { bubbles: true }));
@@ -336,11 +343,13 @@ _BITWARDEN_FETCH_JS = """\
             .catch(function (err) {
                 fetchBtn.disabled = false;
                 fetchBtn.textContent = 'Fetch Fields from Bitwarden';
+                setTinyFetchButtonStyle();
                 errorDiv.textContent = 'Request failed: ' + (err && err.message ? err.message : String(err));
                 errorDiv.style.display = '';
             });
     });
 
+    setTinyFetchButtonStyle();
     setCustomFieldState();
     setButtonVisibility();
     syncParametersJson();
@@ -370,8 +379,21 @@ class BitwardenCustomFieldNameWidget(forms.TextInput):
             '<style id="bw-secret-style">'
             ".bw-secret-name { font-weight:600; color:#056d3b; }"
             ".bw-custom-warning { color: #a94442; font-weight:600; }"
+            "#bw-fetch-fields-btn { display: inline-block; margin-left: 8px; background-color: #0066cc !important; color: white !important; border-radius: 3px; border: 1px solid #0052a3; cursor: pointer; font-weight: 500; transition: background-color 0.2s; }"
+            "#bw-fetch-fields-btn:hover { background-color: #0052a3 !important; }"
+            "#bw-fetch-fields-btn:active { background-color: #003d7a !important; }"
+            "#bw-fetch-fields-btn:disabled { background-color: #cccccc !important; color: #666 !important; cursor: not-allowed; }"
+            ".bw-field-button { display: inline-block; padding: 4px 8px; margin: 4px 4px 4px 0; background-color: #f0f0f0 !important; color: #333 !important; border: 1px solid #d0d0d0; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.15s; }"
+            ".bw-field-button:hover { background-color: #e0e0e0 !important; border-color: #0066cc; }"
+            ".bw-field-button:active { background-color: #0066cc !important; color: white !important; border-color: #0052a3; }"
             "@media (prefers-color-scheme: dark) {"
             "  .bw-secret-name { color: #7ee787; text-shadow: 0 1px 0 rgba(0,0,0,0.6); }"
+            "  #bw-fetch-fields-btn { background-color: #0077e6 !important; border-color: #0066cc; }"
+            "  #bw-fetch-fields-btn:hover { background-color: #0066cc !important; }"
+            "  #bw-fetch-fields-btn:active { background-color: #0052a3 !important; }"
+            "  .bw-field-button { background-color: #2d2d2d !important; color: #e0e0e0 !important; border-color: #444; }"
+            "  .bw-field-button:hover { background-color: #404040 !important; border-color: #0077e6; }"
+            "  .bw-field-button:active { background-color: #0077e6 !important; color: white !important; border-color: #0066cc; }"
             "}"
             "@media (prefers-color-scheme: light) {"
             "  .bw-secret-name { color: #056d3b; }"
@@ -379,7 +401,7 @@ class BitwardenCustomFieldNameWidget(forms.TextInput):
             "</style>"
             '<div style="margin-top:4px;">'
             '<button type="button" id="bw-fetch-fields-btn"'
-            ' class="btn btn-default btn-sm" style="display:none;"'
+            ' class="btn btn-sm" style="display:none;"'
             f' data-url="{fetch_url}">Fetch Fields from Bitwarden</button>'
             '<div id="bw-field-suggestions" style="display:none;margin-top:6px;">'
             '<small class="text-muted">Click a field name to copy it above:</small>'
