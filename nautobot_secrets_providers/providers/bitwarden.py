@@ -463,7 +463,7 @@ class BitwardenCLISecretsProvider(SecretsProvider):
             # entering a custom name while a non-custom field is chosen.
             # Accept either the literal 'custom' value or scoped values
             # starting with 'custom.' (e.g. 'custom.someField').
-            if custom_field_name and not (selected_field == "custom"):
+            if custom_field_name and selected_field != "custom":
                 raise forms.ValidationError(
                     {"secret_field": "Selected field must be a Custom Field when a Custom Field name is provided."}
                 )
@@ -519,10 +519,10 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         plugin_settings = cls._plugin_settings()
         retry_total = plugin_settings.get("retry_total")
         if retry_total is None:
-            retry_total = os.getenv("BW_CLI_RETRY_TOTAL", BITWARDEN_RETRY_TOTAL)
+            retry_total = os.getenv("BW_CLI_RETRY_TOTAL", str(BITWARDEN_RETRY_TOTAL))
         retry_backoff = plugin_settings.get("retry_backoff")
         if retry_backoff is None:
-            retry_backoff = os.getenv("BW_CLI_RETRY_BACKOFF", BITWARDEN_RETRY_BACKOFF)
+            retry_backoff = os.getenv("BW_CLI_RETRY_BACKOFF", str(BITWARDEN_RETRY_BACKOFF))
 
         try:
             parsed_retry_total = int(retry_total)

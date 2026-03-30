@@ -1076,13 +1076,13 @@ class BitwardenCLISecretsProviderTestCase(SecretsProviderTestCase):
     def test_read_nested_supports_list_index_paths(self):
         """Nested reader should support simple list index notation in dotted paths."""
         sample = {"login": {"uris": [{"uri": "https://example.local"}]}}
-        value = self.provider._read_nested(sample, "login.uris[0].uri")
+        value = self.provider._read_nested(sample, "login.uris[0].uri")  # pylint: disable=protected-access
         self.assertEqual(value, "https://example.local")
 
     def test_read_nested_returns_none_for_out_of_range_list_index(self):
         """Out-of-range list index in nested path should return None."""
         sample = {"login": {"uris": [{"uri": "https://example.local"}]}}
-        value = self.provider._read_nested(sample, "login.uris[9].uri")
+        value = self.provider._read_nested(sample, "login.uris[9].uri")  # pylint: disable=protected-access
         self.assertIsNone(value)
 
     @patch.dict(
