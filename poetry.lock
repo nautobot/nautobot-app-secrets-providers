@@ -241,29 +241,6 @@ files = [
 ]
 
 [[package]]
-name = "bitwarden-sdk"
-version = "2.0.0"
-description = "A Bitwarden Client for python"
-optional = true
-python-versions = ">=3.0"
-groups = ["main"]
-markers = "extra == \"all\" or extra == \"vaultwarden\""
-files = [
-    {file = "bitwarden_sdk-2.0.0-cp39-abi3-macosx_10_12_x86_64.whl", hash = "sha256:054ccdda8fbf615d0e582e1e75c7c316bf291ed03b27efd774325ecc3b0fb0b8"},
-    {file = "bitwarden_sdk-2.0.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:3cc41cae078d086b1eaeb9e4f781454cfba7b77119f70908d074bed259dce8a6"},
-    {file = "bitwarden_sdk-2.0.0-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a49739ebe37103df677e263637fdabc61682f10a5f4518fb22b130d530fffbcd"},
-    {file = "bitwarden_sdk-2.0.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1c0e2dd8d8a3db2f0cb29d6dcd55fd578bd66839f666b8e1712712b6e9791021"},
-    {file = "bitwarden_sdk-2.0.0-cp39-abi3-win_amd64.whl", hash = "sha256:9b9a523dab81cca56151481bd0dce07bd58695fd14b4c5bcab520c7a24fc16c3"},
-]
-
-[package.dependencies]
-python-dateutil = ">=2.6.0"
-
-[package.extras]
-dev = ["maturin (>=1.0,<2.0)", "uv (>=0.6,<1.0)"]
-dev-linux = ["maturin (>=1.0,<2.0)", "patchelf (>=0.17.0)", "uv (>=0.6,<1.0)"]
-
-[[package]]
 name = "boto3"
 version = "1.42.76"
 description = "The AWS SDK for Python"
@@ -979,34 +956,11 @@ profile = ["gprof2dot (>=2022.7.29)"]
 
 [[package]]
 name = "django"
-version = "4.2.29"
-description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
-optional = false
-python-versions = ">=3.8"
-groups = ["main", "dev"]
-markers = "python_version < \"3.12\""
-files = [
-    {file = "django-4.2.29-py3-none-any.whl", hash = "sha256:074d7c4d2808050e528388bda442bd491f06def4df4fe863f27066851bba010c"},
-    {file = "django-4.2.29.tar.gz", hash = "sha256:86d91bc8086569c8d08f9c55888b583a921ac1f95ed3bdc7d5659d4709542014"},
-]
-
-[package.dependencies]
-asgiref = ">=3.6.0,<4"
-sqlparse = ">=0.3.1"
-tzdata = {version = "*", markers = "sys_platform == \"win32\""}
-
-[package.extras]
-argon2 = ["argon2-cffi (>=19.1.0)"]
-bcrypt = ["bcrypt"]
-
-[[package]]
-name = "django"
 version = "5.2.12"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 optional = false
 python-versions = ">=3.10"
 groups = ["main", "dev"]
-markers = "python_version >= \"3.12\""
 files = [
     {file = "django-5.2.12-py3-none-any.whl", hash = "sha256:4853482f395c3a151937f6991272540fcbf531464f254a347bf7c89f53c8cff7"},
     {file = "django-5.2.12.tar.gz", hash = "sha256:6b809af7165c73eff5ce1c87fdae75d4da6520d6667f86401ecf55b681eb1eeb"},
@@ -1035,33 +989,11 @@ files = [
 
 [[package]]
 name = "django-celery-beat"
-version = "2.7.0"
-description = "Database-backed Periodic Tasks."
-optional = false
-python-versions = ">=3.8"
-groups = ["main"]
-markers = "python_version < \"3.12\""
-files = [
-    {file = "django_celery_beat-2.7.0-py3-none-any.whl", hash = "sha256:851c680d8fbf608ca5fecd5836622beea89fa017bc2b3f94a5b8c648c32d84b1"},
-    {file = "django_celery_beat-2.7.0.tar.gz", hash = "sha256:8482034925e09b698c05ad61c36ed2a8dbc436724a3fe119215193a4ca6dc967"},
-]
-
-[package.dependencies]
-celery = ">=5.2.3,<6.0"
-cron-descriptor = ">=1.2.32"
-Django = ">=2.2,<5.2"
-django-timezone-field = ">=5.0"
-python-crontab = ">=2.3.4"
-tzdata = "*"
-
-[[package]]
-name = "django-celery-beat"
 version = "2.8.1"
 description = "Database-backed Periodic Tasks."
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
-markers = "python_version >= \"3.12\""
 files = [
     {file = "django_celery_beat-2.8.1-py3-none-any.whl", hash = "sha256:da2b1c6939495c05a551717509d6e3b79444e114a027f7b77bf3727c2a39d171"},
     {file = "django_celery_beat-2.8.1.tar.gz", hash = "sha256:dfad0201c0ac50c91a34700ef8fa0a10ee098cc7f3375fe5debed79f2204f80a"},
@@ -2681,79 +2613,11 @@ portalocker = ["portalocker (>=1.4,<4)"]
 
 [[package]]
 name = "nautobot"
-version = "3.0.9"
-description = "Source of truth and network automation platform."
-optional = false
-python-versions = "<3.14,>=3.10"
-groups = ["main"]
-markers = "python_version < \"3.12\""
-files = [
-    {file = "nautobot-3.0.9-py3-none-any.whl", hash = "sha256:c0eaaab03169d7618d452d13139e75e54814708e5382ed47f7d0efa9cb403526"},
-    {file = "nautobot-3.0.9.tar.gz", hash = "sha256:5cc8aa9104286b5754b40088f984c8977eb0e568f16df53c150d5b1850a72001"},
-]
-
-[package.dependencies]
-celery = ">=5.6.2,<5.7.0"
-cryptography = ">=46.0.5,<46.1.0"
-Django = ">=4.2.29,<4.3.0"
-django-ajax-tables = ">=1.1.1,<1.2.0"
-django-celery-beat = ">=2.7.0,<2.8.0"
-django-celery-results = ">=2.6.0,<2.7.0"
-django-constance = ">=4.3.5,<4.4.0"
-django-cors-headers = ">=4.9.0,<4.10.0"
-django-db-file-storage = ">=0.5.6.1,<0.6.0.0"
-django-extensions = ">=4.1,<4.2"
-django-filter = ">=25.1,<25.2"
-django-health-check = ">=3.20.8,<3.21.0"
-django-jinja = ">=2.11.0,<2.12.0"
-django-prometheus = ">=2.4.1,<2.5.0"
-django-redis = ">=6.0.0,<6.1.0"
-django-silk = ">=5.4.3,<5.5.0"
-django-structlog = {version = ">=10.0.0,<10.1.0", extras = ["celery"]}
-django-tables2 = ">=2.8.0,<2.9.0"
-django-taggit = ">=6.1.0,<6.2.0"
-django-timezone-field = ">=7.2.1,<7.3.0"
-django-tree-queries = ">=0.23.1,<0.24.0"
-django-webserver = ">=1.2.0,<1.3.0"
-djangorestframework = ">=3.16.1,<3.17.0"
-drf-spectacular = {version = ">=0.28.0,<0.29.0", extras = ["sidecar"]}
-emoji = ">=2.15.0,<2.16.0"
-GitPython = ">=3.1.46,<3.2.0"
-graphene-django = ">=3.2.3,<3.3.0"
-graphene-django-optimizer = ">=0.10.0,<0.11.0"
-Jinja2 = ">=3.1.6,<3.2.0"
-jsonschema = ">=4.7.0,<5.0.0"
-kubernetes = ">=33.1.0,<34.0.0"
-Markdown = ">=3.8.2,<3.9.0"
-netaddr = ">=1.3.0,<1.4.0"
-netutils = ">=1.14.0,<2.0.0"
-nh3 = ">=0.3.3,<0.4.0"
-packaging = ">=23.1"
-Pillow = ">=12.1.1,<13.0.0"
-prometheus-client = ">=0.23.1,<0.24.0"
-psycopg2-binary = ">=2.9.11,<2.10.0"
-python-slugify = ">=8.0.4,<8.1.0"
-pyuwsgi = ">=2.0.30,<2.1.0"
-PyYAML = ">=6.0.3,<6.1.0"
-social-auth-app-django = ">=5.4.3,<5.5.0"
-svgwrite = ">=1.4.3,<1.5.0"
-
-[package.extras]
-all = ["django-auth-ldap (>=5.2.0,<5.3.0)", "django-storages (>=1.14.6,<1.15.0)", "mysqlclient (>=2.2.8,<2.3.0)", "napalm (>=4.1.0,<6.0.0)", "social-auth-core[saml] (>=4.8.5,<4.9.0)"]
-ldap = ["django-auth-ldap (>=5.2.0,<5.3.0)"]
-mysql = ["mysqlclient (>=2.2.8,<2.3.0)"]
-napalm = ["napalm (>=4.1.0,<6.0.0)"]
-remote-storage = ["django-storages (>=1.14.6,<1.15.0)"]
-sso = ["social-auth-core[saml] (>=4.8.5,<4.9.0)"]
-
-[[package]]
-name = "nautobot"
 version = "3.1.0a3"
 description = "Source of truth and network automation platform."
 optional = false
 python-versions = "<3.15,>=3.10"
 groups = ["main"]
-markers = "python_version >= \"3.12\""
 files = [
     {file = "nautobot-3.1.0a3-py3-none-any.whl", hash = "sha256:ab535ea7e3ac4af7014b5257d586d327adf8aae2c3f8ff4f90afe314c5659850"},
     {file = "nautobot-3.1.0a3.tar.gz", hash = "sha256:19c740cba24f3cd7646c5253feaa63785020960a9e64b528fec4818315cdd5a2"},
@@ -4742,32 +4606,11 @@ files = [
 
 [[package]]
 name = "social-auth-app-django"
-version = "5.4.3"
-description = "Python Social Authentication, Django integration."
-optional = false
-python-versions = ">=3.9"
-groups = ["main"]
-markers = "python_version < \"3.12\""
-files = [
-    {file = "social_auth_app_django-5.4.3-py3-none-any.whl", hash = "sha256:db70b972faeb10ee1ec83d0dc7dbd0558d5f5830417bba317b712b10ff58d031"},
-    {file = "social_auth_app_django-5.4.3.tar.gz", hash = "sha256:d1f4286d5ca1e512c9b2f686e7ecb2a0128148f1a33d853b69dc07b58508362e"},
-]
-
-[package.dependencies]
-Django = ">=3.2"
-social-auth-core = ">=4.4,<5.0"
-
-[package.extras]
-dev = ["coverage (>=3.6)"]
-
-[[package]]
-name = "social-auth-app-django"
 version = "5.6.0"
 description = "Python Social Authentication, Django integration."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "python_version >= \"3.12\""
 files = [
     {file = "social_auth_app_django-5.6.0-py3-none-any.whl", hash = "sha256:43ca88cc5cd9161710896165ced58b3155e8aafaaff847e859879194770f138d"},
     {file = "social_auth_app_django-5.6.0.tar.gz", hash = "sha256:c695501fcbf6fe87f68f5a79e379abe853662f5129e7ec6cb758a75d5b28c888"},
@@ -5368,15 +5211,14 @@ pyyaml = "*"
 dev = ["doc8", "flake8", "flake8-import-order", "rstcheck[sphinx]", "ruff", "sphinx"]
 
 [extras]
-all = ["azure-identity", "azure-keyvault-secrets", "bitwarden-sdk", "boto3", "hvac", "onepassword-sdk", "python-tss-sdk"]
+all = ["azure-identity", "azure-keyvault-secrets", "boto3", "hvac", "onepassword-sdk", "python-tss-sdk"]
 aws = ["boto3"]
 azure = ["azure-identity", "azure-keyvault-secrets"]
 hashicorp = ["hvac"]
 onepassword = ["onepassword-sdk"]
 thycotic = ["python-tss-sdk"]
-vaultwarden = ["bitwarden-sdk"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.15"
-content-hash = "2285d4d91e556eaca1b15f3907f2421b6f8abd000593cd567afd7c6c68abff55"
+content-hash = "5dbf00d21773f9dc1f0050bf2aea90b538cbf3d169a269cdde2f74a39896a317"

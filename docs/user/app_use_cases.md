@@ -18,13 +18,13 @@ This document describes common use-cases and scenarios for this App.
 
 ---
 
-![Screenshot of secret using AWS Secrets Manager](../images/light/aws-secrets-manager-secrets-provider-add.png#only-light "Secret using AWS Secrets Manager"){ .on-glb }
-![Screenshot of secret using AWS Secrets Manager](../images/dark/aws-secrets-manager-secrets-provider-add.png#only-dark "Secret using AWS Secrets Manager"){ .on-glb }
+![Screenshot of secret using 1Password](../images/light/1password-vault-secrets-provider-add.png#only-light "Secret using 1Password"){ .on-glb }
+![Screenshot of secret using 1Password](../images/dark/1password-vault-secrets-provider-add.png#only-dark "Secret using 1Password"){ .on-glb }
 
 ---
 
-![Screenshot of secret using 1Password](../images/light/1password-vault-secrets-provider-add.png#only-light "Secret using 1Password"){ .on-glb }
-![Screenshot of secret using 1Password](../images/dark/1password-vault-secrets-provider-add.png#only-dark "Secret using 1Password"){ .on-glb }
+![Screenshot of secret using AWS Secrets Manager](../images/light/aws-secrets-manager-secrets-provider-add.png#only-light "Secret using AWS Secrets Manager"){ .on-glb }
+![Screenshot of secret using AWS Secrets Manager](../images/dark/aws-secrets-manager-secrets-provider-add.png#only-dark "Secret using AWS Secrets Manager"){ .on-glb }
 
 ---
 

@@ -76,8 +76,7 @@ Settings
 - `BITWARDEN_FIELDS` (optional): override the default selectable fields presented in the UI (see code reference).
 
 ## Environment variables
-
-When running the development stack, you can set provider values with environment variables.
+You can set provider values with environment variables.
 Create or edit `development/creds.env` or your environment with the following variables:
 
 ```dotenv

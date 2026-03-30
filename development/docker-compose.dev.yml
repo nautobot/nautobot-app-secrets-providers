@@ -26,7 +26,6 @@ services:
       - "8001:8080"
     volumes:
       - "../:/source"
-      - "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro"
     image: "nautobot-secrets-providers/nautobot:${NAUTOBOT_VER}-py${PYTHON_VER}"
     healthcheck:
       disable: true
