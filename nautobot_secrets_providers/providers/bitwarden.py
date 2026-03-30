@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
+import time
 from functools import partial
 from pathlib import Path
 from typing import Any
+from urllib.parse import urljoin, urlsplit
 
 import requests
-import urllib3
 from django import forms
 from django.conf import settings
 from django.urls import NoReverseMatch, reverse
@@ -18,8 +20,16 @@ from nautobot.apps.forms import BootstrapMixin
 from nautobot.apps.secrets import SecretsProvider
 from nautobot.core.settings_funcs import is_truthy
 from nautobot.extras.secrets import exceptions
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+logger = logging.getLogger(__name__)
 
 REQUEST_TIMEOUT = 15
+BITWARDEN_ITEM_ENDPOINT_TEMPLATE = "/object/item/{secret_id}"
+BITWARDEN_RETRY_TOTAL = 3
+BITWARDEN_RETRY_BACKOFF = 0.3
+BITWARDEN_CACHE_TTL_SECONDS = 0
 
 DEFAULT_BITWARDEN_FIELDS = [
     {"name": "card_brand", "label": "Card Brand"},
@@ -388,6 +398,7 @@ class BitwardenCLISecretsProvider(SecretsProvider):
     slug = "bitwarden-cli"
     name = "Bitwarden CLI"
     is_available = True
+    _item_info_cache: dict[str, tuple[float, dict[str, Any]]] = {}
 
     # TBD: Remove after pylint-nautobot bump
     # pylint: disable-next=nb-incorrect-base-class
@@ -459,6 +470,113 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         return plugin_config.get("bitwarden", {})
 
     @classmethod
+    def _get_timeout(cls) -> int:
+        """Return request timeout in seconds from plugin settings/env/defaults."""
+        raw_value = cls._plugin_settings().get("request_timeout") or os.getenv("BW_CLI_REQUEST_TIMEOUT")
+        if raw_value is None:
+            return REQUEST_TIMEOUT
+        try:
+            return int(raw_value)
+        except (TypeError, ValueError):
+            return REQUEST_TIMEOUT
+
+    @classmethod
+    def _get_item_endpoint_template(cls) -> str:
+        """Return item endpoint template from plugin settings/env/default."""
+        endpoint = cls._plugin_settings().get("item_endpoint") or os.getenv("BW_CLI_ITEM_ENDPOINT")
+        if not endpoint:
+            return BITWARDEN_ITEM_ENDPOINT_TEMPLATE
+        endpoint_str = str(endpoint).strip()
+        if "{secret_id}" not in endpoint_str:
+            return BITWARDEN_ITEM_ENDPOINT_TEMPLATE
+        return endpoint_str
+
+    @classmethod
+    def _get_retry_settings(cls) -> tuple[int, float]:
+        """Return retry count and backoff factor for requests session retries."""
+        plugin_settings = cls._plugin_settings()
+        retry_total = plugin_settings.get("retry_total")
+        if retry_total is None:
+            retry_total = os.getenv("BW_CLI_RETRY_TOTAL", BITWARDEN_RETRY_TOTAL)
+        retry_backoff = plugin_settings.get("retry_backoff")
+        if retry_backoff is None:
+            retry_backoff = os.getenv("BW_CLI_RETRY_BACKOFF", BITWARDEN_RETRY_BACKOFF)
+
+        try:
+            parsed_retry_total = int(retry_total)
+        except (TypeError, ValueError):
+            parsed_retry_total = BITWARDEN_RETRY_TOTAL
+
+        try:
+            parsed_retry_backoff = float(retry_backoff)
+        except (TypeError, ValueError):
+            parsed_retry_backoff = BITWARDEN_RETRY_BACKOFF
+
+        return max(parsed_retry_total, 0), max(parsed_retry_backoff, 0.0)
+
+    @classmethod
+    def _get_cache_ttl_seconds(cls) -> int:
+        """Return cache TTL for UI lookup helpers in seconds."""
+        raw_value = cls._plugin_settings().get("cache_ttl") or os.getenv("BW_CLI_CACHE_TTL")
+        if raw_value is None:
+            return BITWARDEN_CACHE_TTL_SECONDS
+        try:
+            return max(int(raw_value), 0)
+        except (TypeError, ValueError):
+            return BITWARDEN_CACHE_TTL_SECONDS
+
+    @staticmethod
+    def _normalize_base_url(base_url: str, raise_exc) -> str:
+        """Normalize and validate a Bitwarden base URL.
+
+        Adds ``https://`` when no scheme is provided and validates that the
+        resulting URL contains a supported scheme and hostname.
+        """
+        normalized = str(base_url).strip()
+        if not normalized:
+            raise raise_exc("Bitwarden base URL is empty.")
+
+        if "://" not in normalized:
+            normalized = f"https://{normalized}"
+
+        parsed = urlsplit(normalized)
+        if parsed.scheme not in ("http", "https"):
+            raise raise_exc("Bitwarden base URL must use http or https scheme.")
+        if not parsed.netloc:
+            raise raise_exc("Bitwarden base URL must include a hostname.")
+
+        return normalized.rstrip("/")
+
+    @classmethod
+    def _build_item_url(cls, base_url: str, secret_id: str) -> str:
+        """Build the item endpoint URL for a given secret ID."""
+        endpoint_template = cls._get_item_endpoint_template()
+        endpoint_path = endpoint_template.format(secret_id=secret_id)
+        if not endpoint_path.startswith("/"):
+            endpoint_path = f"/{endpoint_path}"
+        return urljoin(f"{base_url}/", endpoint_path.lstrip("/"))
+
+    @classmethod
+    def _build_session(cls) -> requests.Session:
+        """Create a requests session configured with retries."""
+        retry_total, retry_backoff = cls._get_retry_settings()
+        retry = Retry(
+            total=retry_total,
+            connect=retry_total,
+            read=retry_total,
+            status=retry_total,
+            backoff_factor=retry_backoff,
+            status_forcelist=(500, 502, 503, 504),
+            allowed_methods=frozenset(["GET"]),
+            raise_on_status=False,
+        )
+        adapter = HTTPAdapter(max_retries=retry)
+        session = requests.Session()
+        session.mount("http://", adapter)
+        session.mount("https://", adapter)
+        return session
+
+    @classmethod
     def get_field_choices(cls) -> list[tuple[str, str]]:
         """Return selectable Bitwarden field choices for the UI.
 
@@ -486,24 +604,18 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         """
         base_url, username, password = cls._get_credentials()
 
-        missing = [
-            name
-            for name, value in [
-                ("BW_CLI_URL", base_url),
-                ("BW_CLI_USER", username),
-                ("BW_CLI_PASSWORD", password),
-            ]
-            if not value
-        ]
+        missing = cls._missing_credential_names(base_url, username, password)
         if missing:
             raise exceptions.SecretProviderError(
                 secret, cls, f"Missing required environment variable(s): {', '.join(missing)}"
             )
 
-        return str(base_url), str(username), str(password)
+        raise_exc = partial(exceptions.SecretProviderError, secret, cls)
+        normalized_url = cls._normalize_base_url(str(base_url), raise_exc)
+        return normalized_url, str(username), str(password)
 
     @classmethod
-    def _get_credentials(cls) -> tuple[Any, Any, Any]:
+    def _get_credentials(cls) -> tuple[str | None, str | None, str | None]:
         """Return raw credential values from plugin settings or environment.
 
         This helper returns the configured values or `None`-like values if not
@@ -517,7 +629,7 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         return base_url, username, password
 
     @classmethod
-    def _load_tls_settings(cls):
+    def _load_tls_settings(cls) -> bool | str:
         """Return TLS verification setting used by `requests`.
 
         The return value is either a boolean (True/False) or a string path to a
@@ -528,7 +640,8 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         plugin_settings = cls._plugin_settings()
         ca_bundle_path = plugin_settings.get("ca_bundle_path") or os.getenv("BW_CLI_CA_BUNDLE")
         if ca_bundle_path:
-            return str(ca_bundle_path)
+            # Return normalized absolute path; existence is validated at use time.
+            return str(Path(ca_bundle_path).expanduser().resolve())
 
         verify_ssl_setting = plugin_settings.get("verify_ssl")
         if verify_ssl_setting is None:
@@ -536,7 +649,7 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         return is_truthy(verify_ssl_setting)
 
     @staticmethod
-    def _validate_secret_id(secret_id: str, raise_exc):
+    def _validate_secret_id(secret_id: str, raise_exc) -> None:
         """Validate the secret ID format and raise via `raise_exc` on error.
 
         `raise_exc` is a callable that accepts a single string message and
@@ -546,9 +659,26 @@ class BitwardenCLISecretsProvider(SecretsProvider):
             raise raise_exc("Invalid secret_id format.")
 
     @classmethod
-    def _check_credentials(cls, base_url, username, password, raise_exc):
+    def _check_credentials(
+        cls,
+        base_url: str | None,
+        username: str | None,
+        password: str | None,
+        raise_exc,
+    ) -> None:
         """Ensure credentials are present; raise via `raise_exc` if any are missing."""
-        missing = [
+        missing = cls._missing_credential_names(base_url, username, password)
+        if missing:
+            raise raise_exc(f"Missing Bitwarden configuration: {', '.join(missing)}")
+
+    @staticmethod
+    def _missing_credential_names(
+        base_url: str | None,
+        username: str | None,
+        password: str | None,
+    ) -> list[str]:
+        """Return names of missing credential inputs for Bitwarden connections."""
+        return [
             name
             for name, value in [
                 ("BW_CLI_URL", base_url),
@@ -557,28 +687,36 @@ class BitwardenCLISecretsProvider(SecretsProvider):
             ]
             if not value
         ]
-        if missing:
-            raise raise_exc(f"Missing Bitwarden configuration: {', '.join(missing)}")
 
     @classmethod
-    def _request_item_payload(cls, url: str, auth: tuple, verify, raise_exc):
+    def _request_item_payload(cls, url: str, auth: tuple[str, str], verify: bool | str, raise_exc):
         """Perform GET -> JSON -> success-check for Bitwarden item endpoints.
 
         `raise_exc` should be a callable accepting a single message string and
         producing an exception appropriate for the caller.
         Returns the `data` object from the Bitwarden payload on success.
+
+        Note:
+            The requests.Session is intentionally not cached or reused between calls.
+            This avoids thread safety issues in Django and WSGI/ASGI environments.
         """
         # If a CA bundle path is returned, ensure the file exists before use.
         if isinstance(verify, str):
-            if not Path(verify).exists():
+            if not Path(verify).expanduser().resolve().is_file():
                 raise raise_exc(f"CA bundle not found at: {verify}")
 
-        if not verify:
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
+        timeout = cls._get_timeout()
+        session = cls._build_session()
         try:
             username, password = auth
-            response = requests.get(url, auth=(str(username), str(password)), timeout=REQUEST_TIMEOUT, verify=verify)
+            logger.debug("Requesting Bitwarden item payload from %s", url)
+            response = session.get(url, auth=(str(username), str(password)), timeout=timeout, verify=verify)
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as err:
+            response = err.response
+            if response is not None:
+                raise raise_exc(f"Bitwarden CLI returned {response.status_code}: {response.text}") from err
+            raise raise_exc("Bitwarden CLI returned an HTTP error without a response body.") from err
         except requests.exceptions.SSLError as err:
             raise raise_exc(
                 "Unable to verify the Bitwarden CLI TLS certificate. "
@@ -586,9 +724,8 @@ class BitwardenCLISecretsProvider(SecretsProvider):
             ) from err
         except requests.RequestException as err:  # pragma: no cover - network error path
             raise raise_exc(f"Unable to reach Bitwarden CLI server: {err}") from err
-
-        if response.status_code != 200:
-            raise raise_exc(f"Bitwarden CLI returned {response.status_code}: {response.text}")
+        finally:
+            session.close()
 
         try:
             payload = response.json()
@@ -600,6 +737,16 @@ class BitwardenCLISecretsProvider(SecretsProvider):
             raise raise_exc(message)
 
         return payload.get("data") or {}
+
+    @classmethod
+    def _get_ui_request_settings(cls) -> tuple[str, tuple[str, str], bool | str]:
+        """Return normalized URL/auth/verify settings for UI helper requests."""
+        base_url, username, password = cls._get_credentials()
+        cls._check_credentials(base_url, username, password, ValueError)
+        normalized_url = cls._normalize_base_url(str(base_url), ValueError)
+        auth = (str(username), str(password))
+        verify = cls._load_tls_settings()
+        return normalized_url, auth, verify
 
     @staticmethod
     def _read_parameters(secret, obj=None) -> tuple[str, str, str]:
@@ -631,7 +778,7 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         cls._validate_secret_id(secret_id, raise_exc)
 
         base_url, username, password = cls._load_env_settings(secret)
-        url = f"{str(base_url).rstrip('/')}/object/item/{secret_id}"
+        url = cls._build_item_url(base_url, secret_id)
         verify = cls._load_tls_settings()
 
         # Delegate request + parse + success-check to shared helper
@@ -639,16 +786,32 @@ class BitwardenCLISecretsProvider(SecretsProvider):
 
     @staticmethod
     def _read_nested(data: dict[str, Any], path: str) -> Any:
-        """Read a dotted-path from nested dictionaries.
+        """Read nested values supporting dotted paths and list indexes.
 
-        Returns the nested value or `None` when any intermediate path segment
-        does not exist or the structure is not a mapping.
+        Examples:
+            - ``login.password``
+            - ``login.uris[0].uri``
         """
         value: Any = data
         for part in path.split("."):
+            match = re.fullmatch(r"([A-Za-z0-9_]+)((?:\[[0-9]+\])*)", part)
+            if not match:
+                return None
+
+            key, indexes = match.groups()
             if not isinstance(value, dict):
                 return None
-            value = value.get(part)
+            value = value.get(key)
+
+            if indexes:
+                for idx_str in re.findall(r"\[([0-9]+)\]", indexes):
+                    if not isinstance(value, list):
+                        return None
+                    idx = int(idx_str)
+                    if idx >= len(value):
+                        return None
+                    value = value[idx]
+
         return value
 
     @classmethod
@@ -772,21 +935,7 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         This helper is intended for UI usage (e.g. to populate suggestions) and
         raises `ValueError` with a clear, user-facing message on failure.
         """
-        base_url, username, password = cls._get_credentials()
-
-        # Ensure credentials are present for UI helper context
-        cls._check_credentials(base_url, username, password, ValueError)
-
-        # Very small safety check for the provided secret ID to reduce risk of
-        # accidental path traversal in downstream services.
-        cls._validate_secret_id(secret_id, ValueError)
-
-        url = f"{str(base_url).rstrip('/')}/object/item/{secret_id}"
-        verify = cls._load_tls_settings()
-
-        data = cls._request_item_payload(url, (username, password), verify, ValueError)
-        fields = data.get("fields") or []
-        return [item["name"] for item in fields if item.get("name")]
+        return list(cls.get_item_info(secret_id).get("fields", []))
 
     @classmethod
     def get_item_info(cls, secret_id: str) -> dict[str, Any]:
@@ -796,19 +945,25 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         and ``fields`` (list[str]). Raises ``ValueError`` on failure with
         an explanatory message suitable for display to the user.
         """
-        base_url, username, password = cls._get_credentials()
+        ttl_seconds = cls._get_cache_ttl_seconds()
+        if ttl_seconds > 0:
+            cached = cls._item_info_cache.get(secret_id)
+            if cached and cached[0] >= time.time():
+                return dict(cached[1])
 
-        # Ensure credentials are present for UI helper context
-        cls._check_credentials(base_url, username, password, ValueError)
+        normalized_url, auth, verify = cls._get_ui_request_settings()
 
         # Validate secret id format
         cls._validate_secret_id(secret_id, ValueError)
 
-        url = f"{str(base_url).rstrip('/')}/object/item/{secret_id}"
-        verify = cls._load_tls_settings()
-
-        data = cls._request_item_payload(url, (username, password), verify, ValueError)
+        url = cls._build_item_url(normalized_url, secret_id)
+        data = cls._request_item_payload(url, auth, verify, ValueError)
         fields = data.get("fields") or []
         field_names = [item.get("name") for item in fields if item.get("name")]
         name = data.get("name") or ""
-        return {"name": str(name), "fields": field_names}
+        result = {"name": str(name), "fields": field_names}
+
+        if ttl_seconds > 0:
+            cls._item_info_cache[secret_id] = (time.time() + ttl_seconds, dict(result))
+
+        return result

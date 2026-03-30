@@ -18,7 +18,6 @@ Bitwarden CLI instance that exposes an HTTP API (for example via `bw serve`).
 
 Contents
 - Prerequisites
-- Quick start (development)
 - Configuration
 - Environment variables
 - Secret parameters and examples
@@ -30,7 +29,7 @@ Contents
 ## Prerequisites
 
 - Bitwarden CLI (`bw`) available for development tasks (used to run `bw serve`).
-- A running Bitwarden or VaultWarden instance with items to be retrieved.
+- A running VaultWarden or Bitwarden instance with items to be retrieved.
 - The Nautobot Secrets Providers app installed and enabled in your Nautobot installation.
 
 ## Configuration
@@ -51,30 +50,81 @@ PLUGINS_CONFIG = {
             "ca_bundle_path": os.getenv("BW_CLI_CA_BUNDLE", ""),
             # Optional: enable/disable strict TLS validation in code (default True)
             "verify_ssl": is_truthy(os.getenv("BW_CLI_VERIFY_SSL", "True")),
+            # Optional: request timeout in seconds (default 15)
+            "request_timeout": int(os.getenv("BW_CLI_REQUEST_TIMEOUT", "15")),
+            # Optional: retry behavior for transient 5xx errors
+            "retry_total": int(os.getenv("BW_CLI_RETRY_TOTAL", "3")),
+            "retry_backoff": float(os.getenv("BW_CLI_RETRY_BACKOFF", "0.3")),
+            # Optional: item endpoint template (must include {secret_id})
+            "item_endpoint": os.getenv("BW_CLI_ITEM_ENDPOINT", "/object/item/{secret_id}"),
+            # Optional: UI lookup cache TTL in seconds (default 0 = disabled)
+            "cache_ttl": int(os.getenv("BW_CLI_CACHE_TTL", "0")),
         }
     }
 }
 ```
 
 Settings
-- `base_url` (required): URL of the Bitwarden CLI service (e.g. `https://bitwarden-cli.example.com`).
+- `base_url` (required): URL of the Bitwarden CLI service (e.g. `https://bitwarden-cli.example.com`). If a scheme is omitted, the provider will default to `https://`.
 - `username`, `password` (required): credentials used by the provider to authenticate to the CLI service.
 - `verify_ssl` (optional, default `True`): when `False`, TLS verification is skipped (use only for development).
-- `ca_bundle_path` (optional): path to a PEM bundle trusted by your system for validating the CLI server certificate.
+- `ca_bundle_path` (optional): path to a PEM bundle trusted by your system for validating the CLI server certificate. The path is expanded and must point to an existing file.
+- `request_timeout` (optional, default `15`): HTTP timeout in seconds for Bitwarden API requests.
+- `retry_total` and `retry_backoff` (optional, defaults `3` and `0.3`): retry policy used for transient network and HTTP 5xx failures.
+- `item_endpoint` (optional, default `/object/item/{secret_id}`): endpoint template used to fetch item payloads.
+- `cache_ttl` (optional, default `0`): in-memory cache TTL for UI helper lookups (`Fetch Fields` / item-name helper). Set to `0` to disable caching.
 - `BITWARDEN_FIELDS` (optional): override the default selectable fields presented in the UI (see code reference).
 
 ## Environment variables
 
-When running the development stack you can set provider values with environment variables.
-Create or edit `development/creds.env` or your environment with:
+When running the development stack, you can set provider values with environment variables.
+Create or edit `development/creds.env` or your environment with the following variables:
 
 ```dotenv
-BW_CLI_URL=https://bitwarden-cli.example.com
-BW_CLI_USER=example-user
-BW_CLI_PASSWORD=example-password
-BW_CLI_VERIFY_SSL=true
-BW_CLI_CA_BUNDLE=/path/to/ca-bundle.pem
+# Enable Bitwarden CLI provider (set to 'true' to enable)
+NAUTOBOT_BITWARDEN_CLI_ENABLED=true
+
+# Bitwarden CLI API base URL (full scheme + host)
+BW_CLI_URL=https://bitwarden-cli-api.example.com
+
+# Bitwarden CLI API username and password
+BW_CLI_USER=your-bitwarden-cli-basic-auth-username@example.com
+BW_CLI_PASSWORD=your-bitwarden-cli-basic-auth-password
+
+# Optional: Path to CA bundle for TLS verification (if using self-signed certs)
+# BW_CLI_CA_BUNDLE=/etc/ssl/certs/ca-bundle.trust.crt
+
+# Optional: Set to 'false' to disable SSL verification (not recommended)
+# BW_CLI_VERIFY_SSL=true
+
+# Optional: Request timeout in seconds (default: 15)
+# BW_CLI_REQUEST_TIMEOUT=15
+
+# Optional: Override the item endpoint template (default: /object/item/{secret_id})
+# BW_CLI_ITEM_ENDPOINT=/object/item/{secret_id}
+
+# Optional: Number of retries for HTTP requests (default: 3)
+# BW_CLI_RETRY_TOTAL=3
+
+# Optional: Backoff factor for retries (default: 0.3)
+# BW_CLI_RETRY_BACKOFF=0.3
+
+# Optional: Cache TTL for UI field lookups in seconds (default: 0 = disabled)
+# BW_CLI_CACHE_TTL=0
 ```
+
+**Descriptions:**
+
+- `NAUTOBOT_BITWARDEN_CLI_ENABLED`: Set to `true` to enable the Bitwarden CLI provider.
+- `BW_CLI_URL`: URL of the Bitwarden CLI API endpoint (required).
+- `BW_CLI_USER`, `BW_CLI_PASSWORD`: Credentials for authenticating to the Bitwarden CLI API (required).
+- `BW_CLI_CA_BUNDLE`: Path to a CA bundle file for TLS verification (optional).
+- `BW_CLI_VERIFY_SSL`: Set to `false` to disable SSL verification (optional, default: `true`).
+- `BW_CLI_REQUEST_TIMEOUT`: HTTP request timeout in seconds (optional, default: `15`).
+- `BW_CLI_ITEM_ENDPOINT`: Endpoint template for fetching items (optional, default: `/object/item/{secret_id}`).
+- `BW_CLI_RETRY_TOTAL`: Number of retries for HTTP requests (optional, default: `3`).
+- `BW_CLI_RETRY_BACKOFF`: Backoff factor for retries (optional, default: `0.3`).
+- `BW_CLI_CACHE_TTL`: Cache TTL for UI field lookups in seconds (optional, default: `0` = disabled).
 
 ## Secret parameters and examples
 
@@ -123,9 +173,10 @@ UI enhancement: item name display
 ## Troubleshooting
 
 - "Bitwarden CLI responded with HTTP <code>": check `BW_CLI_URL`, the `secret_id`, and the CLI server logs.
-- TLS failures: confirm `BW_CLI_CA_BUNDLE` points to a valid PEM bundle and `verify_ssl` is `true`.
+- TLS failures: confirm `BW_CLI_CA_BUNDLE` points to a valid PEM bundle file and `verify_ssl` is `true`.
 - Authentication failures: verify `username`/`password` and that the CLI service accepts those credentials.
 - Secret not found or field missing: confirm the `secret_id` points to an existing item and that the requested `secret_field` or `custom_field_name` exists on that item.
+- Invalid JSON responses: ensure the reverse proxy/service in front of Bitwarden is returning valid JSON payloads for item endpoints.
 - Use container logs for debugging:
 
 ```bash

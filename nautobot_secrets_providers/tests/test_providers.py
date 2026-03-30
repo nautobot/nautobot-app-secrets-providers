@@ -5,7 +5,7 @@
 
 import json
 import os
-from unittest.mock import mock_open, patch
+from unittest.mock import MagicMock, mock_open, patch
 
 import boto3
 import requests
@@ -725,6 +725,18 @@ class BitwardenCLISecretsProviderTestCase(SecretsProviderTestCase):
     """Tests for Bitwarden CLI secrets provider."""
 
     provider = BitwardenCLISecretsProvider
+    BW_ENABLED_ENV = {
+        "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
+        "BW_CLI_URL": "https://vaultwarden.example",
+        "BW_CLI_USER": "nautobot",
+        "BW_CLI_PASSWORD": "secret",
+    }
+    BW_ENABLED_NO_SCHEME_ENV = {
+        "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
+        "BW_CLI_URL": "vaultwarden.example",
+        "BW_CLI_USER": "nautobot",
+        "BW_CLI_PASSWORD": "secret",
+    }
 
     def setUp(self):
         super().setUp()
@@ -733,6 +745,17 @@ class BitwardenCLISecretsProviderTestCase(SecretsProviderTestCase):
             provider=self.provider.slug,
             parameters={"secret_id": "f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1", "secret_field": "password"},
         )
+
+    @staticmethod
+    def _mock_successful_session(mock_build_session, secret_value="pw"):
+        """Create a mocked requests session returning a successful Bitwarden payload."""
+        mock_session = MagicMock()
+        mock_response = MagicMock()
+        mock_response.raise_for_status.return_value = None
+        mock_response.json.return_value = {"success": True, "data": {"login": {"password": secret_value}}}
+        mock_session.get.return_value = mock_response
+        mock_build_session.return_value = mock_session
+        return mock_session
 
     @patch.dict(
         os.environ,
@@ -963,26 +986,104 @@ class BitwardenCLISecretsProviderTestCase(SecretsProviderTestCase):
 
         self.assertIn("401", str(err.exception))
 
-    @patch.dict(
-        os.environ,
-        {
-            "NAUTOBOT_BITWARDEN_CLI_ENABLED": "true",
-            "BW_CLI_URL": "https://vaultwarden.example",
-            "BW_CLI_USER": "nautobot",
-            "BW_CLI_PASSWORD": "secret",
-        },
-        clear=True,
-    )
-    @patch("nautobot_secrets_providers.providers.bitwarden.requests.get")
-    def test_ssl_error(self, requests_get):
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    @patch.object(BitwardenCLISecretsProvider, "_build_session")
+    def test_ssl_error(self, mock_build_session):
         """Raise provider error with guidance on TLS verification failures."""
 
-        requests_get.side_effect = requests.exceptions.SSLError("CERTIFICATE_VERIFY_FAILED")
+        mock_session = MagicMock()
+        mock_session.get.side_effect = requests.exceptions.SSLError("CERTIFICATE_VERIFY_FAILED")
+        mock_build_session.return_value = mock_session
 
         with self.assertRaises(exceptions.SecretProviderError) as err:
             self.provider.get_value_for_secret(self.secret)
 
         self.assertIn("BW_CLI_VERIFY_SSL=false", str(err.exception))
+
+    @patch.dict(os.environ, BW_ENABLED_NO_SCHEME_ENV, clear=True)
+    @requests_mock.Mocker()
+    def test_retrieve_success_base_url_without_scheme_defaults_to_https(self, requests_mocker):
+        """Base URL without scheme should default to https for requests."""
+
+        requests_mocker.register_uri(
+            method="GET",
+            url="https://vaultwarden.example/object/item/f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1",
+            status_code=200,
+            json={"success": True, "data": {"login": {"password": "secret-value"}}},
+        )
+
+        value = self.provider.get_value_for_secret(self.secret)
+        self.assertEqual(value, "secret-value")
+
+    @patch.dict(
+        os.environ,
+        {**BW_ENABLED_ENV, "BW_CLI_CA_BUNDLE": "/tmp/does-not-exist-ca.pem"},
+        clear=True,
+    )
+    def test_missing_ca_bundle_path_raises_provider_error(self):
+        """Invalid CA bundle path should raise a provider error before request."""
+
+        with self.assertRaises(exceptions.SecretProviderError) as err:
+            self.provider.get_value_for_secret(self.secret)
+
+        self.assertIn("CA bundle not found", str(err.exception))
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    @patch.object(BitwardenCLISecretsProvider, "_build_session")
+    def test_request_uses_configured_timeout_and_endpoint(self, mock_build_session):
+        """Configured timeout and endpoint path should be applied to request calls."""
+        mock_session = self._mock_successful_session(mock_build_session, secret_value="pw")
+
+        with self.settings(
+            PLUGINS_CONFIG={
+                "nautobot_secrets_providers": {
+                    "bitwarden": {
+                        "request_timeout": 9,
+                        "item_endpoint": "/api/items/{secret_id}",
+                    }
+                }
+            }
+        ):
+            value = self.provider.get_value_for_secret(self.secret)
+
+        self.assertEqual(value, "pw")
+        self.assertTrue(mock_session.get.called)
+        called_url = mock_session.get.call_args.args[0]
+        called_timeout = mock_session.get.call_args.kwargs["timeout"]
+        self.assertIn("/api/items/f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1", called_url)
+        self.assertEqual(called_timeout, 9)
+
+    @patch.dict(os.environ, BW_ENABLED_ENV, clear=True)
+    @patch.object(BitwardenCLISecretsProvider, "_build_session")
+    def test_request_uses_default_item_endpoint_when_template_invalid(self, mock_build_session):
+        """Invalid item_endpoint template should fall back to default endpoint format."""
+        mock_session = self._mock_successful_session(mock_build_session, secret_value="pw")
+
+        with self.settings(
+            PLUGINS_CONFIG={
+                "nautobot_secrets_providers": {
+                    "bitwarden": {
+                        "item_endpoint": "/api/items/no-placeholder",
+                    }
+                }
+            }
+        ):
+            self.provider.get_value_for_secret(self.secret)
+
+        called_url = mock_session.get.call_args.args[0]
+        self.assertIn("/object/item/f1ca57e0-2b9f-4c1a-9b2c-7b61aa1dc1b1", called_url)
+
+    def test_read_nested_supports_list_index_paths(self):
+        """Nested reader should support simple list index notation in dotted paths."""
+        sample = {"login": {"uris": [{"uri": "https://example.local"}]}}
+        value = self.provider._read_nested(sample, "login.uris[0].uri")
+        self.assertEqual(value, "https://example.local")
+
+    def test_read_nested_returns_none_for_out_of_range_list_index(self):
+        """Out-of-range list index in nested path should return None."""
+        sample = {"login": {"uris": [{"uri": "https://example.local"}]}}
+        value = self.provider._read_nested(sample, "login.uris[9].uri")
+        self.assertIsNone(value)
 
     @patch.dict(
         os.environ,
@@ -1192,6 +1293,64 @@ class BitwardenGetCustomFieldNamesTestCase(SecretsProviderTestCase):
 
     @patch.dict(os.environ, BW_ENV, clear=True)
     @requests_mock.Mocker()
+    def test_raises_on_invalid_json(self, requests_mocker):
+        """Raises ValueError when Bitwarden returns a non-JSON response body."""
+        requests_mocker.get(
+            f"https://vaultwarden.example/object/item/{self.ITEM_ID}",
+            status_code=200,
+            text="not-json",
+            headers={"Content-Type": "text/plain"},
+        )
+        with self.assertRaises(ValueError) as err:
+            self.provider.get_custom_field_names(self.ITEM_ID)
+        self.assertIn("invalid JSON", str(err.exception))
+
+    @patch.dict(os.environ, BW_ENV, clear=True)
+    @requests_mock.Mocker()
+    def test_get_custom_field_names_uses_item_info_cache(self, requests_mocker):
+        """Repeated UI lookups should use cached item info within TTL."""
+        requests_mocker.get(
+            f"https://vaultwarden.example/object/item/{self.ITEM_ID}",
+            json={"success": True, "data": {"name": "X", "fields": [{"name": "f1"}]}},
+        )
+
+        with self.settings(
+            PLUGINS_CONFIG={
+                "nautobot_secrets_providers": {
+                    "bitwarden": {
+                        "base_url": "https://vaultwarden.example",
+                        "username": "nautobot",
+                        "password": "secret",
+                        "cache_ttl": 60,
+                    }
+                }
+            }
+        ):
+            first = self.provider.get_custom_field_names(self.ITEM_ID)
+            second = self.provider.get_custom_field_names(self.ITEM_ID)
+
+        self.assertEqual(first, ["f1"])
+        self.assertEqual(second, ["f1"])
+        self.assertEqual(len(requests_mocker.request_history), 1)
+
+    @patch.dict(os.environ, BW_ENV, clear=True)
+    @requests_mock.Mocker()
+    def test_get_custom_field_names_no_cache_by_default(self, requests_mocker):
+        """With default cache_ttl=0, repeated lookups should hit endpoint each time."""
+        requests_mocker.get(
+            f"https://vaultwarden.example/object/item/{self.ITEM_ID}",
+            json={"success": True, "data": {"name": "X", "fields": [{"name": "f1"}]}},
+        )
+
+        first = self.provider.get_custom_field_names(self.ITEM_ID)
+        second = self.provider.get_custom_field_names(self.ITEM_ID)
+
+        self.assertEqual(first, ["f1"])
+        self.assertEqual(second, ["f1"])
+        self.assertEqual(len(requests_mocker.request_history), 2)
+
+    @patch.dict(os.environ, BW_ENV, clear=True)
+    @requests_mock.Mocker()
     def test_raises_on_bitwarden_failure(self, requests_mocker):
         """Raises ValueError when Bitwarden reports success=false."""
         requests_mocker.get(
@@ -1382,6 +1541,11 @@ class SecretAdminEditIntegrationTestCase(SecretsProviderTestCase):
             provider=BitwardenCLISecretsProvider.slug,
             parameters={"secret_id": "some-uuid", "secret_field": "password", "custom_field_name": ""},
         )
+
+    @staticmethod
+    def _form(**data):
+        """Instantiate a Bitwarden ParametersForm for integration-level validation checks."""
+        return BitwardenCLISecretsProvider.ParametersForm(data=data)
 
     def test_admin_edit_post_triggers_provider_validation_without_traceback(self):
         """POSTing an update that fails provider validation should not traceback (500).
