@@ -23,8 +23,23 @@ This document describes common use-cases and scenarios for this App.
 
 ---
 
-![Screenshot of secret using HashiCorp Vault](../images/light/hashicorp-vault-secrets-provider-add.png#only-light "Secret using HashiCorp Vault"){ .on-glb }
-![Screenshot of secret using HashiCorp Vault](../images/dark/hashicorp-vault-secrets-provider-add.png#only-dark "Secret using HashiCorp Vault"){ .on-glb }
+![Screenshot of secret using 1Password](../images/light/1password-vault-secrets-provider-add.png#only-light "Secret using 1Password"){ .on-glb }
+![Screenshot of secret using 1Password](../images/dark/1password-vault-secrets-provider-add.png#only-dark "Secret using 1Password"){ .on-glb }
+
+---
+
+![Screenshot of secret using Azure Key Vault](../images/light/azure-key-vault-secrets-provider-add.png#only-light "Secret using Azure Key Vault"){ .on-glb }
+![Screenshot of secret using Azure Key Vault](../images/dark/azure-key-vault-secrets-provider-add.png#only-dark "Secret using Azure Key Vault"){ .on-glb }
+
+---
+
+![Screenshot of secret using Bitwarden](../images/light/bitwarden-cli-secrets-provider-add.png#only-light "Secret using Bitwarden"){ .on-glb }
+![Screenshot of secret using Bitwarden](../images/dark/bitwarden-cli-secrets-provider-add.png#only-dark "Secret using Bitwarden"){ .on-glb }
+
+---
+
+![Screenshot of Secret using Bitwarden with Custom Field](../images/light/bitwarden-cli-secrets-provider-custom-field-names.png)
+![Screenshot of Secret using Bitwarden with Custom Field](../images/dark/bitwarden-cli-secrets-provider-custom-field-names.png)
 
 ---
 
@@ -38,10 +53,5 @@ This document describes common use-cases and scenarios for this App.
 
 ---
 
-![Screenshot of secret using Azure Key Vault](../images/light/azure-key-vault-secrets-provider-add.png#only-light "Secret using Azure Key Vault"){ .on-glb }
-![Screenshot of secret using Azure Key Vault](../images/dark/azure-key-vault-secrets-provider-add.png#only-dark "Secret using Azure Key Vault"){ .on-glb }
-
----
-
-![Screenshot of secret using 1Password](../images/light/1password-vault-secrets-provider-add.png#only-light "Secret using 1Password"){ .on-glb }
-![Screenshot of secret using 1Password](../images/dark/1password-vault-secrets-provider-add.png#only-dark "Secret using 1Password"){ .on-glb }
+![Screenshot of secret using HashiCorp Vault](../images/light/hashicorp-vault-secrets-provider-add.png#only-light "Secret using HashiCorp Vault"){ .on-glb }
+![Screenshot of secret using HashiCorp Vault](../images/dark/hashicorp-vault-secrets-provider-add.png#only-dark "Secret using HashiCorp Vault"){ .on-glb }
