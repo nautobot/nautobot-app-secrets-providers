@@ -306,6 +306,8 @@ invoke.yml
 
 # Docker compose override
 docker-compose.override.yml
+bitwarden_secrets_response.json
+bitwarden_list_object_items_response.json
 
 # Docs
 public

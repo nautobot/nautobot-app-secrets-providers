@@ -127,6 +127,13 @@ PLUGINS = ["nautobot_secrets_providers"]
 
 PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
+        "bitwarden": {
+            "base_url": os.getenv("BW_CLI_URL", "https://bitwarden-cli-api.example.com"),
+            "username": os.getenv("BW_CLI_USER", ""),
+            "password": os.getenv("BW_CLI_PASSWORD", ""),
+            "ca_bundle_path": os.getenv("BW_CLI_CA_BUNDLE", ""),
+            "verify_ssl": is_truthy(os.getenv("BW_CLI_VERIFY_SSL", "True")),
+        },
         "delinea": {
             "base_url": os.getenv("SECRET_SERVER_BASE_URL"),
             "ca_bundle_path": os.getenv("REQUESTS_CA_BUNDLE", ""),
