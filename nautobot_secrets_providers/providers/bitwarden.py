@@ -1,5 +1,8 @@
 """Bitwarden CLI secrets provider backed by bw serve REST endpoints."""
 
+# This provider intentionally includes the Bitwarden widget structure plus provider logic.
+# pylint: disable=too-many-lines
+
 from __future__ import annotations
 
 import logging
@@ -9,11 +12,12 @@ import time
 from functools import partial
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import urlencode, urljoin, urlsplit
 
 import requests
 from django import forms
 from django.conf import settings
+from django.templatetags.static import static
 from django.urls import NoReverseMatch, reverse
 from django.utils.safestring import mark_safe
 from nautobot.apps.forms import BootstrapMixin
@@ -23,395 +27,98 @@ from nautobot.extras.secrets import exceptions
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from nautobot_secrets_providers.constants import (
+    BITWARDEN_CACHE_TTL_SECONDS,
+    BITWARDEN_COMMON_ALLOWED_FIELDS,
+    BITWARDEN_ITEM_ENDPOINT_TEMPLATE,
+    BITWARDEN_ITEM_TYPE_ALLOWED_FIELDS,
+    BITWARDEN_LIST_ITEMS_ENDPOINT,
+    BITWARDEN_PARAMETER_KEYS,
+    BITWARDEN_RETRY_BACKOFF,
+    BITWARDEN_RETRY_TOTAL,
+    BITWARDEN_WIDGET_JS_PATH,
+    CARD_FIELDS,
+    DEFAULT_BITWARDEN_FIELDS,
+    IDENTITY_FIELDS,
+    LOGIN_FIELDS,
+    REQUEST_TIMEOUT,
+    SSHKEY_FIELDS,
+)
+
 logger = logging.getLogger(__name__)
 
-REQUEST_TIMEOUT = 15
-BITWARDEN_ITEM_ENDPOINT_TEMPLATE = "/object/item/{secret_id}"
-BITWARDEN_RETRY_TOTAL = 3
-BITWARDEN_RETRY_BACKOFF = 0.3
-BITWARDEN_CACHE_TTL_SECONDS = 0
 
-DEFAULT_BITWARDEN_FIELDS = [
-    {"name": "card_brand", "label": "Card Brand"},
-    {"name": "card_cardholderName", "label": "Card Holder Name"},
-    {"name": "card_code", "label": "Card Security Code"},
-    {"name": "card_expMonth", "label": "Card Expiry Month"},
-    {"name": "card_expYear", "label": "Card Expiry Year"},
-    {"name": "card_number", "label": "Card Number"},
-    {"name": "custom", "label": "Custom Field"},
-    {"name": "identity_address1", "label": "Identity Address 1"},
-    {"name": "identity_address2", "label": "Identity Address 2"},
-    {"name": "identity_address3", "label": "Identity Address 3"},
-    {"name": "identity_city", "label": "Identity City"},
-    {"name": "identity_company", "label": "Identity Company"},
-    {"name": "identity_country", "label": "Identity Country"},
-    {"name": "identity_email", "label": "Identity Email"},
-    {"name": "identity_firstName", "label": "Identity First Name"},
-    {"name": "identity_lastName", "label": "Identity Last Name"},
-    {"name": "identity_licenseNumber", "label": "Identity License Number"},
-    {"name": "identity_middleName", "label": "Identity Middle Name"},
-    {"name": "identity_passportNumber", "label": "Identity Passport Number"},
-    {"name": "identity_phone", "label": "Identity Phone"},
-    {"name": "identity_postalCode", "label": "Identity Postal Code"},
-    {"name": "identity_ssn", "label": "Identity SSN"},
-    {"name": "identity_state", "label": "Identity State"},
-    {"name": "identity_title", "label": "Identity Title"},
-    {"name": "identity_username", "label": "Identity Username"},
-    {"name": "notes", "label": "Notes"},
-    {"name": "password", "label": "Password"},
-    {"name": "ssh_key_fingerprint", "label": "SSH Key Fingerprint"},
-    {"name": "ssh_private_key", "label": "SSH Private Key"},
-    {"name": "ssh_public_key", "label": "SSH Public Key"},
-    {"name": "totp", "label": "TOTP"},
-    {"name": "uri", "label": "URI (first)"},
-    {"name": "username", "label": "Username"},
-]
-
-# Fields for entry types that have nested structures in the API response.
-# The key is the secret_field value and the value is the path within the item data.
-IDENTITY_FIELDS = {
-    "identity_title": "title",
-    "identity_firstName": "firstName",
-    "identity_middleName": "middleName",
-    "identity_lastName": "lastName",
-    "identity_address1": "address1",
-    "identity_address2": "address2",
-    "identity_address3": "address3",
-    "identity_city": "city",
-    "identity_state": "state",
-    "identity_postalCode": "postalCode",
-    "identity_country": "country",
-    "identity_company": "company",
-    "identity_email": "email",
-    "identity_phone": "phone",
-    "identity_ssn": "ssn",
-    "identity_username": "username",
-    "identity_passportNumber": "passportNumber",
-    "identity_licenseNumber": "licenseNumber",
-}
-
-CARD_FIELDS = {
-    "card_cardholderName": "cardholderName",
-    "card_brand": "brand",
-    "card_number": "number",
-    "card_expMonth": "expMonth",
-    "card_expYear": "expYear",
-    "card_code": "code",
-}
-
-SSHKEY_FIELDS = {
-    "ssh_private_key": "privateKey",
-    "ssh_public_key": "publicKey",
-    "ssh_key_fingerprint": "kexFingerprint",
-}
-
-
-LOGIN_FIELDS = {
-    "username": "username",
-    "password": "password",
-    "fido2Credentials": "fido2Credentials",
-    "totp": "totp",
-}
-
-
-_BITWARDEN_FETCH_JS = """\
-(function () {
-    var customInput = document.getElementById('id_custom_field_name');
-    if (!customInput) { return; }
-    var secretIdInput = document.getElementById('id_secret_id');
-    var secretFieldSelect = document.getElementById('id_secret_field');
-    var fetchBtn = document.getElementById('bw-fetch-fields-btn');
-    var suggestionsDiv = document.getElementById('bw-field-suggestions');
-    var fieldList = document.getElementById('bw-field-list');
-    var errorDiv = document.getElementById('bw-fetch-error');
-    if (!secretIdInput || !secretFieldSelect || !fetchBtn) { return; }
-    var fetchUrl = fetchBtn.getAttribute('data-url');
-
-    function findHelpElementFor(el) {
-        var parent = el.parentElement;
-        if (!parent) { return null; }
-        var selectors = ['.help-block', '.help-text', 'small.form-text', 'small.text-muted', 'p.help-block', 'div.help-block', '.field-help', 'small.help-text'];
-        for (var i = 0; i < selectors.length; i++) {
-            var candidate = parent.querySelector(selectors[i]);
-            if (candidate) { return candidate; }
-        }
-        var s = el.nextElementSibling;
-        while (s) {
-            if (['SMALL', 'P', 'DIV', 'SPAN'].indexOf(s.tagName) >= 0) { return s; }
-            s = s.nextElementSibling;
-        }
-        return null;
-    }
-
-    var helpEl = findHelpElementFor(secretIdInput);
-    var originalHelpHTML = helpEl ? helpEl.innerHTML : '';
-    var customHelpEl = findHelpElementFor(customInput);
-    var originalCustomHelpHTML = customHelpEl ? customHelpEl.innerHTML : '';
-
-    function ensureCustomHelpEl() {
-        if (customHelpEl) { return; }
-        try {
-            var el = document.createElement('small');
-            el.className = 'form-text bw-custom-help';
-            if (customInput.nextSibling) {
-                customInput.parentNode.insertBefore(el, customInput.nextSibling);
-            } else {
-                customInput.parentNode.appendChild(el);
-            }
-            customHelpEl = el;
-            originalCustomHelpHTML = '';
-        } catch (e) {
-            // Not critical if we cannot create the help element.
-        }
-    }
-
-    function syncParametersJson() {
-        var jsonInput = document.getElementById('id_parameters');
-        if (!jsonInput) { return; }
-        var current = {};
-        try {
-            current = jsonInput.value ? JSON.parse(jsonInput.value) : {};
-        } catch (e) {
-            current = {};
-        }
-        current.secret_id = secretIdInput.value || '';
-        current.secret_field = secretFieldSelect.value || '';
-        current.custom_field_name = customInput.value || '';
-        jsonInput.value = JSON.stringify(current, null, 4);
-    }
-
-    function setCustomFieldState() {
-        var isCustom = secretFieldSelect.value === 'custom';
-        if (!isCustom) {
-            ensureCustomHelpEl();
-            if (customInput.value) {
-                customInput.value = '';
-                if (customHelpEl) {
-                    customHelpEl.innerHTML = originalCustomHelpHTML + ' <span class="bw-custom-warning text-danger">This value was cleared because the selected Secret field is not "Custom Field". Select "Custom Field" to keep it or re-enter a value.</span>';
-                }
-            } else if (customHelpEl) {
-                customHelpEl.innerHTML = originalCustomHelpHTML + ' <span class="bw-custom-warning text-danger">The Custom Field is inactive because the selected Secret field is not "Custom Field".</span>';
-            }
-        } else if (customHelpEl) {
-            customHelpEl.innerHTML = originalCustomHelpHTML;
-        }
-        customInput.style.opacity = isCustom ? '1' : '0.5';
-        customInput.placeholder = isCustom ? '' : 'Activate Custom field selection to specify this value';
-    }
-
-    function setButtonVisibility() {
-        var hasId = secretIdInput.value.trim().length > 0;
-        fetchBtn.style.display = hasId ? 'inline-block' : 'none';
-        if (!hasId) {
-            suggestionsDiv.style.display = 'none';
-            errorDiv.style.display = 'none';
-            if (helpEl) { helpEl.innerHTML = originalHelpHTML; }
-        }
-    }
-
-    function debounce(fn, wait) {
-        var t;
-        return function () {
-            var args = arguments;
-            var ctx = this;
-            clearTimeout(t);
-            t = setTimeout(function () { fn.apply(ctx, args); }, wait);
-        };
-    }
-
-    function escapeHtml(s) {
-        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-
-    var lastRequestedId = null;
-    function fetchAndUpdateName(secretId) {
-        if (!secretId) {
-            if (helpEl) { helpEl.innerHTML = originalHelpHTML; }
-            return;
-        }
-        lastRequestedId = secretId;
-        fetch(fetchUrl + '?secret_id=' + encodeURIComponent(secretId), { headers: {'X-Requested-With': 'XMLHttpRequest'} })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (secretIdInput.value.trim() !== lastRequestedId) { return; }
-                if (data && data.success && data.name) {
-                    if (helpEl) {
-                        var escaped = escapeHtml(data.name);
-                        helpEl.innerHTML = originalHelpHTML + ' <span class="bw-secret-wrapper">(<span class="text-muted">Secret: </span><span class="bw-secret-name">&#39;' + escaped + '&#39;</span>)</span>';
-                    }
-                } else if (helpEl) {
-                    helpEl.innerHTML = originalHelpHTML;
-                }
-            })
-            .catch(function () {
-                if (helpEl) { helpEl.innerHTML = originalHelpHTML; }
-            });
-    }
-
-    var debouncedFetchName = debounce(function () {
-        var id = secretIdInput.value.trim();
-        if (!id) {
-            if (helpEl) { helpEl.innerHTML = originalHelpHTML; }
-            return;
-        }
-        fetchAndUpdateName(id);
-    }, 700);
-
-    customInput.addEventListener('input', function () {
-        if (customHelpEl && customInput.value.trim()) {
-            customHelpEl.innerHTML = originalCustomHelpHTML;
-        }
-        syncParametersJson();
-    });
-    customInput.addEventListener('change', syncParametersJson);
-
-    secretFieldSelect.addEventListener('change', function () {
-        setCustomFieldState();
-        syncParametersJson();
-    });
-
-    secretIdInput.addEventListener('input', function () {
-        setButtonVisibility();
-        debouncedFetchName();
-        syncParametersJson();
-    });
-    secretIdInput.addEventListener('change', syncParametersJson);
-
-    try {
-        var formEl = customInput.closest('form');
-        if (formEl) {
-            formEl.addEventListener('submit', function () {
-                setCustomFieldState();
-                syncParametersJson();
-            });
-        }
-    } catch (e) {
-        // Ignore if closest() isn't available.
-    }
-
-    function setTinyFetchButtonStyle() {
-        fetchBtn.style.padding = '4px 10px';
-        fetchBtn.style.fontSize = '13px';
-    }
-
-    fetchBtn.addEventListener('click', function () {
-        var secretId = secretIdInput.value.trim();
-        if (!secretId) { return; }
-        fetchBtn.disabled = true;
-        fetchBtn.textContent = 'Fetching...';
-        setTinyFetchButtonStyle();
-        errorDiv.textContent = '';
-        errorDiv.style.display = 'none';
-        suggestionsDiv.style.display = 'none';
-
-        fetch(fetchUrl + '?secret_id=' + encodeURIComponent(secretId), { headers: {'X-Requested-With': 'XMLHttpRequest'} })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                fetchBtn.disabled = false;
-                fetchBtn.textContent = 'Fetch Fields from Bitwarden';
-                setTinyFetchButtonStyle();
-                if (data && data.success && data.fields && data.fields.length > 0) {
-                    fieldList.innerHTML = '';
-                    data.fields.forEach(function (fname) {
-                        var b = document.createElement('button');
-                        b.type = 'button';
-                        b.className = 'bw-field-button';
-                        b.textContent = fname;
-                        b.addEventListener('click', function () {
-                            customInput.value = fname;
-                            setCustomFieldState();
-                            try {
-                                customInput.dispatchEvent(new Event('input', { bubbles: true }));
-                                customInput.dispatchEvent(new Event('change', { bubbles: true }));
-                            } catch (e) {
-                                // Ignore if dispatching events is not supported.
-                            }
-                            syncParametersJson();
-                            try { customInput.focus(); } catch (e) {}
-                        });
-                        fieldList.appendChild(b);
-                    });
-                    suggestionsDiv.style.display = '';
-                } else if (data && data.success) {
-                    errorDiv.textContent = 'No custom fields found on this Bitwarden item.';
-                    errorDiv.style.display = '';
-                } else {
-                    errorDiv.textContent = (data && data.error) ? data.error : 'Could not fetch Bitwarden custom fields.';
-                    errorDiv.style.display = '';
-                }
-            })
-            .catch(function (err) {
-                fetchBtn.disabled = false;
-                fetchBtn.textContent = 'Fetch Fields from Bitwarden';
-                setTinyFetchButtonStyle();
-                errorDiv.textContent = 'Request failed: ' + (err && err.message ? err.message : String(err));
-                errorDiv.style.display = '';
-            });
-    });
-
-    setTinyFetchButtonStyle();
-    setCustomFieldState();
-    setButtonVisibility();
-    syncParametersJson();
-    try {
-        var initialId = secretIdInput.value.trim();
-        if (initialId) {
-            setTimeout(function () { fetchAndUpdateName(initialId); }, 150);
-        }
-    } catch (e) {
-        // Fail silently; not critical.
-    }
-}());
-"""
-
-
-class BitwardenCustomFieldNameWidget(forms.TextInput):
-    """Text input widget for `custom_field_name` with a Bitwarden field-fetch button."""
+class BitwardenCustomFieldNameWidget(forms.Select):
+    """Select widget for `custom_field_name` with Bitwarden helper controls."""
 
     def render(self, name, value, attrs=None, renderer=None):
-        """Render the input together with the suggestion button and inline JavaScript."""
+        """Render the input together with buttons and external Bitwarden widget JavaScript."""
+        attrs = dict(attrs or {})
+        attrs.setdefault("data-initial-custom-field", str(value or "").strip())
         input_html = super().render(name, value, attrs, renderer)
         try:
-            fetch_url = reverse("plugins:nautobot_secrets_providers:bitwarden_custom_fields")
+            item_info_url = reverse("plugins:nautobot_secrets_providers:bitwarden_item_info")
         except NoReverseMatch:
-            fetch_url = ""
+            item_info_url = ""
+        try:
+            search_url = reverse("plugins:nautobot_secrets_providers:bitwarden_search_items")
+        except NoReverseMatch:
+            search_url = ""
         wrapper = (
             '<style id="bw-secret-style">'
             ".bw-secret-name { font-weight:600; color:#056d3b; }"
-            ".bw-custom-warning { color: #a94442; font-weight:600; }"
-            "#bw-fetch-fields-btn { display: inline-block; margin-left: 8px; background-color: #0066cc !important; color: white !important; border-radius: 3px; border: 1px solid #0052a3; cursor: pointer; font-weight: 500; transition: background-color 0.2s; }"
-            "#bw-fetch-fields-btn:hover { background-color: #0052a3 !important; }"
-            "#bw-fetch-fields-btn:active { background-color: #003d7a !important; }"
-            "#bw-fetch-fields-btn:disabled { background-color: #cccccc !important; color: #666 !important; cursor: not-allowed; }"
-            ".bw-field-button { display: inline-block; padding: 4px 8px; margin: 4px 4px 4px 0; background-color: #f0f0f0 !important; color: #333 !important; border: 1px solid #d0d0d0; border-radius: 3px; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.15s; }"
-            ".bw-field-button:hover { background-color: #e0e0e0 !important; border-color: #0066cc; }"
-            ".bw-field-button:active { background-color: #0066cc !important; color: white !important; border-color: #0052a3; }"
+            "#bw-search-items-btn { display: inline-block; margin-left: 0; background-color: #0066cc !important; color: white !important; border-radius: 3px; border: 1px solid #0052a3; cursor: pointer; font-weight: 500; transition: background-color 0.2s; }"
+            "#bw-search-items-btn:hover { background-color: #0052a3 !important; }"
+            "#bw-search-items-btn:active { background-color: #003d7a !important; }"
+            "#bw-search-items-btn:disabled { background-color: #cccccc !important; color: #666 !important; cursor: not-allowed; }"
+            "#bw-search-anchor { display: none; margin-top: 8px; width: 100%; max-width: 100%; }"
+            "#bw-search-panel { margin-top: 8px; width: min(36rem, 100%); max-width: 100%; padding: 8px; border: 1px solid #d0d0d0; border-radius: 4px; background: rgba(0, 0, 0, 0.02); box-sizing: border-box; }"
+            ".bw-search-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 6px; }"
+            ".bw-search-input { flex: 1 1 16rem; min-width: 0; }"
+            ".bw-search-item { display: block; width: 100%; text-align: left; padding: 6px 8px; margin: 4px 0; border: 1px solid #d6d6d6; background: #fff; border-radius: 4px; cursor: pointer; }"
+            ".bw-search-item:hover, .bw-search-item.is-selected { border-color: #2f855a; background: #edf9f1; }"
+            ".bw-search-item-name { display: block; font-weight: 600; color: #1f2933; }"
+            ".bw-search-item-id { display: block; font-family: monospace; font-size: 12px; color: #5f6b7a; margin-top: 2px; }"
+            "@media (max-width: 767px) {"
+            "  .bw-search-controls { flex-direction: column; align-items: stretch; }"
+            "  #bw-search-panel { width: 100%; }"
+            "  #bw-search-run-btn { width: 100%; }"
+            "}"
             "@media (prefers-color-scheme: dark) {"
             "  .bw-secret-name { color: #7ee787; text-shadow: 0 1px 0 rgba(0,0,0,0.6); }"
-            "  #bw-fetch-fields-btn { background-color: #0077e6 !important; border-color: #0066cc; }"
-            "  #bw-fetch-fields-btn:hover { background-color: #0066cc !important; }"
-            "  #bw-fetch-fields-btn:active { background-color: #0052a3 !important; }"
-            "  .bw-field-button { background-color: #2d2d2d !important; color: #e0e0e0 !important; border-color: #444; }"
-            "  .bw-field-button:hover { background-color: #404040 !important; border-color: #0077e6; }"
-            "  .bw-field-button:active { background-color: #0077e6 !important; color: white !important; border-color: #0066cc; }"
+            "  #bw-search-items-btn { background-color: #0077e6 !important; border-color: #0066cc; }"
+            "  #bw-search-items-btn:hover { background-color: #0066cc !important; }"
+            "  #bw-search-items-btn:active { background-color: #0052a3 !important; }"
+            "  #bw-search-panel { background: rgba(255, 255, 255, 0.04); border-color: #444; }"
+            "  .bw-search-item { background: #2d2d2d; border-color: #444; }"
+            "  .bw-search-item:hover, .bw-search-item.is-selected { background: #214a34; border-color: #2f855a; }"
+            "  .bw-search-item-name { color: #dbe7e0; }"
+            "  .bw-search-item-id { color: #b8c5bf; }"
             "}"
             "@media (prefers-color-scheme: light) {"
             "  .bw-secret-name { color: #056d3b; }"
             "}"
             "</style>"
             '<div style="margin-top:4px;">'
-            '<button type="button" id="bw-fetch-fields-btn"'
-            ' class="btn btn-sm" style="display:none;"'
-            f' data-url="{fetch_url}">Fetch Fields from Bitwarden</button>'
-            '<div id="bw-field-suggestions" style="display:none;margin-top:6px;">'
-            '<small class="text-muted">Click a field name to copy it above:</small>'
-            '<div id="bw-field-list" style="margin-top:4px;"></div>'
+            '<div id="bw-search-anchor" style="display:none;">'
+            '<button type="button" id="bw-search-items-btn" class="btn btn-sm"'
+            f' data-item-info-url="{item_info_url}" data-search-url="{search_url}">Find Item UUID</button>'
+            '<div id="bw-search-panel" style="display:none;">'
+            '<div class="bw-search-controls">'
+            '<input type="text" id="bw-search-query" class="form-control bw-search-input" '
+            'placeholder="Search Bitwarden items (min 2 chars)">'
+            '<button type="button" id="bw-search-run-btn" class="btn btn-sm">Search</button>'
             "</div>"
-            '<div id="bw-fetch-error" class="text-danger"'
+            '<small id="bw-search-status" class="text-muted">Enter at least 2 characters to search.</small>'
+            '<div id="bw-search-results" style="margin-top:6px;"></div>'
+            "</div>"
+            "</div>"
+            '<div id="bw-custom-field-status" class="text-muted"'
             ' style="display:none;margin-top:4px;"></div>'
             "</div>"
         )
-        return mark_safe(str(input_html) + wrapper + "<script>" + _BITWARDEN_FETCH_JS + "</script>")  # noqa: S308
+        script_url = static(BITWARDEN_WIDGET_JS_PATH)
+        return mark_safe(str(input_html) + wrapper + f'<script src="{script_url}"></script>')  # noqa: S308
 
 
 class BitwardenCLISecretsProvider(SecretsProvider):
@@ -421,6 +128,36 @@ class BitwardenCLISecretsProvider(SecretsProvider):
     name = "Bitwarden CLI"
     is_available = True
     _item_info_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+
+    @staticmethod
+    def remove_transient_parameter_keys(parameters: dict[str, Any] | None) -> dict[str, Any]:
+        """Return only canonical Bitwarden parameters from an input payload."""
+        if not isinstance(parameters, dict):
+            return {}
+
+        return {key: value for key, value in parameters.items() if key in BITWARDEN_PARAMETER_KEYS}
+
+    @classmethod
+    def sanitize_parameters(cls, parameters: dict[str, Any] | None) -> dict[str, Any]:
+        """Ensure parameters only contain canonical Bitwarden keys.
+
+        This method provides defensive sanitization to guarantee parameters
+        stored in a Secret are clean, regardless of how they were submitted
+        (form, API, bulk edit, etc.). Transient UI fields are always removed.
+
+        Args:
+            parameters: Raw parameters dict, potentially containing transient keys.
+
+        Returns:
+            Dict containing only canonical Bitwarden parameter keys.
+        """
+        cleaned = cls.remove_transient_parameter_keys(parameters)
+        # Ensure all canonical keys are present with safe defaults
+        return {
+            "secret_id": str(cleaned.get("secret_id", "")).strip(),
+            "secret_field": str(cleaned.get("secret_field", "")).strip(),
+            "custom_field_name": str(cleaned.get("custom_field_name", "")).strip(),
+        }
 
     # TBD: Remove after pylint-nautobot bump
     # pylint: disable-next=nb-incorrect-base-class
@@ -435,9 +172,10 @@ class BitwardenCLISecretsProvider(SecretsProvider):
             required=True,
             help_text="The field name to retrieve.",
         )
-        custom_field_name = forms.CharField(
+        custom_field_name = forms.ChoiceField(
             required=False,
             help_text="Custom field name when secret_field is 'custom'.",
+            choices=(("", "---------"),),
         )
 
         def __init__(self, *args, **kwargs):
@@ -445,30 +183,60 @@ class BitwardenCLISecretsProvider(SecretsProvider):
             super().__init__(*args, **kwargs)
             self.fields["secret_field"].choices = BitwardenCLISecretsProvider.get_field_choices()
             self.fields["custom_field_name"].widget = BitwardenCustomFieldNameWidget()
+            self.fields["custom_field_name"].choices = [("", "---------")]
+
+            configured_custom_field_name = ""
+            if self.is_bound:
+                configured_custom_field_name = str(self.data.get("custom_field_name") or "").strip()
+            else:
+                configured_custom_field_name = str(self.initial.get("custom_field_name") or "").strip()
+
+            if configured_custom_field_name:
+                self.fields["custom_field_name"].choices.append(
+                    (configured_custom_field_name, configured_custom_field_name)
+                )
 
         def clean(self):
-            """Validate that required fields are present based on the selected secret_field."""
+            """Validate cross-field dependencies for Bitwarden parameters.
+
+            Raises a non-field ValidationError when the combination of
+            ``secret_field`` and ``custom_field_name`` is inconsistent.  A
+            non-field error is used so this method behaves identically whether
+            called via ``form.is_valid()`` (standard Django path) or directly
+            as Nautobot's ``Secret.clean()`` does after ``is_valid()``.  On
+            both invocations a raised exception is the only reliable signal
+            that blocks the model save.
+
+            ``self.data`` is consulted as a fallback for ``cleaned_data`` so
+            that validation remains correct when Django has already removed a
+            field from ``cleaned_data`` (for example after a prior error).
+            This is a standard Django practice for robust cross-field
+            validation.
+            """
             cleaned_data = super().clean()
-            # Use a local name that avoids triggering security linters
-            # (some linters flag variables containing 'secret'/'password').
-            selected_field = cleaned_data.get("secret_field")
-            custom_field_name = cleaned_data.get("custom_field_name")
+            # Fall back to raw submitted data when cleaned_data is incomplete.
+            # (Django removes a field from cleaned_data when add_error() is
+            # called on it, and Nautobot may call clean() again directly.)
+            selected_field = str(cleaned_data.get("secret_field") or self.data.get("secret_field", "")).strip()
+            custom_field_name = str(
+                cleaned_data.get("custom_field_name") or self.data.get("custom_field_name", "")
+            ).strip()
 
             # If the selected field is the generic `custom` option, require a custom name.
             if selected_field == "custom" and not custom_field_name:  # noqa: S105
-                raise forms.ValidationError({"custom_field_name": "Custom field name is required for 'custom'."})
+                raise forms.ValidationError("Custom field name is required if Secret field is set to 'Custom Field'.")
 
-            # If a custom field name was supplied, ensure the selected field
-            # reflects a custom-field selection. This guards against a user
-            # entering a custom name while a non-custom field is chosen.
-            # Accept either the literal 'custom' value or scoped values
-            # starting with 'custom.' (e.g. 'custom.someField').
-            if custom_field_name and selected_field != "custom":
+            # If a custom field name was supplied, the selected field must be
+            # 'custom'; any other combination is an invalid configuration.
+            if custom_field_name and selected_field != "custom":  # noqa: S105
                 raise forms.ValidationError(
-                    {"secret_field": "Selected field must be a Custom Field when a Custom Field name is provided."}
+                    "'Secret field' must be set to 'Custom Field' when 'Custom field name' is provided."
                 )
 
-            return cleaned_data
+            # Return only canonical provider keys via sanitization.
+            # sanitize_parameters ensures transient UI fields are removed and all canonical
+            # keys are present with safe defaults.
+            return BitwardenCLISecretsProvider.sanitize_parameters(cleaned_data)
 
     @classmethod
     def _require_enabled(cls, secret) -> None:
@@ -512,6 +280,15 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         if "{secret_id}" not in endpoint_str:
             return BITWARDEN_ITEM_ENDPOINT_TEMPLATE
         return endpoint_str
+
+    @classmethod
+    def _get_list_items_endpoint(cls) -> str:
+        """Return list endpoint from plugin settings/env/default."""
+        endpoint = cls._plugin_settings().get("list_items_endpoint") or os.getenv("BW_CLI_LIST_ITEMS_ENDPOINT")
+        if not endpoint:
+            return BITWARDEN_LIST_ITEMS_ENDPOINT
+        endpoint_str = str(endpoint).strip()
+        return endpoint_str or BITWARDEN_LIST_ITEMS_ENDPOINT
 
     @classmethod
     def _get_retry_settings(cls) -> tuple[int, float]:
@@ -579,6 +356,15 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         return urljoin(f"{base_url}/", endpoint_path.lstrip("/"))
 
     @classmethod
+    def _build_list_items_url(cls, base_url: str, search_query: str) -> str:
+        """Build list-items endpoint URL for the given search query."""
+        endpoint_path = cls._get_list_items_endpoint()
+        if not endpoint_path.startswith("/"):
+            endpoint_path = f"/{endpoint_path}"
+        base_endpoint = urljoin(f"{base_url}/", endpoint_path.lstrip("/"))
+        return f"{base_endpoint}?{urlencode({'search': search_query})}"
+
+    @classmethod
     def _build_session(cls) -> requests.Session:
         """Create a requests session configured with retries."""
         retry_total, retry_backoff = cls._get_retry_settings()
@@ -615,6 +401,25 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         if not choices:
             choices = [(field["name"], field["label"]) for field in DEFAULT_BITWARDEN_FIELDS]
         return choices
+
+    @classmethod
+    def get_allowed_secret_fields_for_item_type(cls, item_type: int | None) -> list[str]:
+        """Return allowed ``secret_field`` values for a Bitwarden item type.
+
+        Item type values follow Bitwarden conventions (for example, 1=Login,
+        2=Secure Note, 3=Card, 4=Identity, 5=SSH Key).
+        """
+        choice_values = [name for name, _label in cls.get_field_choices()]
+
+        if item_type is None:
+            return choice_values
+
+        type_specific_fields = BITWARDEN_ITEM_TYPE_ALLOWED_FIELDS.get(item_type)
+        allowed = (type_specific_fields | BITWARDEN_COMMON_ALLOWED_FIELDS) if type_specific_fields is not None else None
+        if allowed is None:
+            return choice_values
+
+        return [value for value in choice_values if value in allowed]
 
     @classmethod
     def _load_env_settings(cls, secret) -> tuple[str, str, str]:
@@ -737,14 +542,22 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         except requests.exceptions.HTTPError as err:
             response = err.response
             if response is not None:
+                logger.warning(
+                    "Bitwarden HTTP error for %s: status=%s",
+                    url,
+                    response.status_code,
+                )
                 raise raise_exc(f"Bitwarden CLI returned {response.status_code}: {response.text}") from err
+            logger.warning("Bitwarden HTTP error without response body for %s", url)
             raise raise_exc("Bitwarden CLI returned an HTTP error without a response body.") from err
         except requests.exceptions.SSLError as err:
+            logger.warning("Bitwarden TLS verification error for %s: %s", url, err)
             raise raise_exc(
                 "Unable to verify the Bitwarden CLI TLS certificate. "
                 "Set BW_CLI_CA_BUNDLE to a trusted CA bundle path or set BW_CLI_VERIFY_SSL=false for development.",
             ) from err
         except requests.RequestException as err:  # pragma: no cover - network error path
+            logger.warning("Bitwarden request exception for %s: %s", url, err)
             raise raise_exc(f"Unable to reach Bitwarden CLI server: {err}") from err
         finally:
             session.close()
@@ -752,10 +565,12 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         try:
             payload = response.json()
         except ValueError as err:
+            logger.warning("Bitwarden JSON decode failed for %s", url)
             raise raise_exc("Bitwarden CLI returned invalid JSON.") from err
 
         if not payload.get("success"):
             message = payload.get("message") or "Bitwarden CLI reported failure."
+            logger.warning("Bitwarden payload failure for %s: %s", url, message)
             raise raise_exc(message)
 
         return payload.get("data") or {}
@@ -964,8 +779,9 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         """Return item metadata for the provided Bitwarden item ID.
 
         Intended for UI usage. Returns a dict with keys ``name`` (string)
-        and ``fields`` (list[str]). Raises ``ValueError`` on failure with
-        an explanatory message suitable for display to the user.
+        and ``fields`` (list[str]), plus ``item_type`` and
+        ``allowed_secret_fields``. Raises ``ValueError`` on failure with an
+        explanatory message suitable for display to the user.
         """
         ttl_seconds = cls._get_cache_ttl_seconds()
         if ttl_seconds > 0:
@@ -983,9 +799,63 @@ class BitwardenCLISecretsProvider(SecretsProvider):
         fields = data.get("fields") or []
         field_names = [item.get("name") for item in fields if item.get("name")]
         name = data.get("name") or ""
-        result = {"name": str(name), "fields": field_names}
+        item_type = data.get("type")
+        try:
+            item_type_value = int(item_type) if item_type is not None else None
+        except (TypeError, ValueError):
+            item_type_value = None
+
+        result = {
+            "name": str(name),
+            "fields": field_names,
+            "item_type": item_type_value,
+            "allowed_secret_fields": cls.get_allowed_secret_fields_for_item_type(item_type_value),
+        }
 
         if ttl_seconds > 0:
             cls._item_info_cache[secret_id] = (time.time() + ttl_seconds, dict(result))
 
         return result
+
+    @classmethod
+    def search_items(cls, search_query: str) -> list[dict[str, Any]]:
+        """Search Bitwarden items by text and return lightweight item metadata.
+
+        Args:
+            search_query: User-provided search string.
+
+        Returns:
+            List of dict entries containing ``id``, ``name``, and ``type``.
+
+        Raises:
+            ValueError: If query is too short or request/response validation fails.
+        """
+        query = str(search_query).strip()
+        if len(query) < 2:
+            raise ValueError("Search text must be at least 2 characters.")
+
+        normalized_url, auth, verify = cls._get_ui_request_settings()
+        url = cls._build_list_items_url(normalized_url, query)
+        data = cls._request_item_payload(url, auth, verify, ValueError)
+
+        raw_items: list[dict[str, Any]] = []
+        if isinstance(data, list):
+            raw_items = data
+        elif isinstance(data, dict):
+            raw_items = data.get("data") or []
+
+        items: list[dict[str, Any]] = []
+        for item in raw_items:
+            if not isinstance(item, dict):
+                continue
+            item_id = item.get("id")
+            if not item_id:
+                continue
+            items.append(
+                {
+                    "id": str(item_id),
+                    "name": str(item.get("name") or ""),
+                    "type": item.get("type"),
+                }
+            )
+        return items

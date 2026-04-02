@@ -12,7 +12,7 @@ The installation and configuration of the VaultWarden Server and Bitwarden CLI s
 
 ## Bitwarden CLI provider
 
-This document describes the Bitwarden CLI provider for Nautobot Secrets Providers.
+This document describes the Bitwarden CLI Secrets Provider that is compatible with VaultWarden.
 The provider fetches secrets from a Bitwarden/VaultWarden vault by talking to a
 Bitwarden CLI instance that exposes an HTTP API (for example via `bw serve`).
 
@@ -57,6 +57,8 @@ PLUGINS_CONFIG = {
             "retry_backoff": float(os.getenv("BW_CLI_RETRY_BACKOFF", "0.3")),
             # Optional: item endpoint template (must include {secret_id})
             "item_endpoint": os.getenv("BW_CLI_ITEM_ENDPOINT", "/object/item/{secret_id}"),
+            # Optional: endpoint used by the UI search picker
+            "list_items_endpoint": os.getenv("BW_CLI_LIST_ITEMS_ENDPOINT", "/list/object/items"),
             # Optional: UI lookup cache TTL in seconds (default 0 = disabled)
             "cache_ttl": int(os.getenv("BW_CLI_CACHE_TTL", "0")),
         }
@@ -72,6 +74,7 @@ Settings
 - `request_timeout` (optional, default `15`): HTTP timeout in seconds for Bitwarden API requests.
 - `retry_total` and `retry_backoff` (optional, defaults `3` and `0.3`): retry policy used for transient network and HTTP 5xx failures.
 - `item_endpoint` (optional, default `/object/item/{secret_id}`): endpoint template used to fetch item payloads.
+- `list_items_endpoint` (optional, default `/list/object/items`): endpoint used by the UI item-search picker (`?search=<text>`).
 - `cache_ttl` (optional, default `0`): in-memory cache TTL for UI helper lookups (`Fetch Fields` / item-name helper). Set to `0` to disable caching.
 - `BITWARDEN_FIELDS` (optional): override the default selectable fields presented in the UI (see code reference).
 
@@ -102,6 +105,9 @@ BW_CLI_PASSWORD=your-bitwarden-cli-basic-auth-password
 # Optional: Override the item endpoint template (default: /object/item/{secret_id})
 # BW_CLI_ITEM_ENDPOINT=/object/item/{secret_id}
 
+# Optional: Override the list endpoint template used by item search (default: /list/object/items)
+# BW_CLI_LIST_ITEMS_ENDPOINT=/list/object/items
+
 # Optional: Number of retries for HTTP requests (default: 3)
 # BW_CLI_RETRY_TOTAL=3
 
@@ -121,6 +127,7 @@ BW_CLI_PASSWORD=your-bitwarden-cli-basic-auth-password
 - `BW_CLI_VERIFY_SSL`: Set to `false` to disable SSL verification (optional, default: `true`).
 - `BW_CLI_REQUEST_TIMEOUT`: HTTP request timeout in seconds (optional, default: `15`).
 - `BW_CLI_ITEM_ENDPOINT`: Endpoint template for fetching items (optional, default: `/object/item/{secret_id}`).
+- `BW_CLI_LIST_ITEMS_ENDPOINT`: Endpoint used for item search (optional, default: `/list/object/items`).
 - `BW_CLI_RETRY_TOTAL`: Number of retries for HTTP requests (optional, default: `3`).
 - `BW_CLI_RETRY_BACKOFF`: Backoff factor for retries (optional, default: `0.3`).
 - `BW_CLI_CACHE_TTL`: Cache TTL for UI field lookups in seconds (optional, default: `0` = disabled).
@@ -161,13 +168,58 @@ secret_parameters:
 Notes on locating field names
 
 - Use the Bitwarden web UI or `bw get item <id>` to inspect available fields and field labels.
-- The Nautobot UI also queries available custom field names (see the provider's view tests for behavior).
 
-UI enhancement: item name display
+- The Nautobot UI queries Nautobot app API endpoints for item metadata, search results, and custom field names; the browser does not talk directly to the Bitwarden CLI server.
+- Those Bitwarden helper API endpoints require an authenticated Nautobot user with the `extras.view_secret` permission, so direct URL access is blocked for users who cannot view Secrets.
 
-- When you enter a valid `secret_id` in the Parameters form (or load a page with a pre-filled `secret_id`), Nautobot will perform a quick, non-blocking lookup of the Bitwarden item and append the item's name to the `secret_id` help text. This is useful to confirm you're referencing the expected item before saving.
-- The secret name is shown with a theme-aware green highlight so it remains readable on both light and dark themes. This display is informational only and does not alter the stored secret parameters.
-- The dedicated "Fetch Fields from Bitwarden" button continues to be the explicit action used to populate available custom field names; it remains unchanged.
+### Item name display
+
+When a valid `secret_id` UUID is present in the Parameters form, a non-blocking API call resolves
+the Bitwarden item name and appends it to the `secret_id` field help text, shown in green.
+This lookup is read-only and does not modify stored parameters.
+
+### Find Item UUID workflow
+
+Use this workflow when creating or editing a Bitwarden-backed Secret and you do not want to copy
+the UUID manually from Bitwarden.
+
+1. Open a Secret create or edit form.
+2. Click **Find Item UUID** below the `secret_id` field.
+3. In the search panel, enter at least 2 characters from the Bitwarden item name.
+4. Press Enter or click **Search**.
+5. Select the desired result by pressing Enter or double-clicking the item.
+6. Confirm that the selected UUID is copied into `secret_id` and the panel closes.
+
+After selecting an item, the form resolves metadata and updates dependent fields:
+
+- The Bitwarden item name is shown in the `secret_id` help text.
+- **Secret Field** options are filtered to values valid for the detected item type.
+- **Custom field name** choices are loaded from the item custom fields.
+
+Behavior notes:
+
+- The search is performed through Nautobot internal plugin API endpoints; the browser does not
+  call the Bitwarden CLI service directly.
+- Only canonical keys are persisted in `parameters`: `secret_id`, `secret_field`, and
+  `custom_field_name`.
+- On the Secret detail page (read-only), the **Find Item UUID** control is hidden.
+
+If a form is opened with a prefilled `secret_id` (for example, while editing an existing Secret),
+the widget initializes immediately, resolves item metadata, and filters **Secret Field** options
+to those supported by the detected Bitwarden item type. It also initializes the
+**Custom field name** dropdown from the Bitwarden item's custom field names.
+
+When **Secret Field** is not `custom`, the **Custom field name** dropdown is disabled and reset
+to an empty selection (`---------`).
+
+When `secret_field` is set to `custom`, `custom_field_name` is required and form validation blocks
+save until it is provided. The Bitwarden widget renders the validation message inline under
+the **Custom field name** field:
+*"Custom field name is required if Secret field is set to 'Custom Field'."*
+Supplying a `custom_field_name` while a non-custom secret field is selected is equally invalid.
+The Bitwarden widget renders that validation message inline under **Secret Field**:
+*"'Secret field' must be set to 'Custom Field' when 'Custom field name' is provided."*
+Invalid parameter combinations are rejected during save and are not persisted.
 
 ## Troubleshooting
 
@@ -175,6 +227,7 @@ UI enhancement: item name display
 - TLS failures: confirm `BW_CLI_CA_BUNDLE` points to a valid PEM bundle file and `verify_ssl` is `true`.
 - Authentication failures: verify `username`/`password` and that the CLI service accepts those credentials.
 - Secret not found or field missing: confirm the `secret_id` points to an existing item and that the requested `secret_field` or `custom_field_name` exists on that item.
+- HTTP 403 from the internal Bitwarden helper URLs: confirm the logged-in user has the `extras.view_secret` permission before calling the item-info, search, or custom-fields endpoints directly.
 - Invalid JSON responses: ensure the reverse proxy/service in front of Bitwarden is returning valid JSON payloads for item endpoints.
 - Use container logs for debugging:
 
@@ -239,16 +292,16 @@ e.g. Traefik configuration to add TLS and Basic Auth, for the `bitwarden-cli-api
 
 ```yaml
 labels:
-    - "traefik.enable=true"
-    - "traefik.http.routers.bitwarden_cli_api.tls=false"
-    - "traefik.http.routers.bitwarden_cli_api.entrypoints=webhttps"
-    - "traefik.http.routers.bitwarden_cli_api.rule=Host(`bitwarden-cli-api.example.local`)"
-    - "traefik.http.routers.bitwarden_cli_api.service=bitwarden_cli_api_service"
-    - "traefik.http.services.bitwarden_cli_api_service.loadbalancer.server.port=8087"
-    # Basic auth middleware using htpasswd-style entry provided via env var
-    # Ensure BW_CLI_AUTH_STR is exported in the environment used by docker-compose/stack
-    - "traefik.http.middlewares.bitwarden_cli_auth.basicauth.users=${BW_CLI_AUTH_STR}"
-    - "traefik.http.routers.bitwarden_cli_api.middlewares=bitwarden_cli_auth"
+      - "traefik.enable=true"
+      - "traefik.http.routers.bitwarden_cli_api.tls=true"
+      - "traefik.http.routers.bitwarden_cli_api.tls.certresolver=step-ca"
+      - "traefik.http.routers.bitwarden_cli_api.entrypoints=webhttps"
+      - "traefik.http.routers.bitwarden_cli_api.rule=Host(`bitwarden-cli-api.example.local`)"
+      - "traefik.http.routers.bitwarden_cli_api.service=bitwarden_cli_api_service"
+      - "traefik.http.services.bitwarden_cli_api_service.loadbalancer.server.port=8087"
+      - "traefik.http.services.bitwarden_cli_api_service.loadbalancer.server.scheme=http"
+      - "traefik.http.middlewares.bitwarden_cli_auth.basicauth.users=${BW_CLI_AUTH_STR}"
+      - "traefik.http.routers.bitwarden_cli_api.middlewares=bitwarden_cli_auth"
 ```
 
 ### Syncing
@@ -340,16 +393,17 @@ services:
         max_attempts: 6
         window: 20s
     labels:
-        - "traefik.enable=true"
-        - "traefik.http.routers.bitwarden_cli_api.tls=false"
-        - "traefik.http.routers.bitwarden_cli_api.entrypoints=webhttps"
-        - "traefik.http.routers.bitwarden_cli_api.rule=Host(`bitwarden-cli-api.example.local`)"
-        - "traefik.http.routers.bitwarden_cli_api.service=bitwarden_cli_api_service"
-        - "traefik.http.services.bitwarden_cli_api_service.loadbalancer.server.port=8087"
-        # Basic auth middleware using htpasswd-style entry provided via env var
-        # Ensure BW_CLI_AUTH_STR is exported in the environment used by docker-compose/stack
-        - "traefik.http.middlewares.bitwarden_cli_auth.basicauth.users=${BW_CLI_AUTH_STR}"
-        - "traefik.http.routers.bitwarden_cli_api.middlewares=bitwarden_cli_auth"
+      - "traefik.enable=true"
+      - "traefik.http.routers.bitwarden_cli_api.tls=true"
+      - "traefik.http.routers.bitwarden_cli_api.tls.certresolver=step-ca"
+      - "traefik.http.routers.bitwarden_cli_api.entrypoints=webhttps"
+      - "traefik.http.routers.bitwarden_cli_api.rule=Host(`bitwarden-cli-api.example.local`)"
+      - "traefik.http.routers.bitwarden_cli_api.service=bitwarden_cli_api_service"
+      - "traefik.http.services.bitwarden_cli_api_service.loadbalancer.server.port=8087"
+      - "traefik.http.services.bitwarden_cli_api_service.loadbalancer.server.scheme=http"
+      - "traefik.http.middlewares.bitwarden_cli_auth.basicauth.users=${BW_CLI_AUTH_STR}"
+      - "traefik.http.routers.bitwarden_cli_api.middlewares=bitwarden_cli_auth"
+
 
 volumes:
   bw_cli_data:
