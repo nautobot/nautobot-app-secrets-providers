@@ -11,7 +11,25 @@ This major release marks the compatibility of the Secrets Provider App with Naut
 - Added support for Python 3.13 and removed support for 3.9.
 - Updated UI framework to use latest Bootstrap 5.3.
 
+We will continue to support the previous major release for users of Nautobot LTM 2.4 only with critical bug and security fixes as per the [Software Lifecycle Policy](https://networktocode.com/company/legal/software-lifecycle-policy/).
+
 <!-- towncrier release notes start -->
+
+## [v4.0.1 (2026-04-10)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v4.0.1)
+
+### Fixed
+
+- [#207](https://github.com/nautobot/nautobot-app-secrets-providers/issues/207) - Fixed issue where `secrets.py` was being imported on app startup.
+
+### Documentation
+
+- [#208](https://github.com/nautobot/nautobot-app-secrets-providers/issues/208) - Updated documentation to include 3.0 images.
+
+### Housekeeping
+
+- Rebaked from the cookie `nautobot-app-v3.0.0`.
+- Rebaked from the cookie `nautobot-app-v3.1.2`.
+- Rebaked from the cookie `nautobot-app-v3.1.3`.
 
 ## [v4.0.0 (2025-11-17)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v4.0.0)
 
