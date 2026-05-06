@@ -17,6 +17,7 @@ The provider fetches secrets from a Bitwarden/VaultWarden vault by talking to a
 Bitwarden CLI instance that exposes an HTTP API (for example via `bw serve`).
 
 Contents
+
 - Prerequisites
 - Configuration
 - Environment variables
@@ -67,6 +68,7 @@ PLUGINS_CONFIG = {
 ```
 
 Settings
+
 - `base_url` (required): URL of the Bitwarden CLI service (e.g. `https://bitwarden-cli.example.com`). If a scheme is omitted, the provider will default to `https://`.
 - `username`, `password` (required): credentials used by the provider to authenticate to the CLI service.
 - `verify_ssl` (optional, default `True`): when `False`, TLS verification is skipped (use only for development).
