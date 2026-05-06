@@ -192,9 +192,10 @@ class BitwardenCLISecretsProvider(SecretsProvider):
                 configured_custom_field_name = str(self.initial.get("custom_field_name") or "").strip()
 
             if configured_custom_field_name:
-                self.fields["custom_field_name"].choices.append(
-                    (configured_custom_field_name, configured_custom_field_name)
-                )
+                self.fields["custom_field_name"].choices = [
+                    ("", "---------"),
+                    (configured_custom_field_name, configured_custom_field_name),
+                ]
 
         def clean(self):
             """Validate cross-field dependencies for Bitwarden parameters.
