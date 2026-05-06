@@ -15,6 +15,22 @@ We will continue to support the previous major release for users of Nautobot LTM
 
 <!-- towncrier release notes start -->
 
+## [v4.0.1 (2026-04-10)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v4.0.1)
+
+### Fixed
+
+- [#207](https://github.com/nautobot/nautobot-app-secrets-providers/issues/207) - Fixed issue where `secrets.py` was being imported on app startup.
+
+### Documentation
+
+- [#208](https://github.com/nautobot/nautobot-app-secrets-providers/issues/208) - Updated documentation to include 3.0 images.
+
+### Housekeeping
+
+- Rebaked from the cookie `nautobot-app-v3.0.0`.
+- Rebaked from the cookie `nautobot-app-v3.1.2`.
+- Rebaked from the cookie `nautobot-app-v3.1.3`.
+
 ## [v4.0.0 (2025-11-17)](https://github.com/nautobot/nautobot-app-secrets-providers/releases/tag/v4.0.0)
 
 ### Added
