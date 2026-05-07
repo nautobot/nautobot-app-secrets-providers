@@ -1,0 +1,1 @@
+Added a new Bitwarden CLI Secrets Provider for Nautobot, including provider configuration, secure Bitwarden API integration, and an interactive Secret form workflow with Find Item UUID search, item-aware field filtering, and custom field name selection.

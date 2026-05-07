@@ -24,3 +24,5 @@ LICENSE
 **/.vscode/
 invoke*.yml
 tasks.py
+bitwarden_secrets_response.json
+bitwarden_list_object_items_response.json
