@@ -63,6 +63,20 @@ pip install nautobot-secrets-providers[onepassword]
 !!! note
     The 1Password Vault requires a minimum version of Python 3.9.
 
+#### Vaultwarden
+
+The Vaultwarden provider (also compatible with self-hosted Bitwarden) requires the `cryptography` library:
+
+```no-highlight
+pip install nautobot-secrets-providers[vaultwarden]
+```
+
+If your Bitwarden account uses Argon2id as its KDF (the default for new accounts on recent server versions), also install `argon2-cffi`:
+
+```no-highlight
+pip install nautobot-secrets-providers[vaultwarden-argon2]
+```
+
 ### Access Requirements
 
 There are no special access requirements to install the app.

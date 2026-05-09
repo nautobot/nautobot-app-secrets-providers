@@ -1,0 +1,4 @@
+.env
+vw-data/
+__pycache__/
+*.pyc
