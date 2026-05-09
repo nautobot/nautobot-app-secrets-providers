@@ -1,0 +1,44 @@
+# Vaultwarden integration test stack.
+#
+# Stands up a single Vaultwarden container with API signups enabled so the seed
+# script can register fresh accounts via the public API. Plain HTTP on the loopback
+# is fine here - this is for local integration testing, not production. The compose
+# file deliberately doesn't depend on caddy-docker-proxy or any shared network so it
+# can run on any developer machine without prior setup.
+
+services:
+  vaultwarden:
+    # Pinned to a specific tag so the integration test is reproducible. Vaultwarden
+    # ships frequent releases; bumping this tag is a deliberate decision, not a
+    # passive update on every container pull.
+    image: vaultwarden/server:1.36.0-alpine
+    container_name: nautobot-secrets-vaultwarden-test
+    restart: "no"
+    environment:
+      # Required so the seed script can create accounts via /identity/accounts/register.
+      SIGNUPS_ALLOWED: "true"
+      # Disable the websocket port - we only need the HTTP API.
+      WEBSOCKET_ENABLED: "false"
+      # Quiet down the noisy startup banner to keep `make up` output readable.
+      LOG_LEVEL: "warn"
+      # Argon2id is what newer Bitwarden clients default to. Vaultwarden honours
+      # the kdf chosen at registration time, so this env var doesn't constrain the
+      # seed script - both PBKDF2 and Argon2id accounts work side by side.
+      DOMAIN: "${VAULTWARDEN_DOMAIN:-http://localhost:18080}"
+    ports:
+      # 18080 chosen to avoid collisions with the dev stack's defaults (8000, 8080).
+      - "${VAULTWARDEN_PORT:-18080}:80"
+    volumes:
+      # State directory - holds the SQLite DB and registered account records. The
+      # gitignore in this directory keeps it out of commits. To reset all state,
+      # `make clean` removes it.
+      - ./vw-data:/data
+    healthcheck:
+      # Vaultwarden serves /alive as a 200-OK liveness probe. `wget` is in the
+      # alpine base image; we use 127.0.0.1 instead of localhost to avoid IPv6
+      # resolution quirks inside containers.
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/alive"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s

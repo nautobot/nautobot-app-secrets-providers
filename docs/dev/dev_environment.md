@@ -361,6 +361,72 @@ In [4]: client.secrets.kv.read_secret(path="hello")["data"]["data"]["hello"]
 Out[4]: 'world'
 ```
 
+#### Vaultwarden (Bitwarden-compatible)
+
+The Vaultwarden provider ships with a self-contained integration-test stack under `tests/integration/` that stands up a real Vaultwarden container, registers fresh PBKDF2 and Argon2id accounts via the public API, populates personal- and organization-owned items, and runs the `BitwardenClient` against the seeded vault.
+
+This is the recommended development workflow when changing the Vaultwarden provider — the unit tests use mocked HTTP, but the integration tests cross-check the wire format and crypto against an actual Bitwarden-protocol server.
+
+##### Quick loop
+
+```no-highlight
+cd tests/integration
+make all     # up + seed + test (about 25 seconds end-to-end on first run)
+```
+
+Individual targets:
+
+| Target | What it does |
+| --- | --- |
+| `make up`    | Start the Vaultwarden container, wait for `/alive` to return 200 |
+| `make seed`  | Register two accounts (PBKDF2 + Argon2id), create personal items, create an org with an org-owned cipher |
+| `make test`  | Run four scenarios against the seeded vault: personal item, org item, Argon2id account, session cache speedup |
+| `make logs`  | Tail container logs |
+| `make down`  | Stop the container (preserves `vw-data/` so reseeding is fast on next `up`) |
+| `make clean` | Stop AND wipe `vw-data/` + `fixtures.json` (full reset for a fresh seed) |
+
+##### Iteration pattern
+
+When developing changes to `nautobot_secrets_providers/providers/_vaultwarden_client.py` or `vaultwarden.py`:
+
+1. Make your code changes.
+2. Run `make test` (assuming the container is already up and seeded). The runner imports the client module directly — no Nautobot stack required for the integration loop.
+3. If your change affects the wire format (e.g. you bump a CipherString type), `make clean && make all` ensures the seed step also exercises your new code path.
+
+##### Talking to the live server manually
+
+The seeded vault is reachable at `http://localhost:18080` while the container is up. You can poke it with `curl` for ad-hoc debugging:
+
+```no-highlight
+# What KDF is the PBKDF2 account configured for?
+curl -s -X POST http://localhost:18080/identity/accounts/prelogin \
+    -H "Content-Type: application/json" \
+    -d '{"email":"pbkdf2-test@example.com"}' | jq
+
+# What's the seeded vault's structure?
+cat tests/integration/fixtures.json | jq
+```
+
+The full credentials and item UUIDs end up in `tests/integration/fixtures.json` after a seed, so you can drive the client against the live server interactively from a Python REPL.
+
+##### Configuring Nautobot to talk to the seeded vault
+
+If you want to drive the seeded vault from a running Nautobot dev environment (rather than from the integration test runner), copy the credentials into your `development/nautobot_config.py`:
+
+```python
+PLUGINS_CONFIG = {
+    "nautobot_secrets_providers": {
+        "vaultwarden": {
+            "url": "http://host.docker.internal:18080",
+            "email": "pbkdf2-test@example.com",
+            "master_password": "pbkdf2-master-password-1",
+        },
+    },
+}
+```
+
+Note `host.docker.internal` rather than `localhost` — the Nautobot container needs to reach the host loopback to find the Vaultwarden container's published port. On Linux without Docker Desktop, set `VAULTWARDEN_DOMAIN` and use the host's actual IP address, or run the Vaultwarden container on the same compose network as Nautobot.
+
 
 ## Project Overview
 
