@@ -3,7 +3,7 @@
 services:
   nautobot:
     ports: !override
-      - "8080"
+      - "8089:8080"
   docs:
     ports: !override
       - "8001"

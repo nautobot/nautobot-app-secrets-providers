@@ -25,5 +25,12 @@ class NautobotSecretsProvidersConfig(NautobotAppConfig):
     # URL reverse lookup names
     home_view_name = "plugins:nautobot_secrets_providers:home"
 
+    def ready(self):
+        """Perform app initialization when Django is ready."""
+        super().ready()
+        # Import signal handlers after app is ready to register Django signals
+        # pylint: disable-next=import-outside-toplevel,unused-import
+        import nautobot_secrets_providers.signals  # noqa: F401
+
 
 config = NautobotSecretsProvidersConfig  # pylint:disable=invalid-name
