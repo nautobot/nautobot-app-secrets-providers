@@ -4,8 +4,8 @@ This document describes all new features and changes in the release. The format 
 
 ## Release Overview
 
-- Major features or milestones
-- Changes to compatibility with Nautobot and/or other apps, libraries etc.
+- Added support for HashiCorp Vault "Active Directory" and "LDAP" secrets engines.
+- Dropped support for Nautobot v3.0.x.
 
 <!-- towncrier release notes start -->
 
