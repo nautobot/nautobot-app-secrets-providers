@@ -45,7 +45,7 @@ __all__ = (
 )
 
 
-class DelineaSecretServerSecretsProviderBase(SecretsProvider):
+class DelineaSecretServerSecretsProviderBase(SecretsProvider):  # pylint: disable=abstract-method
     """A secrets provider for Delinea Secret Server."""
 
     is_available = delinea_installed

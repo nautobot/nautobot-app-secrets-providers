@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nautobot-secrets-providers"
-version = "4.0.2a0"
+version = "4.1.1a0"
 description = "Nautobot Secrets Providers App"
 authors = ["Network to Code, LLC <info@networktocode.com>"]
 license = "Apache-2.0"
@@ -189,7 +189,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.towncrier]
 package = "nautobot_secrets_providers"
 directory = "changes"
-filename = "docs/admin/release_notes/version_4.0.md"
+filename = "docs/admin/release_notes/version_4.1.md"
 template = "development/towncrier_template.j2"
 start_string = "<!-- towncrier release notes start -->"
 issue_format = "[#{issue}](https://github.com/nautobot/nautobot-app-secrets-providers/issues/{issue})"
