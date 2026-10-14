@@ -1,5 +1,7 @@
 """Unit tests for Secrets Providers."""
 
+# pylint: disable=too-many-lines
+
 import os
 from unittest.mock import mock_open, patch
 
