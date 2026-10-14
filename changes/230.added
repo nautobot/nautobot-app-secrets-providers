@@ -1,1 +1,0 @@
-Added the HashiCorp Vault AD/LDAP secrets provider to retrieve credentials from the Active Directory and LDAP secrets engines.
