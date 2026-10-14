@@ -16,12 +16,23 @@ except ImportError:
 from nautobot.core.forms import BootstrapMixin, add_blank_choice
 from nautobot.extras.secrets import SecretsProvider, exceptions
 
-from .choices import HashicorpKVVersionChoices
+from .choices import HashicorpKVVersionChoices, HashicorpLDAPCredentialChoices, HashicorpLDAPEngineChoices
 
-__all__ = ("HashiCorpVaultSecretsProvider",)
+__all__ = (
+    "HashiCorpVaultLDAPSecretsProvider",
+    "HashiCorpVaultSecretsProvider",
+)
 
 K8S_TOKEN_DEFAULT_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/token"  # noqa: S105
 AUTH_METHOD_CHOICES = ["approle", "aws", "kubernetes", "token"]
+LDAP_CREDENTIAL_PATHS = {
+    HashicorpLDAPEngineChoices.ENGINE_AD: "creds",
+    HashicorpLDAPEngineChoices.ENGINE_LDAP: "static-cred",
+}
+LDAP_PASSWORD_KEYS = {
+    HashicorpLDAPEngineChoices.ENGINE_AD: "current_password",
+    HashicorpLDAPEngineChoices.ENGINE_LDAP: "password",
+}
 
 
 def vault_choices():
@@ -238,3 +249,75 @@ class HashiCorpVaultSecretsProvider(SecretsProvider):
         except KeyError as err:
             msg = f"The secret value could not be retrieved using key {err}"
             raise exceptions.SecretValueNotFoundError(secret, cls, msg) from err
+
+
+class HashiCorpVaultLDAPSecretsProvider(HashiCorpVaultSecretsProvider):
+    """A secrets provider for HashiCorp Vault AD/LDAP credentials."""
+
+    slug = "hashicorp-vault-ldap"
+    name = "HashiCorp Vault AD/LDAP"
+
+    # pylint: disable-next=nb-incorrect-base-class
+    class ParametersForm(BootstrapMixin, forms.Form):
+        """Required parameters for HashiCorp Vault AD/LDAP."""
+
+        role_name = forms.CharField(
+            required=True,
+            help_text="The name of the role to retrieve the credentials for.",
+        )
+        key = forms.ChoiceField(
+            required=True,
+            choices=HashicorpLDAPCredentialChoices,
+            help_text="The credential value to retrieve.",
+        )
+        vault = forms.ChoiceField(
+            required=True,
+            choices=vault_choices,
+            help_text="HashiCorp Vault to retrieve the secret from.",
+        )
+        mount_point = forms.CharField(
+            required=False,
+            help_text="The path where the secrets engine was mounted on. Defaults to the engine name.",
+        )
+        engine = forms.ChoiceField(
+            required=True,
+            choices=HashicorpLDAPEngineChoices,
+            help_text="The secrets engine that manages the credentials.",
+        )
+
+    @classmethod
+    def get_value_for_secret(cls, secret, obj=None, **kwargs):
+        """Return the credential value stored under the secret's key for the secret's role."""
+        parameters = secret.rendered_parameters(obj=obj)
+        vault_name = parameters.get("vault", "default")
+
+        try:
+            engine = parameters["engine"]
+            role_name = parameters["role_name"]
+            secret_key = parameters["key"]
+        except KeyError as err:
+            msg = f"The secret parameter could not be retrieved for field {err}"
+            raise exceptions.SecretParametersError(secret, cls, msg) from err
+
+        if engine not in HashicorpLDAPEngineChoices.as_dict():
+            raise exceptions.SecretParametersError(secret, cls, f"HashiCorp Vault secrets engine {engine} is invalid!")
+
+        mount_point = parameters.get("mount_point") or engine
+        if secret_key == HashicorpLDAPCredentialChoices.CREDENTIAL_CURRENT:
+            secret_key = LDAP_PASSWORD_KEYS[engine]
+
+        client = cls.get_client(secret, vault_name)
+        try:
+            response = client.read(f"{mount_point}/{LDAP_CREDENTIAL_PATHS[engine]}/{role_name}")
+        except hvac.exceptions.InvalidRequest as err:
+            raise exceptions.SecretValueNotFoundError(secret, cls, str(err)) from err
+
+        if response is None:
+            msg = f"HashiCorp Vault role {role_name} was not found on mount point {mount_point}"
+            raise exceptions.SecretValueNotFoundError(secret, cls, msg)
+
+        value = response["data"].get(secret_key)
+        if not value:
+            msg = f"The secret value could not be retrieved using key '{secret_key}'"
+            raise exceptions.SecretValueNotFoundError(secret, cls, msg)
+        return value

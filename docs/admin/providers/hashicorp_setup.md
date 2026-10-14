@@ -62,3 +62,41 @@ PLUGINS_CONFIG = {
 
 !!! note
     If using this option, you should not have any keys except `vaults` under `hashicorp_vault`.
+
+## Active Directory and LDAP Credentials
+
++++ 4.1.0
+
+The `HashiCorp Vault AD/LDAP` provider retrieves the credentials of directory accounts managed by the [LDAP secrets engine](https://developer.hashicorp.com/vault/docs/secrets/ldap) or the Active Directory secrets engine.
+
+A secret using this provider takes the following parameters:
+
+- `role_name` - (required) The name of the role in Vault.
+- `key` - (required) The credential value to retrieve. Either `username`, `password` or `last_password`.
+- `vault` - (required) The HashiCorp Vault to retrieve the secret from.
+- `mount_point` - (optional / defaults to the engine name) The path where the secrets engine was mounted on.
+- `engine` - (required) The secrets engine that manages the credentials. Either `ad` for the Active Directory secrets engine or `ldap` for the LDAP secrets engine.
+
+The provider reads the credentials from the following Vault paths, which the token or role used by Nautobot must be allowed to `read`:
+
+| Engine | Path                                    | Value returned for `password` |
+| ------ | --------------------------------------- | ----------------------------- |
+| `ad`   | `<mount_point>/creds/<role_name>`       | `current_password`            |
+| `ldap` | `<mount_point>/static-cred/<role_name>` | `password`                    |
+
+For example, the following Vault policy allows Nautobot to retrieve the credentials of the `nautobot` role of an Active Directory secrets engine mounted on `ad`:
+
+```hcl
+path "ad/creds/nautobot" {
+  capabilities = ["read"]
+}
+```
+
+To use the credentials of an account, for example as device credentials, create one secret with `key` set to `username` and one with `key` set to `password` for the same role, and add both of them to a Secrets Group.
+
+!!! note
+    Nautobot retrieves each secret of a Secrets Group separately, so only the static roles of the LDAP secrets engine are supported. Dynamic roles create a new account on every read, and service account check-out requires the account to be checked back in.
+
+!!! warning
+    HashiCorp has [deprecated](https://developer.hashicorp.com/vault/docs/updates/deprecation) the Active Directory secrets engine and no longer supports it. The LDAP secrets engine configured with `schema=ad` is its replacement for Active Directory accounts.
+

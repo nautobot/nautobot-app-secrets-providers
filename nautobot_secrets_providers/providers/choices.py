@@ -31,3 +31,29 @@ class HashicorpKVVersionChoices(ChoiceSet):
         (KV_VERSION_1, "V1"),
         (KV_VERSION_2, "V2"),
     )
+
+
+class HashicorpLDAPEngineChoices(ChoiceSet):
+    """Choices for Hashicorp AD/LDAP Secrets Engine."""
+
+    ENGINE_AD = "ad"
+    ENGINE_LDAP = "ldap"
+
+    CHOICES = (
+        (ENGINE_AD, "Active Directory"),
+        (ENGINE_LDAP, "LDAP"),
+    )
+
+
+class HashicorpLDAPCredentialChoices(ChoiceSet):
+    """Choices for Hashicorp AD/LDAP Credential Result."""
+
+    CREDENTIAL_USERNAME = "username"
+    CREDENTIAL_CURRENT = "password"
+    CREDENTIAL_LAST = "last_password"
+
+    CHOICES = (
+        (CREDENTIAL_USERNAME, "Username"),
+        (CREDENTIAL_CURRENT, "Password"),
+        (CREDENTIAL_LAST, "Last Password"),
+    )

@@ -6,7 +6,7 @@ labels:
 ---
 
 ### Environment
-* Nautobot version:  <!-- Example: 3.0.0 -->
+* Nautobot version:  <!-- Example: 3.1.0 -->
 * nautobot-secrets-providers version:  <!-- Example: 1.0.0 -->
 
 <!--
