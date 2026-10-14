@@ -16,10 +16,15 @@ from nautobot.extras.secrets import exceptions
 from nautobot_secrets_providers.providers import (
     AWSSecretsManagerSecretsProvider,
     AWSSystemsManagerParameterStore,
+    HashiCorpVaultLDAPSecretsProvider,
     HashiCorpVaultSecretsProvider,
     OnePasswordSecretsProvider,
 )
-from nautobot_secrets_providers.providers.choices import HashicorpKVVersionChoices
+from nautobot_secrets_providers.providers.choices import (
+    HashicorpKVVersionChoices,
+    HashicorpLDAPCredentialChoices,
+    HashicorpLDAPEngineChoices,
+)
 from nautobot_secrets_providers.providers.hashicorp import vault_choices
 from nautobot_secrets_providers.providers.one_password import vault_choices as one_password_vault_choices
 
@@ -644,6 +649,169 @@ class HashiCorpVaultSecretsProviderTestCase(SecretsProviderTestCase):
         with self.settings(PLUGINS_CONFIG=multiple_plugins_config):
             choices = vault_choices()
             self.assertEqual(choices, [("example", "Example"), ("example_2", "Example 2")])
+
+
+class HashiCorpVaultLDAPSecretsProviderTestCase(SecretsProviderTestCase):
+    """Tests for HashiCorpVaultLDAPSecretsProvider."""
+
+    provider = HashiCorpVaultLDAPSecretsProvider
+
+    mock_ad_response = {
+        "data": {
+            "current_password": "?@09AZnh4Ub",
+            "last_password": "?@09AZSen9TzU",
+            "username": "nautobot-svc",
+        },
+    }
+
+    mock_ldap_response = {
+        "data": {
+            "dn": "CN=nautobot-svc,OU=Service Accounts,DC=example,DC=com",
+            "last_password": "?@09AZKh03hBQ",
+            "password": "?@09AZGdnkinw",
+            "username": "nautobot-svc",
+        },
+    }
+
+    def setUp(self):
+        super().setUp()
+
+        self.secret = Secret.objects.create(
+            name="hello-hashicorp-ad",
+            provider=self.provider.slug,
+            parameters={
+                "engine": HashicorpLDAPEngineChoices.ENGINE_AD,
+                "role_name": "nautobot",
+                "key": HashicorpLDAPCredentialChoices.CREDENTIAL_CURRENT,
+            },
+        )
+        self.ad_test_path = "http://localhost:8200/v1/ad/creds/nautobot"
+        self.ldap_test_path = "http://localhost:8200/v1/ldap/static-cred/nautobot"
+
+    @requests_mock.Mocker()
+    def test_retrieve_success(self, requests_mocker):
+        """Retrieve each credential value from both secrets engines."""
+        requests_mocker.register_uri(method="GET", url=self.ad_test_path, json=self.mock_ad_response)
+        requests_mocker.register_uri(method="GET", url=self.ldap_test_path, json=self.mock_ldap_response)
+        test_cases = (
+            (HashicorpLDAPEngineChoices.ENGINE_AD, self.mock_ad_response["data"], "current_password"),
+            (HashicorpLDAPEngineChoices.ENGINE_LDAP, self.mock_ldap_response["data"], "password"),
+        )
+
+        for engine, data, password_key in test_cases:
+            expected_values = {
+                HashicorpLDAPCredentialChoices.CREDENTIAL_USERNAME: data["username"],
+                HashicorpLDAPCredentialChoices.CREDENTIAL_CURRENT: data[password_key],
+                HashicorpLDAPCredentialChoices.CREDENTIAL_LAST: data["last_password"],
+            }
+            for key, expected in expected_values.items():
+                with self.subTest(engine=engine, key=key):
+                    self.secret.parameters.update({"engine": engine, "key": key})
+                    self.assertEqual(self.provider.get_value_for_secret(self.secret), expected)
+
+    @requests_mock.Mocker()
+    def test_retrieve_mount_point_success(self, requests_mocker):
+        """Retrieve a credential successfully using a custom `mount_point`."""
+        requests_mocker.register_uri(
+            method="GET", url="http://localhost:8200/v1/mymount/creds/nautobot", json=self.mock_ad_response
+        )
+        self.secret.parameters["mount_point"] = "mymount"
+
+        response = self.provider.get_value_for_secret(self.secret)
+        self.assertEqual(self.mock_ad_response["data"]["current_password"], response)
+
+    @requests_mock.Mocker()
+    def test_retrieve_configuration_success(self, requests_mocker):
+        """Retrieve a credential successfully from the selected vault."""
+        requests_mocker.register_uri(
+            method="GET", url="http://example.com/v1/ad/creds/nautobot", json=self.mock_ad_response
+        )
+        self.secret.parameters["vault"] = "example_2"
+
+        multiple_plugins_config = {
+            "nautobot_secrets_providers": {
+                "hashicorp_vault": {
+                    "vaults": {
+                        "example": {"token": "nautobot", "url": "http://localhost:8200"},
+                        "example_2": {"token": "nautobot", "url": "http://example.com"},
+                    }
+                }
+            }
+        }
+        with self.settings(PLUGINS_CONFIG=multiple_plugins_config):
+            response = self.provider.get_value_for_secret(self.secret)
+        self.assertEqual(self.mock_ad_response["data"]["current_password"], response)
+
+    def test_retrieve_invalid_parameters(self):
+        """Try and fail to retrieve a secret with missing or invalid parameters."""
+        test_cases = (
+            (
+                {
+                    "engine": HashicorpLDAPEngineChoices.ENGINE_AD,
+                    "key": HashicorpLDAPCredentialChoices.CREDENTIAL_CURRENT,
+                },
+                "The secret parameter could not be retrieved for field 'role_name'",
+            ),
+            (
+                {"engine": "bogus", "role_name": "nautobot", "key": HashicorpLDAPCredentialChoices.CREDENTIAL_CURRENT},
+                "HashiCorp Vault secrets engine bogus is invalid!",
+            ),
+        )
+
+        for parameters, message in test_cases:
+            with self.subTest(parameters=parameters):
+                self.secret.parameters = parameters
+                with self.assertRaises(exceptions.SecretParametersError) as err:
+                    self.provider.get_value_for_secret(self.secret)
+                self.assertEqual(
+                    str(err.exception),
+                    f'SecretParametersError: Secret "hello-hashicorp-ad" (provider "HashiCorpVaultLDAPSecretsProvider"): {message}',
+                )
+
+    @requests_mock.Mocker()
+    def test_retrieve_does_not_exist(self, requests_mocker):
+        """Try and fail to retrieve the credentials of a role that doesn't exist."""
+        requests_mocker.register_uri(method="GET", url=self.ad_test_path, status_code=404)
+        requests_mocker.register_uri(
+            method="GET",
+            url=self.ldap_test_path,
+            status_code=400,
+            headers={"Content-Type": "application/json"},
+            json={"errors": ["unknown role: nautobot"]},
+        )
+        test_cases = (
+            (HashicorpLDAPEngineChoices.ENGINE_AD, "HashiCorp Vault role nautobot was not found on mount point ad"),
+            (HashicorpLDAPEngineChoices.ENGINE_LDAP, f"unknown role: nautobot, on get {self.ldap_test_path}"),
+        )
+
+        for engine, message in test_cases:
+            with self.subTest(engine=engine):
+                self.secret.parameters["engine"] = engine
+                with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
+                    self.provider.get_value_for_secret(self.secret)
+                self.assertEqual(
+                    str(err.exception),
+                    f'SecretValueNotFoundError: Secret "hello-hashicorp-ad" (provider "HashiCorpVaultLDAPSecretsProvider"): {message}',
+                )
+
+    @requests_mock.Mocker()
+    def test_retrieve_invalid_key(self, requests_mocker):
+        """Try and fail to retrieve a credential value that is missing or empty in the response."""
+        mock_ad_response = {"data": {"current_password": "?@09AZnh4Ub", "username": "nautobot-svc"}}
+        mock_ldap_response = {"data": {"last_password": "", "password": "?@09AZGdnkinw", "username": "nautobot-svc"}}
+        requests_mocker.register_uri(method="GET", url=self.ad_test_path, json=mock_ad_response)
+        requests_mocker.register_uri(method="GET", url=self.ldap_test_path, json=mock_ldap_response)
+        self.secret.parameters["key"] = HashicorpLDAPCredentialChoices.CREDENTIAL_LAST
+
+        for engine in (HashicorpLDAPEngineChoices.ENGINE_AD, HashicorpLDAPEngineChoices.ENGINE_LDAP):
+            with self.subTest(engine=engine):
+                self.secret.parameters["engine"] = engine
+                with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
+                    self.provider.get_value_for_secret(self.secret)
+                self.assertEqual(
+                    str(err.exception),
+                    'SecretValueNotFoundError: Secret "hello-hashicorp-ad" (provider "HashiCorpVaultLDAPSecretsProvider"): The secret value could not be retrieved using key \'last_password\'',
+                )
 
 
 class AWSSystemsManagerParameterStoreTestCase(SecretsProviderTestCase):
