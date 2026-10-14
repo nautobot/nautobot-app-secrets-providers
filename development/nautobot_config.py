@@ -137,6 +137,12 @@ PLUGINS_CONFIG = {
             "token": os.getenv("SECRET_SERVER_TOKEN", ""),
             "username": os.getenv("SECRET_SERVER_USERNAME", ""),
         },
+        "bitwarden": {
+            "api_url": os.getenv("BITWARDEN_API_URL"),
+            "identity_url": os.getenv("BITWARDEN_IDENTITY_URL"),
+            "org_id": os.getenv("BITWARDEN_ORG_ID"),
+            "token": os.getenv("BITWARDEN_ACCESS_TOKEN"),
+        },
         "hashicorp_vault": {
             # "url": os.environ.get("HASHICORP_VAULT_URL"),
             # "token": os.environ.get("HASHICORP_VAULT_TOKEN"),
