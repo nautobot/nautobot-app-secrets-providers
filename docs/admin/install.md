@@ -63,6 +63,13 @@ pip install nautobot-secrets-providers[onepassword]
 !!! note
     The 1Password Vault requires a minimum version of Python 3.9.
 
+#### Password Manager Pro
+
+The Password Manager Pro provider requires Python's default `requests` library. No additional libraries are required.
+
+!!! note
+    The Password Manager Pro requires a minimum version of Python 3.9.
+
 ### Access Requirements
 
 There are no special access requirements to install the app.

@@ -45,3 +45,8 @@ This document describes common use-cases and scenarios for this App.
 
 ![Screenshot of secret using 1Password](../images/light/1password-vault-secrets-provider-add.png#only-light "Secret using 1Password"){ .on-glb }
 ![Screenshot of secret using 1Password](../images/dark/1password-vault-secrets-provider-add.png#only-dark "Secret using 1Password"){ .on-glb }
+
+---
+
+![Screenshot of secret using Password Manager Pro](../images/light/password-manager-pro-secrets-provider-add.png#only-light "Secret using Password Manager Pro"){ .on-glb }
+![Screenshot of secret using Password Manager Pro](../images/dark/password-manager-pro-secrets-provider-add.png#only-dark "Secret using Password Manager Pro"){ .on-glb }
