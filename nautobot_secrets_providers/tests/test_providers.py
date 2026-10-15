@@ -1035,6 +1035,20 @@ class PasswordManagerProSecretsProviderTestCase(TestCase):
             result = self.provider.get_value_for_secret(self.secret)
 
         self.assertEqual(result, "world")
+        for request in mock.request_history:
+            self.assertEqual(request.headers["APP_AUTHTOKEN"], "fake-token")
+
+    def test_missing_or_empty_token(self):
+        """Raise SecretParametersError if the token is missing, None, or empty."""
+        for token in ("MISSING", None, ""):
+            with self.subTest(token=token):
+                config = {"base_url": "https://pmp.local"}
+                if token != "MISSING":
+                    config["token"] = token
+                with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {"password_manager_pro": config}}):
+                    with self.assertRaises(exceptions.SecretParametersError) as err:
+                        self.provider.get_value_for_secret(self.secret)
+                self.assertIn("requires 'base_url' and 'token'", str(err.exception))
 
     @requests_mock.Mocker()
     def test_password_not_found(self, mock):

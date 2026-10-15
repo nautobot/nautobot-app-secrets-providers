@@ -1,7 +1,5 @@
 """Password Manager Pro Secrets Provider for Nautobot."""
 
-import os
-
 import requests
 from django import forms
 from django.conf import settings
@@ -11,7 +9,7 @@ __all__ = ("PasswordManagerProSecretsProvider",)
 
 
 class PasswordManagerProSecretsProvider(SecretsProvider):
-    """Secrets Provider that retrieves secrets from Password Manager Pro via HTTP GET, using connection config from PLUGINS_CONFIG and token from environment."""
+    """Secrets Provider that retrieves secrets from Password Manager Pro via HTTP GET, using connection config from PLUGINS_CONFIG."""
 
     slug = "password-manager-pro"
     name = "Password Manager Pro Provider"
@@ -40,7 +38,7 @@ class PasswordManagerProSecretsProvider(SecretsProvider):
         except KeyError as exc:
             raise exceptions.SecretParametersError(secret, cls, "Password Manager Pro plugin not configured") from exc
 
-        if "base_url" not in config or "token" not in config:
+        if not config.get("base_url") or not config.get("token"):
             raise exceptions.SecretParametersError(
                 secret, cls, "Password Manager Pro config requires 'base_url' and 'token'"
             )
@@ -52,8 +50,7 @@ class PasswordManagerProSecretsProvider(SecretsProvider):
         """Helper to get resource and account IDs based on names."""
         config = cls._get_plugin_config(secret)
         url = f"{config['base_url'].rstrip('/')}/restapi/json/v1/resources/getResourceIdAccountId?RESOURCENAME={resource_name}&ACCOUNTNAME={account_name}"
-        token = os.getenv(config["token"])
-        headers = {"APP_AUTHTOKEN": token}
+        headers = {"APP_AUTHTOKEN": config["token"]}
 
         try:
             r = requests.get(url, headers=headers, verify=config.get("verify_ssl", True), timeout=10)
@@ -79,8 +76,7 @@ class PasswordManagerProSecretsProvider(SecretsProvider):
         """Helper to get the secret value based on resource and account IDs."""
         config = cls._get_plugin_config(secret)
         url = f"{config['base_url'].rstrip('/')}/restapi/json/v1/resources/{resource_id}/accounts/{account_id}/password"
-        token = os.getenv(config["token"])
-        headers = {"APP_AUTHTOKEN": token}
+        headers = {"APP_AUTHTOKEN": config["token"]}
 
         try:
             r = requests.get(url, headers=headers, verify=config.get("verify_ssl", True), timeout=10)
