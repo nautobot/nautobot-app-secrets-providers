@@ -1253,7 +1253,8 @@ class BeyondTrustManagedAccountSecretsProviderTestCase(TestCase):
     def test_check_in_triggers_rotation(self, mock):
         """Checking a request back in is a separate call, so rotation happens after the credential is used."""
         self._mock_auth(mock, self.base_url)
-        mock.put(f"{self.base_url}/Requests/4211/Checkin", json={"Status": "CheckedIn"})
+        # Password Safe returns 204 No Content on a successful check-in.
+        mock.put(f"{self.base_url}/Requests/4211/Checkin", status_code=204)
 
         with self.settings(PLUGINS_CONFIG=self.plugin_config):
             self.provider.check_in(self.secret, 4211, reason="done")

@@ -280,7 +280,13 @@ class BeyondTrustManagedAccountSecretsProvider(BeyondTrustSecretsProvider):
         session, session_created = cls._authenticate(secret, config)
         try:
             return cls._request(
-                secret, config, session, "PUT", f"/Requests/{request_id}/Checkin", data={"Reason": reason}
+                secret,
+                config,
+                session,
+                "PUT",
+                f"/Requests/{request_id}/Checkin",
+                data={"Reason": reason},
+                expected_status=(200, 204),
             )
         finally:
             cls._sign_out(secret, config, session, session_created)
