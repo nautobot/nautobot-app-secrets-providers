@@ -105,13 +105,62 @@ When creating a Secret with the **BeyondTrust Secrets Safe** provider:
 
 ## Rotation
 
-Reading a secret only releases it. To rotate, check the request back in after the credential has been
-used:
+A normal read never rotates. Reading a managed-account secret — the **Check Secret** button, or a Secrets
+Group lookup from a Job — opens a release request, returns the credential, and lets the request expire.
+Nothing is checked in and nothing changes.
+
+Rotation is a separate, opt-in action, because the secrets-provider interface only reads. The managed-account
+provider exposes `release()` and `check_in()` so a Job can run the full lifecycle and rotate the password
+*after* it has been used:
+
+This app is a provider library and ships no Jobs, so the lifecycle lives in a consumer-side Job (place it
+in `JOBS_ROOT`, a Git-repository job source, or an app's `jobs.py`):
 
 ```python
+from nautobot.apps.jobs import BooleanVar, Job, ObjectVar, register_jobs
+from nautobot.dcim.models import Device
+from nautobot.extras.choices import SecretsGroupAccessTypeChoices as AT, SecretsGroupSecretTypeChoices as ST
+from nautobot.extras.models import SecretsGroupAssociation
 from nautobot_secrets_providers.providers import BeyondTrustManagedAccountSecretsProvider as BT
 
-request_id = BT.release(secret)          # returns the request ID
-password = BT.get_value_for_secret(secret)
-BT.check_in(secret, request_id, reason="job complete")   # rotation happens here
+
+class RotateBeyondTrustManagedAccount(Job):
+    """Check out a device's managed-account credential, use it, and check it back in."""
+
+    device = ObjectVar(model=Device)
+    rotate = BooleanVar(default=False, description="Rotate on check-in (requires a Resource Broker).")
+
+    class Meta:
+        name = "BeyondTrust: Rotate Managed Account"
+        has_sensitive_variables = False
+
+    def run(self, device, rotate):
+        group = device.secrets_group
+        secret = SecretsGroupAssociation.objects.get(
+            secrets_group=group, access_type=AT.TYPE_GENERIC, secret_type=ST.TYPE_PASSWORD
+        ).secret
+        # RotateOnCheckin is set when the request is created, so decide it up front.
+        secret.parameters = {**secret.parameters, "rotate_on_checkin": "true" if rotate else "false"}
+
+        request_id = BT.release(secret, obj=device)                                       # open the request
+        password = group.get_secret_value(AT.TYPE_GENERIC, ST.TYPE_PASSWORD, obj=device)  # reuses it (ConflictOption: reuse)
+        self.logger.info("Retrieved the credential (%d chars) for %s.", len(password), device.name)
+        # ...use `password` against the device...
+        BT.check_in(secret, request_id, reason="rotation job")                            # check in -> rotate if configured + reachable
+
+
+register_jobs(RotateBeyondTrustManagedAccount)
 ```
+
+Passing `obj=device` is what lets a Jinja parameter such as `system_name = {{ obj.name }}` resolve per
+device, so one Secret serves many devices.
+
+Rotation on check-in only actually changes the password when **both** hold:
+
+1. the Secret's `rotate_on_checkin` parameter is `true` (sets `RotateOnCheckin` on the request), and
+2. Password Safe can reach and manage the target account — a functional account plus connectivity, which on
+   Password Safe **Cloud** requires a **Resource Broker**.
+
+If Password Safe cannot reach the device, the check-in still succeeds but the password change fails on the
+Password Safe side (visible on the account's change status, not in Nautobot) and the vaulted value is
+unchanged.
