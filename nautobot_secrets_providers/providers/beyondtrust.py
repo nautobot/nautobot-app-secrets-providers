@@ -10,7 +10,8 @@ __all__ = ("BeyondTrustManagedAccountSecretsProvider", "BeyondTrustSecretsSafeSe
 
 API_VERSION = "3.2"
 
-# Password Safe custom codes, returned as the response body rather than the HTTP status.
+# Some on-prem Password Safe versions return a bare numeric code as the response body instead of a
+# message. Password Safe Cloud returns the message text directly, so this map is only a fallback.
 ERROR_MESSAGES = {
     "4031": "User does not have permission.",
     "4034": "Request is not yet approved.",
@@ -127,6 +128,29 @@ class BeyondTrustSecretsProvider(SecretsProvider):
             return response.text
 
     @classmethod
+    def _error_message(cls, response):
+        """Return the most useful message from a BeyondTrust error response.
+
+        Password Safe returns errors in more than one shape: a bare numeric result code (`4031`) on
+        some on-prem versions, a bare JSON string (`"Password Safe Role is required"`), or a JSON
+        object (`{"error": "Secret does not exist."}`) on Password Safe Cloud. Map a known numeric
+        code to friendlier wording, otherwise surface the API's own text, then fall back to a
+        per-status message.
+        """
+        code = response.text.strip().strip('"')
+        if code in ERROR_MESSAGES:
+            return ERROR_MESSAGES[code]
+
+        body = cls._payload(response)
+        if isinstance(body, dict):
+            message = body.get("error") or body.get("Message") or body.get("ErrorMessage") or ""
+        elif isinstance(body, str):
+            message = body
+        else:
+            message = ""
+        return message.strip() or STATUS_MESSAGES.get(response.status_code) or response.text
+
+    @classmethod
     def _request(
         cls,
         secret,
@@ -162,11 +186,8 @@ class BeyondTrustSecretsProvider(SecretsProvider):
             raise exceptions.SecretProviderError(secret, cls, f"Could not connect to BeyondTrust: {err}") from err
 
         if response.status_code not in expected_status:
-            message = (
-                ERROR_MESSAGES.get(response.text.strip()) or STATUS_MESSAGES.get(response.status_code) or response.text
-            )
             raise exceptions.SecretProviderError(
-                secret, cls, f"BeyondTrust API error [{response.status_code}]: {message}"
+                secret, cls, f"BeyondTrust API error [{response.status_code}]: {cls._error_message(response)}"
             )
 
         return response
@@ -435,7 +456,7 @@ class BeyondTrustSecretsSafeSecretsProvider(BeyondTrustSecretsProvider):
                     },
                 )
             )
-            page = payload.get("Results", []) if isinstance(payload, dict) else payload
+            page = payload.get("Data", []) if isinstance(payload, dict) else payload
             results.extend(page)
             if len(page) < page_size:
                 return results

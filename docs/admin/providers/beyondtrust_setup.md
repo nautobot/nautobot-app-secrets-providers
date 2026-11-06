@@ -11,15 +11,39 @@ Two providers are supported:
 
 ## Prerequisites
 
-Password Safe (BeyondInsight / Password Safe, or Password Safe Cloud) must be reachable from Nautobot.
+Password Safe (BeyondInsight / Password Safe on-prem, or Password Safe Cloud / Pathfinder) must be
+reachable from Nautobot over HTTPS.
 
-Authentication supports two paths, and the API registration must be enabled for either:
+### Base URL
 
-- **OAuth client** — create an API client in Password Safe and use its `client_id` / `client_secret`.
+The `base_url` is the API endpoint plus the `/BeyondTrust/api/public/v3` path — **not** the sign-in portal:
+
+- **On-prem:** `https://<your-host>/BeyondTrust/api/public/v3`
+- **Cloud / Pathfinder:** the **Base API Endpoint** shown on the API Registration page, for example
+  `https://<instance>.ps.beyondtrustcloud.com/BeyondTrust/api/public/v3`. The admin portal
+  (`https://app.beyondtrust.io/`) is **not** the API host.
+
+### Authentication
+
+Two paths are supported; the API registration must be enabled for whichever you use:
+
+- **OAuth client** (recommended) — create an **API Access Policy** registration and an **Application**
+  user bound to it, then use its `client_id` / `client_secret`. On Cloud the registration requires an
+  **IP rule** that allow-lists the caller's public IP (Nautobot's egress address), or authentication
+  returns a generic 401.
 - **API key** — create an API key and the user it runs as (`run_as`). Keys are only usable with the
-  `PS-Auth` header, so a run-as user is required.
+  `PS-Auth` header, so a run-as user is required. On Cloud the API-key path enforces MFA by default,
+  which automation cannot answer, so prefer the OAuth path.
 
-The API user needs permission to view the managed system and account, and to create release requests.
+### Permissions (least privilege)
+
+Grant the API user's group only what each provider needs:
+
+- **Secrets Safe** — **Secrets Safe (Read)** on the target safe or folder. Read is sufficient; the
+  provider never writes.
+- **Managed accounts** — a Password Safe role that can create release requests on the target system and
+  account, and the account must have **"Enable for API Access"** set, or it will not appear in
+  `GET /ManagedAccounts`.
 
 ## Configuration
 
@@ -52,6 +76,10 @@ PLUGINS_CONFIG = {
     },
 }
 ```
+
+The `client_secret` / `api_key` is a bootstrap credential — it cannot be fetched from BeyondTrust itself,
+so supply it from the environment or your deployment's secret store rather than committing it to
+`nautobot_config.py`.
 
 ## Secret parameters
 

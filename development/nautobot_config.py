@@ -162,9 +162,10 @@ PLUGINS_CONFIG = {
             ),
         },
         "beyondtrust": {
-            "base_url": "http://host.docker.internal:8090/BeyondTrust/api/public/v3",
-            "client_id": "fake-client",
-            "client_secret": "fake-secret",
+            "base_url": os.getenv("BT_BASE_URL"),
+            "client_id": os.getenv("BT_CLIENT_ID"),
+            "client_secret": os.getenv("BT_CLIENT_SECRET"),
+            "verify_ssl": is_truthy(os.getenv("BT_VERIFY_SSL", "true")),
         },
     },
 }

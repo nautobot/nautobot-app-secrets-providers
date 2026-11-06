@@ -1371,11 +1371,16 @@ class BeyondTrustSecretsSafeSecretsProviderTestCase(TestCase):
         entry.update(overrides)
         return entry
 
+    @staticmethod
+    def _search(entries, total=None):
+        """Wrap entries in the real Secrets Safe search envelope: `{"TotalCount", "Data"}`."""
+        return {"TotalCount": len(entries) if total is None else total, "Data": list(entries)}
+
     @requests_mock.Mocker()
     def test_retrieve_success(self, mock):
         """Read a Secrets Safe secret by folder path and title."""
         self._mock_auth(mock, self.base_url)
-        mock.get(f"{self.base_url}/Secrets-Safe/Secrets", json=[self._entry()])
+        mock.get(f"{self.base_url}/Secrets-Safe/Secrets", json=self._search([self._entry()]))
 
         with self.settings(PLUGINS_CONFIG=self.plugin_config):
             result = self.provider.get_value_for_secret(self.secret)
@@ -1418,7 +1423,7 @@ class BeyondTrustSecretsSafeSecretsProviderTestCase(TestCase):
     def test_value_missing_without_decrypt(self, mock):
         """The documented model returns metadata only unless Decrypt is set, so a null value is an error."""
         self._mock_auth(mock, self.base_url)
-        mock.get(f"{self.base_url}/Secrets-Safe/Secrets", json=[self._entry(Text=None)])
+        mock.get(f"{self.base_url}/Secrets-Safe/Secrets", json=self._search([self._entry(Text=None)]))
 
         with self.settings(PLUGINS_CONFIG=self.plugin_config):
             with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
@@ -1432,9 +1437,9 @@ class BeyondTrustSecretsSafeSecretsProviderTestCase(TestCase):
         self._mock_auth(mock, self.base_url)
         mock.get(
             f"{self.base_url}/Secrets-Safe/Secrets",
-            json=[
-                self._entry(Title="Break Glass", SecretType="Credential", Password=None, Text=None, TotpEnabled=True)
-            ],
+            json=self._search(
+                [self._entry(Title="Break Glass", SecretType="Credential", Password=None, Text=None, TotpEnabled=True)]
+            ),
         )
 
         secret = Secret.objects.create(
@@ -1462,9 +1467,12 @@ class BeyondTrustSecretsSafeSecretsProviderTestCase(TestCase):
         query = "Path=IT%2FPlatform&Title=Meraki+Dashboard+API+Key&Decrypt=true&Limit=2&Offset={offset}&version=3.2"
         mock.get(
             f"{self.base_url}/Secrets-Safe/Secrets?{query.format(offset=0)}",
-            json=[self._entry(Title="Other"), self._entry(Title="Another")],
+            json=self._search([self._entry(Title="Other"), self._entry(Title="Another")], total=3),
         )
-        mock.get(f"{self.base_url}/Secrets-Safe/Secrets?{query.format(offset=2)}", json=[target])
+        mock.get(
+            f"{self.base_url}/Secrets-Safe/Secrets?{query.format(offset=2)}",
+            json=self._search([target], total=3),
+        )
 
         secret = Secret.objects.create(
             name="meraki-key",
@@ -1485,21 +1493,48 @@ class BeyondTrustSecretsSafeSecretsProviderTestCase(TestCase):
 
     @requests_mock.Mocker()
     def test_permission_denied(self, mock):
-        """Map error code 4031 onto a provider error."""
+        """Surface the API's own 403 message, which Password Safe Cloud returns as a bare JSON string."""
         self._mock_auth(mock, self.base_url)
-        mock.get(f"{self.base_url}/Secrets-Safe/Secrets", text="4031", status_code=403)
+        mock.get(
+            f"{self.base_url}/Secrets-Safe/Secrets",
+            json="Permission exception: One of these permissions are required: SecretsSafe.Read, WorkforcePasswords.Read",
+            status_code=403,
+        )
 
         with self.settings(PLUGINS_CONFIG=self.plugin_config):
             with self.assertRaises(exceptions.SecretProviderError) as err:
                 self.provider.get_value_for_secret(self.secret)
 
-        self.assertIn("permission", str(err.exception))
+        self.assertIn("permissions are required", str(err.exception))
+
+    @requests_mock.Mocker()
+    def test_secret_id_not_found(self, mock):
+        """A by-id lookup of a missing secret returns a 404 object body, which is surfaced."""
+        secret_id = "4e4e4e4e-4e4e-4e4e-4e4e-4e4e4e4e4e4e"
+        self._mock_auth(mock, self.base_url)
+        mock.get(
+            f"{self.base_url}/Secrets-Safe/Secrets/{secret_id}",
+            json={"error": "Secret does not exist."},
+            status_code=404,
+        )
+
+        secret = Secret.objects.create(
+            name="missing-by-id",
+            provider=self.provider.slug,
+            parameters={"secret_id": secret_id},
+        )
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretProviderError) as err:
+                self.provider.get_value_for_secret(secret)
+
+        self.assertIn("Secret does not exist", str(err.exception))
 
     @requests_mock.Mocker()
     def test_secret_not_found(self, mock):
         """Raise SecretValueNotFoundError when the path and title do not match a secret."""
         self._mock_auth(mock, self.base_url)
-        mock.get(f"{self.base_url}/Secrets-Safe/Secrets", json=[])
+        mock.get(f"{self.base_url}/Secrets-Safe/Secrets", json=self._search([]))
 
         with self.settings(PLUGINS_CONFIG=self.plugin_config):
             with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
@@ -1523,15 +1558,17 @@ class BeyondTrustSecretsSafeSecretsProviderTestCase(TestCase):
         self._mock_auth(mock, self.base_url)
         mock.get(
             f"{self.base_url}/Secrets-Safe/Secrets",
-            json=[
-                self._entry(
-                    Title="Report Builder File",
-                    SecretType="File",
-                    Text=None,
-                    FileName="report.zip",
-                    FileHash="abc123",
-                )
-            ],
+            json=self._search(
+                [
+                    self._entry(
+                        Title="Report Builder File",
+                        SecretType="File",
+                        Text=None,
+                        FileName="report.zip",
+                        FileHash="abc123",
+                    )
+                ]
+            ),
         )
 
         secret = Secret.objects.create(
