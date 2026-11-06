@@ -18,6 +18,8 @@ from nautobot.extras.secrets import exceptions
 from nautobot_secrets_providers.providers import (
     AWSSecretsManagerSecretsProvider,
     AWSSystemsManagerParameterStore,
+    BeyondTrustManagedAccountSecretsProvider,
+    BeyondTrustSecretsSafeSecretsProvider,
     HashiCorpVaultLDAPSecretsProvider,
     HashiCorpVaultSecretsProvider,
     OnePasswordSecretsProvider,
@@ -1100,3 +1102,446 @@ class PasswordManagerProSecretsProviderTestCase(TestCase):
                 self.provider.get_value_for_secret(bad_secret)
 
         self.assertIn("Resource name and account name must be provided", str(err.exception))
+
+
+class BeyondTrustManagedAccountSecretsProviderTestCase(TestCase):
+    """Tests for BeyondTrustManagedAccountSecretsProvider."""
+
+    provider = BeyondTrustManagedAccountSecretsProvider
+    base_url = "https://beyondtrust.local/BeyondTrust/api/public/v3"
+
+    def setUp(self):
+        """Create a secret for use with testing."""
+        super().setUp()
+
+        self.secret = Secret.objects.create(
+            name="core-switch-account",
+            provider=self.provider.slug,
+            parameters={
+                "system_name": "sw01.sitea",
+                "account_name": "network_admin",
+            },
+        )
+
+        self.plugin_config = {
+            "nautobot_secrets_providers": {
+                "beyondtrust": {
+                    "base_url": self.base_url,
+                    "client_id": "fake-client-id",
+                    "client_secret": "fake-client-secret",
+                    "verify_ssl": False,
+                }
+            }
+        }
+
+    @staticmethod
+    def _mock_auth(mock, base_url):
+        """Register the OAuth token endpoint and sign-out.
+
+        With a bearer token the token is sent on every request, so no session is created and there
+        is no sign-in call.
+        """
+        mock.post(f"{base_url}/Auth/connect/token", json={"access_token": "fake-token", "expires_in": 3600})
+        mock.post(f"{base_url}/Auth/Signout", status_code=204)
+
+    @staticmethod
+    def _mock_account(mock, base_url):
+        """Register the managed account lookup."""
+        mock.get(
+            f"{base_url}/ManagedAccounts",
+            json=[
+                {"SystemId": 100, "AccountId": 200, "SystemName": "sw01.sitea", "AccountName": "network_admin"},
+                {"SystemId": 101, "AccountId": 201, "SystemName": "sw02.siteb", "AccountName": "network_admin"},
+            ],
+        )
+
+    @requests_mock.Mocker()
+    def test_retrieve_success(self, mock):
+        """Create a release request and return the credential for it."""
+        self._mock_auth(mock, self.base_url)
+        self._mock_account(mock, self.base_url)
+        mock.post(f"{self.base_url}/requests", json=4211, status_code=201)
+        mock.get(f"{self.base_url}/credentials/4211", json="s3cret-password")
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            result = self.provider.get_value_for_secret(self.secret)
+
+        self.assertEqual(result, "s3cret-password")
+        token_request = mock.request_history[0]
+        self.assertEqual(token_request.headers["Content-Type"], "application/x-www-form-urlencoded")
+        self.assertIn("grant_type=client_credentials", token_request.text)
+        self.assertEqual(mock.request_history[1].headers["Authorization"], "Bearer fake-token")
+
+    @requests_mock.Mocker()
+    def test_release_request_payload(self, mock):
+        """The release request carries the resolved IDs, duration and rotation flag."""
+        self._mock_auth(mock, self.base_url)
+        self._mock_account(mock, self.base_url)
+        mock.post(f"{self.base_url}/requests", json=4211, status_code=201)
+        mock.get(f"{self.base_url}/credentials/4211", json="s3cret-password")
+
+        secret = Secret.objects.create(
+            name="core-switch-account-rotate",
+            provider=self.provider.slug,
+            parameters={
+                "system_name": "sw01.sitea",
+                "account_name": "network_admin",
+                "duration_minutes": "15",
+                "rotate_on_checkin": "true",
+                "reason": "planned maintenance",
+            },
+        )
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            self.provider.get_value_for_secret(secret)
+
+        release = [call for call in mock.request_history if call.path.endswith("/requests")][0]
+        self.assertEqual(
+            release.json(),
+            {
+                "SystemId": 100,
+                "AccountId": 200,
+                "DurationMinutes": 15,
+                "Reason": "planned maintenance",
+                "ConflictOption": "reuse",
+                "RotateOnCheckin": True,
+            },
+        )
+
+    @requests_mock.Mocker()
+    def test_api_key_auth(self, mock):
+        """An API key with a run-as user authenticates without an OAuth token and signs out afterwards."""
+        config = {"beyondtrust": {"base_url": self.base_url, "api_key": "fake-key", "run_as": "nautobot_svc"}}
+        mock.post(f"{self.base_url}/Auth/SignAppIn", json={"UserId": 1})
+        mock.post(f"{self.base_url}/Auth/Signout", status_code=204)
+        self._mock_account(mock, self.base_url)
+        mock.post(f"{self.base_url}/requests", json=4211, status_code=201)
+        mock.get(f"{self.base_url}/credentials/4211", json="s3cret-password")
+
+        with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": config}):
+            result = self.provider.get_value_for_secret(self.secret)
+
+        self.assertEqual(result, "s3cret-password")
+        self.assertEqual(mock.request_history[0].headers["Authorization"], "PS-Auth key=fake-key; runas=nautobot_svc;")
+        self.assertTrue(mock.request_history[0].url.endswith("/Auth/SignAppIn"))
+        self.assertTrue(mock.request_history[-1].url.endswith("/Auth/Signout"))
+
+    @requests_mock.Mocker()
+    def test_oauth_run_as_header(self, mock):
+        """OAuth impersonation uses a RunAs header, not the authorization header."""
+        config = {
+            "beyondtrust": {
+                "base_url": self.base_url,
+                "client_id": "fake-client-id",
+                "client_secret": "fake-client-secret",
+                "run_as": "nautobot_svc",
+            }
+        }
+        mock.post(f"{self.base_url}/Auth/connect/token", json={"access_token": "fake-token", "expires_in": 3600})
+        self._mock_account(mock, self.base_url)
+        mock.post(f"{self.base_url}/requests", json=4211, status_code=201)
+        mock.get(f"{self.base_url}/credentials/4211", json="s3cret-password")
+
+        with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": config}):
+            self.provider.get_value_for_secret(self.secret)
+
+        urls = [call.url for call in mock.request_history]
+        self.assertNotIn(f"{self.base_url}/Auth/SignAppIn", urls)
+        self.assertEqual(mock.request_history[1].headers["RunAs"], "nautobot_svc")
+
+    @requests_mock.Mocker()
+    def test_check_in_triggers_rotation(self, mock):
+        """Checking a request back in is a separate call, so rotation happens after the credential is used."""
+        self._mock_auth(mock, self.base_url)
+        mock.put(f"{self.base_url}/Requests/4211/Checkin", json={"Status": "CheckedIn"})
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            self.provider.check_in(self.secret, 4211, reason="done")
+
+        check_in = [call for call in mock.request_history if call.method == "PUT"][0]
+        self.assertEqual(check_in.json(), {"Reason": "done"})
+
+    def test_missing_config(self):
+        """Raise SecretProviderError if BeyondTrust is not configured."""
+        with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {}}):
+            with self.assertRaises(exceptions.SecretProviderError):
+                self.provider.get_value_for_secret(self.secret)
+
+    def test_missing_credentials(self):
+        """Raise SecretProviderError if neither an OAuth client nor an API key is configured."""
+        with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {"beyondtrust": {"base_url": self.base_url}}}):
+            with self.assertRaises(exceptions.SecretProviderError) as err:
+                self.provider.get_value_for_secret(self.secret)
+
+        self.assertIn("client_id", str(err.exception))
+
+    @requests_mock.Mocker()
+    def test_account_not_found(self, mock):
+        """Raise SecretValueNotFoundError when the system/account pair does not exist."""
+        self._mock_auth(mock, self.base_url)
+        self._mock_account(mock, self.base_url)
+
+        secret = Secret.objects.create(
+            name="unknown-account",
+            provider=self.provider.slug,
+            parameters={"system_name": "sw99.sitez", "account_name": "network_admin"},
+        )
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
+                self.provider.get_value_for_secret(secret)
+
+        self.assertIn("sw99.sitez", str(err.exception))
+
+    @requests_mock.Mocker()
+    def test_unapproved_request(self, mock):
+        """Map BeyondTrust error code 4034 onto a provider error."""
+        self._mock_auth(mock, self.base_url)
+        self._mock_account(mock, self.base_url)
+        mock.post(f"{self.base_url}/requests", json=4211, status_code=201)
+        mock.get(f"{self.base_url}/credentials/4211", text="4034", status_code=400)
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretProviderError) as err:
+                self.provider.get_value_for_secret(self.secret)
+
+        self.assertIn("not yet approved", str(err.exception))
+
+    @requests_mock.Mocker()
+    def test_release_returns_request_id(self, mock):
+        """release() returns the request ID so a job can check it in after using the credential."""
+        self._mock_auth(mock, self.base_url)
+        self._mock_account(mock, self.base_url)
+        mock.post(f"{self.base_url}/requests", json=4211, status_code=201)
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            request_id = self.provider.release(self.secret)
+
+        self.assertEqual(request_id, 4211)
+
+
+class BeyondTrustSecretsSafeSecretsProviderTestCase(TestCase):
+    """Tests for BeyondTrustSecretsSafeSecretsProvider."""
+
+    provider = BeyondTrustSecretsSafeSecretsProvider
+    base_url = "https://beyondtrust.local/BeyondTrust/api/public/v3"
+
+    def setUp(self):
+        """Create a secret for use with testing."""
+        super().setUp()
+
+        self.secret = Secret.objects.create(
+            name="gitlab-service-account",
+            provider=self.provider.slug,
+            parameters={"folder_path": "IT/Platform", "title": "GitLab Service Account"},
+        )
+
+        self.plugin_config = {
+            "nautobot_secrets_providers": {
+                "beyondtrust": {
+                    "base_url": self.base_url,
+                    "client_id": "fake-client-id",
+                    "client_secret": "fake-client-secret",
+                    "verify_ssl": False,
+                }
+            }
+        }
+
+    @staticmethod
+    def _mock_auth(mock, base_url):
+        """Register the OAuth token endpoint and sign-out. No session, so no sign-in call."""
+        mock.post(f"{base_url}/Auth/connect/token", json={"access_token": "fake-token", "expires_in": 3600})
+        mock.post(f"{base_url}/Auth/Signout", status_code=204)
+
+    @staticmethod
+    def _entry(**overrides):
+        """A Secrets Safe entry in the documented `SecretsSafeSecretModel` shape."""
+        entry = {
+            "Id": "1b1b1b1b-1b1b-1b1b-1b1b-1b1b1b1b1b1b",
+            "Title": "GitLab Service Account",
+            "Folder": "Platform",
+            "FolderId": "2c2c2c2c-2c2c-2c2c-2c2c-2c2c2c2c2c2c",
+            "FolderPath": "IT/Platform",
+            "SecretType": "Text",
+            "Text": "glpat-fake-token",
+            "Password": None,
+            "Username": None,
+            "TotpEnabled": False,
+        }
+        entry.update(overrides)
+        return entry
+
+    @requests_mock.Mocker()
+    def test_retrieve_success(self, mock):
+        """Read a Secrets Safe secret by folder path and title."""
+        self._mock_auth(mock, self.base_url)
+        mock.get(f"{self.base_url}/Secrets-Safe/Secrets", json=[self._entry()])
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            result = self.provider.get_value_for_secret(self.secret)
+
+        self.assertEqual(result, "glpat-fake-token")
+        # requests_mock lowercases the path and query, so assert on the url.
+        search = [call for call in mock.request_history if call.url.split("?")[0].endswith("/Secrets-Safe/Secrets")][0]
+        for fragment in ("Path=IT%2FPlatform", "Title=GitLab+Service+Account", "Decrypt=true", "version=3.2"):
+            self.assertIn(fragment, search.url)
+
+    @requests_mock.Mocker()
+    def test_retrieve_by_secret_id(self, mock):
+        """A secret ID is a UUID and a direct lookup, with no path and title search."""
+        secret_id = "3d3d3d3d-3d3d-3d3d-3d3d-3d3d3d3d3d3d"
+        self._mock_auth(mock, self.base_url)
+        mock.get(
+            f"{self.base_url}/Secrets-Safe/Secrets/{secret_id}",
+            json=self._entry(
+                Id=secret_id,
+                Title="Panorama API Key",
+                SecretType="Credential",
+                Password="panorama-fake-key",
+                Text=None,
+                Username="api",
+            ),
+        )
+
+        secret = Secret.objects.create(
+            name="panorama-key",
+            provider=self.provider.slug,
+            parameters={"secret_id": secret_id},
+        )
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            result = self.provider.get_value_for_secret(secret)
+
+        self.assertEqual(result, "panorama-fake-key")
+
+    @requests_mock.Mocker()
+    def test_value_missing_without_decrypt(self, mock):
+        """The documented model returns metadata only unless Decrypt is set, so a null value is an error."""
+        self._mock_auth(mock, self.base_url)
+        mock.get(f"{self.base_url}/Secrets-Safe/Secrets", json=[self._entry(Text=None)])
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
+                self.provider.get_value_for_secret(self.secret)
+
+        self.assertIn("No value", str(err.exception))
+
+    @requests_mock.Mocker()
+    def test_totp_secret_is_not_resolved(self, mock):
+        """A TOTP-enabled secret has no stored value; its code comes from a separate endpoint."""
+        self._mock_auth(mock, self.base_url)
+        mock.get(
+            f"{self.base_url}/Secrets-Safe/Secrets",
+            json=[
+                self._entry(Title="Break Glass", SecretType="Credential", Password=None, Text=None, TotpEnabled=True)
+            ],
+        )
+
+        secret = Secret.objects.create(
+            name="break-glass",
+            provider=self.provider.slug,
+            parameters={"folder_path": "IT/Platform", "title": "Break Glass"},
+        )
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
+                self.provider.get_value_for_secret(secret)
+
+        self.assertIn("totp-code", str(err.exception))
+
+    @requests_mock.Mocker()
+    def test_pagination_walks_past_the_limit(self, mock):
+        """Results are paged with Offset until a short page comes back."""
+        config = dict(self.plugin_config["nautobot_secrets_providers"]["beyondtrust"])
+        config["page_size"] = 2
+        self._mock_auth(mock, self.base_url)
+
+        target = self._entry(
+            Title="Meraki Dashboard API Key", SecretType="Credential", Password="meraki-fake-key", Text=None
+        )
+        query = "Path=IT%2FPlatform&Title=Meraki+Dashboard+API+Key&Decrypt=true&Limit=2&Offset={offset}&version=3.2"
+        mock.get(
+            f"{self.base_url}/Secrets-Safe/Secrets?{query.format(offset=0)}",
+            json=[self._entry(Title="Other"), self._entry(Title="Another")],
+        )
+        mock.get(f"{self.base_url}/Secrets-Safe/Secrets?{query.format(offset=2)}", json=[target])
+
+        secret = Secret.objects.create(
+            name="meraki-key",
+            provider=self.provider.slug,
+            parameters={"folder_path": "IT/Platform", "title": "Meraki Dashboard API Key"},
+        )
+
+        with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {"beyondtrust": config}}):
+            result = self.provider.get_value_for_secret(secret)
+
+        self.assertEqual(result, "meraki-fake-key")
+        offsets = [
+            call.url.split("Offset=")[1].split("&")[0]
+            for call in mock.request_history
+            if call.url.split("?")[0].endswith("/Secrets-Safe/Secrets")
+        ]
+        self.assertEqual(offsets, ["0", "2"])
+
+    @requests_mock.Mocker()
+    def test_permission_denied(self, mock):
+        """Map error code 4031 onto a provider error."""
+        self._mock_auth(mock, self.base_url)
+        mock.get(f"{self.base_url}/Secrets-Safe/Secrets", text="4031", status_code=403)
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretProviderError) as err:
+                self.provider.get_value_for_secret(self.secret)
+
+        self.assertIn("permission", str(err.exception))
+
+    @requests_mock.Mocker()
+    def test_secret_not_found(self, mock):
+        """Raise SecretValueNotFoundError when the path and title do not match a secret."""
+        self._mock_auth(mock, self.base_url)
+        mock.get(f"{self.base_url}/Secrets-Safe/Secrets", json=[])
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretValueNotFoundError) as err:
+                self.provider.get_value_for_secret(self.secret)
+
+        self.assertIn("GitLab Service Account", str(err.exception))
+
+    def test_missing_parameters(self):
+        """Raise SecretParametersError when neither an ID nor a path and title are given."""
+        secret = Secret.objects.create(name="no-params", provider=self.provider.slug, parameters={})
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretParametersError) as err:
+                self.provider.get_value_for_secret(secret)
+
+        self.assertIn("secret_id", str(err.exception))
+
+    @requests_mock.Mocker()
+    def test_file_secret_not_supported(self, mock):
+        """File secrets are out of scope and fail with a clear message."""
+        self._mock_auth(mock, self.base_url)
+        mock.get(
+            f"{self.base_url}/Secrets-Safe/Secrets",
+            json=[
+                self._entry(
+                    Title="Report Builder File",
+                    SecretType="File",
+                    Text=None,
+                    FileName="report.zip",
+                    FileHash="abc123",
+                )
+            ],
+        )
+
+        secret = Secret.objects.create(
+            name="report-file",
+            provider=self.provider.slug,
+            parameters={"folder_path": "IT/Platform", "title": "Report Builder File"},
+        )
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretParametersError) as err:
+                self.provider.get_value_for_secret(secret)
+
+        self.assertIn("File secrets", str(err.exception))

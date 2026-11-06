@@ -161,5 +161,10 @@ PLUGINS_CONFIG = {
                 "OP_SERVICE_ACCOUNT_TOKEN",
             ),
         },
+        "beyondtrust": {
+            "base_url": "http://host.docker.internal:8090/BeyondTrust/api/public/v3",
+            "client_id": "fake-client",
+            "client_secret": "fake-secret",
+        },
     },
 }

@@ -1,0 +1,1 @@
+Added BeyondTrust Password Safe providers: managed accounts (release request, credential, and check-in for password rotation) and Secrets Safe (Text or Credential secrets read by folder path and title, or by secret ID).
