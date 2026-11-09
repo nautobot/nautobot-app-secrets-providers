@@ -81,6 +81,9 @@ The `client_secret` / `api_key` is a bootstrap credential — it cannot be fetch
 so supply it from the environment or your deployment's secret store rather than committing it to
 `nautobot_config.py`.
 
+Optional tuning keys: `timeout` (request timeout in seconds, default `30`), `verify_ssl` (default `true`),
+and `page_size` (Secrets Safe pagination page size, default `1000`).
+
 ## Secret parameters
 
 When creating a Secret with the **BeyondTrust Managed Account** provider:
@@ -90,7 +93,7 @@ When creating a Secret with the **BeyondTrust Managed Account** provider:
 | `system_name` | yes | Managed system (asset) name. Supports Jinja2, e.g. `{{ obj.name }}` |
 | `account_name` | yes | Managed account name on that system |
 | `duration_minutes` | no | Release window in minutes, default `5` |
-| `rotate_on_checkin` | no | `true` / `false`, default `true` |
+| `rotate_on_checkin` | no | `true` / `false`, default `false`. A plain read never rotates; set `true` only for a rotation Job |
 | `reason` | no | Reason recorded on the request |
 
 When creating a Secret with the **BeyondTrust Secrets Safe** provider:
@@ -107,11 +110,13 @@ When creating a Secret with the **BeyondTrust Secrets Safe** provider:
 
 A normal read never rotates. Reading a managed-account secret — the **Check Secret** button, or a Secrets
 Group lookup from a Job — opens a release request, returns the credential, and lets the request expire.
-Nothing is checked in and nothing changes.
+Nothing is checked in and nothing changes. This holds because `rotate_on_checkin` defaults to `false`; if you
+set it to `true` on a Secret, the release request carries `RotateOnCheckin`, so even a plain read may rotate the
+password when Password Safe checks the request in on expiry — enable it only on Secrets a rotation Job uses.
 
 Rotation is a separate, opt-in action, because the secrets-provider interface only reads. The managed-account
 provider exposes `release()` and `check_in()` so a Job can run the full lifecycle and rotate the password
-*after* it has been used:
+*after* it has been used.
 
 This app is a provider library and ships no Jobs, so the lifecycle lives in a consumer-side Job (place it
 in `JOBS_ROOT`, a Git-repository job source, or an app's `jobs.py`):

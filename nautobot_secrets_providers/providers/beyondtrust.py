@@ -32,7 +32,7 @@ ROTATE_CHOICES = (
 )
 
 
-class BeyondTrustSecretsProvider(SecretsProvider):
+class BeyondTrustSecretsProvider(SecretsProvider):  # pylint: disable=abstract-method
     """Shared connection and request handling for the BeyondTrust providers.
 
     Connection settings are read from `PLUGINS_CONFIG["nautobot_secrets_providers"]["beyondtrust"]`.
@@ -151,7 +151,7 @@ class BeyondTrustSecretsProvider(SecretsProvider):
         return message.strip() or STATUS_MESSAGES.get(response.status_code) or response.text
 
     @classmethod
-    def _request(
+    def _request(  # pylint: disable=too-many-arguments,too-many-locals
         cls,
         secret,
         config,
@@ -232,8 +232,11 @@ class BeyondTrustManagedAccountSecretsProvider(BeyondTrustSecretsProvider):
         rotate_on_checkin = forms.ChoiceField(
             required=False,
             choices=ROTATE_CHOICES,
-            initial="true",
-            help_text="Ask Password Safe to rotate the password when the request is checked in.",
+            initial="false",
+            help_text=(
+                "Ask Password Safe to rotate the password when the request is checked in. "
+                "Defaults to false, so a plain read does not rotate."
+            ),
         )
         reason = forms.CharField(
             required=False,
@@ -313,8 +316,21 @@ class BeyondTrustManagedAccountSecretsProvider(BeyondTrustSecretsProvider):
     @classmethod
     def _find_account(cls, secret, config, session, system_name, account_name):
         """Return the managed account matching the system and account names."""
-        payload = cls._payload(cls._request(secret, config, session, "GET", "/ManagedAccounts"))
-        accounts = payload.get("Results", []) if isinstance(payload, dict) else payload
+        payload = cls._payload(
+            cls._request(
+                secret,
+                config,
+                session,
+                "GET",
+                "/ManagedAccounts",
+                params={"systemName": system_name, "accountName": account_name},
+            )
+        )
+        # The filtered endpoint may answer with a single account object or a list of them.
+        if isinstance(payload, dict):
+            accounts = payload.get("Data") or payload.get("Results") or [payload]
+        else:
+            accounts = payload
         for account in accounts:
             if account.get("SystemName") == system_name and account.get("AccountName") == account_name:
                 return account
@@ -341,7 +357,7 @@ class BeyondTrustManagedAccountSecretsProvider(BeyondTrustSecretsProvider):
             "Reason": parameters.get("reason") or "Nautobot secrets provider",
             "ConflictOption": "reuse",
         }
-        if str(parameters.get("rotate_on_checkin", "true")).lower() == "true":
+        if str(parameters.get("rotate_on_checkin", "false")).lower() == "true":
             data["RotateOnCheckin"] = True
 
         response = cls._request(secret, config, session, "POST", "/requests", data=data, expected_status=(200, 201))

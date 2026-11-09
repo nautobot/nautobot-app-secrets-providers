@@ -1209,6 +1209,51 @@ class BeyondTrustManagedAccountSecretsProviderTestCase(TestCase):
         )
 
     @requests_mock.Mocker()
+    def test_release_request_payload_default_no_rotation(self, mock):
+        """A read with no rotate_on_checkin parameter does not ask Password Safe to rotate."""
+        self._mock_auth(mock, self.base_url)
+        self._mock_account(mock, self.base_url)
+        mock.post(f"{self.base_url}/requests", json=4211, status_code=201)
+        mock.get(f"{self.base_url}/credentials/4211", json="s3cret-password")
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            self.provider.get_value_for_secret(self.secret)
+
+        release = [call for call in mock.request_history if call.path.endswith("/requests")][0]
+        self.assertNotIn("RotateOnCheckin", release.json())
+
+    @requests_mock.Mocker()
+    def test_managed_account_lookup_uses_server_side_filter(self, mock):
+        """The managed-account lookup filters by system and account name on the server."""
+        self._mock_auth(mock, self.base_url)
+        self._mock_account(mock, self.base_url)
+        mock.post(f"{self.base_url}/requests", json=4211, status_code=201)
+        mock.get(f"{self.base_url}/credentials/4211", json="s3cret-password")
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            self.provider.get_value_for_secret(self.secret)
+
+        lookup = [call for call in mock.request_history if "managedaccounts" in call.url.lower()][0]
+        self.assertEqual(lookup.qs["systemname"], ["sw01.sitea"])
+        self.assertEqual(lookup.qs["accountname"], ["network_admin"])
+
+    @requests_mock.Mocker()
+    def test_managed_account_single_object_response(self, mock):
+        """A filtered lookup that returns a single account object instead of a list is handled."""
+        self._mock_auth(mock, self.base_url)
+        mock.get(
+            f"{self.base_url}/ManagedAccounts",
+            json={"SystemId": 100, "AccountId": 200, "SystemName": "sw01.sitea", "AccountName": "network_admin"},
+        )
+        mock.post(f"{self.base_url}/requests", json=4211, status_code=201)
+        mock.get(f"{self.base_url}/credentials/4211", json="s3cret-password")
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            result = self.provider.get_value_for_secret(self.secret)
+
+        self.assertEqual(result, "s3cret-password")
+
+    @requests_mock.Mocker()
     def test_api_key_auth(self, mock):
         """An API key with a run-as user authenticates without an OAuth token and signs out afterwards."""
         config = {"beyondtrust": {"base_url": self.base_url, "api_key": "fake-key", "run_as": "nautobot_svc"}}

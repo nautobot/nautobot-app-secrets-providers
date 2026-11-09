@@ -116,6 +116,10 @@
                 "verify_ssl": {
                     "type": "boolean",
                     "default": true
+                },
+                "page_size": {
+                    "type": "integer",
+                    "default": 1000
                 }
             },
             "required": ["base_url"]
