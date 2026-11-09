@@ -91,7 +91,7 @@
             },
             "required": ["base_url"]
         },
-        "beyondtrust": {
+        "beyondtrust_password_safe": {
             "type": "object",
             "properties": {
                 "base_url": {

@@ -2,7 +2,10 @@
 
 from .aws import AWSSecretsManagerSecretsProvider, AWSSystemsManagerParameterStore
 from .azure import AzureKeyVaultSecretsProvider
-from .beyondtrust import BeyondTrustManagedAccountSecretsProvider, BeyondTrustSecretsSafeSecretsProvider
+from .beyondtrust import (
+    BeyondTrustPasswordSafeManagedAccountSecretsProvider,
+    BeyondTrustPasswordSafeSecretsSafeSecretsProvider,
+)
 from .delinea import DelineaSecretServerSecretsProviderId, DelineaSecretServerSecretsProviderPath
 from .hashicorp import HashiCorpVaultLDAPSecretsProvider, HashiCorpVaultSecretsProvider
 from .one_password import OnePasswordSecretsProvider
@@ -12,8 +15,8 @@ __all__ = (
     "AWSSecretsManagerSecretsProvider",
     "AWSSystemsManagerParameterStore",
     "AzureKeyVaultSecretsProvider",
-    "BeyondTrustManagedAccountSecretsProvider",
-    "BeyondTrustSecretsSafeSecretsProvider",
+    "BeyondTrustPasswordSafeManagedAccountSecretsProvider",
+    "BeyondTrustPasswordSafeSecretsSafeSecretsProvider",
     "DelineaSecretServerSecretsProviderId",
     "DelineaSecretServerSecretsProviderPath",
     "HashiCorpVaultLDAPSecretsProvider",

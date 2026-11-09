@@ -6,7 +6,10 @@ from django.conf import settings
 from nautobot.core.forms import BootstrapMixin
 from nautobot.extras.secrets import SecretsProvider, exceptions
 
-__all__ = ("BeyondTrustManagedAccountSecretsProvider", "BeyondTrustSecretsSafeSecretsProvider")
+__all__ = (
+    "BeyondTrustPasswordSafeManagedAccountSecretsProvider",
+    "BeyondTrustPasswordSafeSecretsSafeSecretsProvider",
+)
 
 API_VERSION = "3.2"
 
@@ -32,10 +35,10 @@ ROTATE_CHOICES = (
 )
 
 
-class BeyondTrustSecretsProvider(SecretsProvider):  # pylint: disable=abstract-method
-    """Shared connection and request handling for the BeyondTrust providers.
+class BeyondTrustPasswordSafeSecretsProvider(SecretsProvider):  # pylint: disable=abstract-method
+    """Shared connection and request handling for the BeyondTrust Password Safe providers.
 
-    Connection settings are read from `PLUGINS_CONFIG["nautobot_secrets_providers"]["beyondtrust"]`.
+    Connection settings are read from `PLUGINS_CONFIG["nautobot_secrets_providers"]["beyondtrust_password_safe"]`.
     Authentication supports either an OAuth client (client_id/client_secret) or an API key with a
     run-as user (api_key/run_as).
     """
@@ -46,7 +49,7 @@ class BeyondTrustSecretsProvider(SecretsProvider):  # pylint: disable=abstract-m
     def _get_config(cls, secret):
         """Return the BeyondTrust plugin settings, failing early if they are incomplete."""
         plugin_settings = settings.PLUGINS_CONFIG["nautobot_secrets_providers"]
-        config = plugin_settings.get("beyondtrust")
+        config = plugin_settings.get("beyondtrust_password_safe")
         if not config:
             raise exceptions.SecretProviderError(secret, cls, "BeyondTrust is not configured!")
 
@@ -193,7 +196,7 @@ class BeyondTrustSecretsProvider(SecretsProvider):  # pylint: disable=abstract-m
         return response
 
 
-class BeyondTrustManagedAccountSecretsProvider(BeyondTrustSecretsProvider):
+class BeyondTrustPasswordSafeManagedAccountSecretsProvider(BeyondTrustPasswordSafeSecretsProvider):
     """Secrets provider for BeyondTrust Password Safe managed accounts.
 
     Managed accounts are not read directly. A credentials release request is created for the
@@ -202,8 +205,8 @@ class BeyondTrustManagedAccountSecretsProvider(BeyondTrustSecretsProvider):
     the rotation to happen once the credential has been used.
     """
 
-    slug = "beyondtrust-managed-account"
-    name = "BeyondTrust Managed Account"
+    slug = "beyondtrust-password-safe-managed-account"
+    name = "BeyondTrust Password Safe - Managed Account"
     description = "Retrieve a managed account credential from BeyondTrust Password Safe through a release request."
 
     class ParametersForm(BootstrapMixin, forms.Form):
@@ -376,7 +379,7 @@ class BeyondTrustManagedAccountSecretsProvider(BeyondTrustSecretsProvider):
         return payload
 
 
-class BeyondTrustSecretsSafeSecretsProvider(BeyondTrustSecretsProvider):
+class BeyondTrustPasswordSafeSecretsSafeSecretsProvider(BeyondTrustPasswordSafeSecretsProvider):
     """Secrets provider for BeyondTrust Secrets Safe.
 
     Secrets Safe holds stored secrets (Text or Credential), read by folder path and title, or by secret
@@ -384,8 +387,8 @@ class BeyondTrustSecretsSafeSecretsProvider(BeyondTrustSecretsProvider):
     rotated. File secrets are not supported.
     """
 
-    slug = "beyondtrust-secrets-safe"
-    name = "BeyondTrust Secrets Safe"
+    slug = "beyondtrust-password-safe-secrets-safe"
+    name = "BeyondTrust Password Safe - Secrets Safe"
     description = (
         "Read a Text or Credential secret from BeyondTrust Secrets Safe by folder path and title, or by secret ID."
     )

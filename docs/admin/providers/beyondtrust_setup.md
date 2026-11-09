@@ -2,12 +2,12 @@
 
 Two providers are supported:
 
-- **BeyondTrust Managed Account** — a credentials release request is created for the managed account and the
-  credential is returned for that request. Checking the request back in is what triggers password rotation,
-  so rotation is a separate step from reading a secret.
-- **BeyondTrust Secrets Safe** — a Text or Credential secret is read by folder path and title, or by secret
-  ID. Plain lookup and read: no request lifecycle, nothing checked in, nothing rotated. File secrets are not
-  supported.
+- **BeyondTrust Password Safe - Managed Account** — a credentials release request is created for the managed
+  account and the credential is returned for that request. Checking the request back in is what triggers
+  password rotation, so rotation is a separate step from reading a secret.
+- **BeyondTrust Password Safe - Secrets Safe** — a Text or Credential secret is read by folder path and title,
+  or by secret ID. Plain lookup and read: no request lifecycle, nothing checked in, nothing rotated. File
+  secrets are not supported.
 
 ## Prerequisites
 
@@ -52,10 +52,10 @@ Provide a mapping in `PLUGINS_CONFIG` within your `nautobot_config.py`, for exam
 ```python
 PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
-        "beyondtrust": {
-            "base_url": os.getenv("BT_BASE_URL"),  # e.g. https://bt.example.com/BeyondTrust/api/public/v3
-            "client_id": os.getenv("BT_CLIENT_ID"),
-            "client_secret": os.getenv("BT_CLIENT_SECRET"),
+        "beyondtrust_password_safe": {
+            "base_url": os.getenv("BEYONDTRUST_PASSWORD_SAFE_BASE_URL"),  # e.g. https://bt.example.com/BeyondTrust/api/public/v3
+            "client_id": os.getenv("BEYONDTRUST_PASSWORD_SAFE_CLIENT_ID"),
+            "client_secret": os.getenv("BEYONDTRUST_PASSWORD_SAFE_CLIENT_SECRET"),
             "verify_ssl": True,
             "timeout": 30,
         },
@@ -68,10 +68,10 @@ Or, for API-key auth:
 ```python
 PLUGINS_CONFIG = {
     "nautobot_secrets_providers": {
-        "beyondtrust": {
-            "base_url": os.getenv("BT_BASE_URL"),
-            "api_key": os.getenv("BT_API_KEY"),
-            "run_as": os.getenv("BT_RUN_AS"),
+        "beyondtrust_password_safe": {
+            "base_url": os.getenv("BEYONDTRUST_PASSWORD_SAFE_BASE_URL"),
+            "api_key": os.getenv("BEYONDTRUST_PASSWORD_SAFE_API_KEY"),
+            "run_as": os.getenv("BEYONDTRUST_PASSWORD_SAFE_RUN_AS"),
         },
     },
 }
@@ -86,7 +86,7 @@ and `page_size` (Secrets Safe pagination page size, default `1000`).
 
 ## Secret parameters
 
-When creating a Secret with the **BeyondTrust Managed Account** provider:
+When creating a Secret with the **BeyondTrust Password Safe - Managed Account** provider:
 
 | Parameter | Required | Notes |
 |---|---|---|
@@ -96,7 +96,7 @@ When creating a Secret with the **BeyondTrust Managed Account** provider:
 | `rotate_on_checkin` | no | `true` / `false`, default `false`. A plain read never rotates; set `true` only for a rotation Job |
 | `reason` | no | Reason recorded on the request |
 
-When creating a Secret with the **BeyondTrust Secrets Safe** provider:
+When creating a Secret with the **BeyondTrust Password Safe - Secrets Safe** provider:
 
 | Parameter | Required | Notes |
 |---|---|---|
@@ -126,7 +126,7 @@ from nautobot.apps.jobs import BooleanVar, Job, ObjectVar, register_jobs
 from nautobot.dcim.models import Device
 from nautobot.extras.choices import SecretsGroupAccessTypeChoices as AT, SecretsGroupSecretTypeChoices as ST
 from nautobot.extras.models import SecretsGroupAssociation
-from nautobot_secrets_providers.providers import BeyondTrustManagedAccountSecretsProvider as BT
+from nautobot_secrets_providers.providers import BeyondTrustPasswordSafeManagedAccountSecretsProvider as BT
 
 
 class RotateBeyondTrustManagedAccount(Job):
