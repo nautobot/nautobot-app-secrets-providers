@@ -1285,7 +1285,9 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProviderTestCase(TestCase):
     @requests_mock.Mocker()
     def test_api_key_auth(self, mock):
         """An API key with a run-as user authenticates without an OAuth token and signs out afterwards."""
-        config = {"beyondtrust_password_safe": {"base_url": self.base_url, "api_key": "fake-key", "run_as": "nautobot_svc"}}
+        config = {
+            "beyondtrust_password_safe": {"base_url": self.base_url, "api_key": "fake-key", "run_as": "nautobot_svc"}
+        }
         mock.post(f"{self.base_url}/Auth/SignAppIn", json={"UserId": 1})
         mock.post(f"{self.base_url}/Auth/Signout", status_code=204)
         self._mock_account(mock, self.base_url)
@@ -1344,7 +1346,9 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProviderTestCase(TestCase):
 
     def test_missing_credentials(self):
         """Raise SecretProviderError if neither an OAuth client nor an API key is configured."""
-        with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {"beyondtrust_password_safe": {"base_url": self.base_url}}}):
+        with self.settings(
+            PLUGINS_CONFIG={"nautobot_secrets_providers": {"beyondtrust_password_safe": {"base_url": self.base_url}}}
+        ):
             with self.assertRaises(exceptions.SecretProviderError) as err:
                 self.provider.get_value_for_secret(self.secret)
 
