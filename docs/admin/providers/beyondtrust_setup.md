@@ -35,6 +35,10 @@ Two paths are supported; the API registration must be enabled for whichever you 
   `PS-Auth` header, so a run-as user is required. On Cloud the API-key path enforces MFA by default,
   which automation cannot answer, so prefer the OAuth path.
 
+These providers have been validated against Password Safe Cloud. The OAuth path sends the bearer token on
+every request and does not open a server-side session (no `Auth/SignAppIn` / `Auth/Signout`); the API-key
+path does sign in and out. On-prem Password Safe exposes the same API but has not been validated here.
+
 ### Permissions (least privilege)
 
 Grant the API user's group only what each provider needs:
@@ -96,6 +100,11 @@ When creating a Secret with the **BeyondTrust Password Safe - Managed Account** 
 | `rotate_on_checkin` | no | `true` / `false`, default `false`. A plain read never rotates; set `true` only for a rotation Job |
 | `reason` | no | Reason recorded on the request |
 
+Each managed-account read opens a credentials release request, which Password Safe audits. Keep
+`duration_minutes` short, and use an account whose requests are **auto-approved** for the API user: an
+account behind an approval workflow returns `4034` ("Request is not yet approved") on every read, because
+the provider does not wait for an approver.
+
 When creating a Secret with the **BeyondTrust Password Safe - Secrets Safe** provider:
 
 | Parameter | Required | Notes |
@@ -105,6 +114,9 @@ When creating a Secret with the **BeyondTrust Password Safe - Secrets Safe** pro
 | `secret_id` | no | Direct lookup instead of a path and title search |
 
 \* `folder_path` and `title` are required unless `secret_id` is provided.
+
+For a **Credential** secret, only the password is returned, not the username. Store the username separately
+(in its own Secret, or alongside in the consumer) if you need both.
 
 ## Rotation
 
