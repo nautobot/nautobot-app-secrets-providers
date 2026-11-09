@@ -417,7 +417,10 @@ class BeyondTrustPasswordSafeSecretsSafeSecretsProvider(BeyondTrustPasswordSafeS
         title = forms.CharField(
             required=False,
             max_length=200,
-            help_text="Secret title inside the folder. Required unless 'secret_id' is set.",
+            help_text=(
+                "Secret title inside the folder. Required unless 'secret_id' is set. For a Credential-type "
+                "secret, only the password is returned, not the username."
+            ),
         )
         secret_id = forms.CharField(
             required=False,
