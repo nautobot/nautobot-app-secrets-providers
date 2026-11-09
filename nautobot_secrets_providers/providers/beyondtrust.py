@@ -173,9 +173,8 @@ class BeyondTrustPasswordSafeSecretsProvider(SecretsProvider):  # pylint: disabl
         if content_type != "application/json":
             headers["Content-Type"] = content_type
 
-        if params is not None:
-            params = dict(params)
-            params.setdefault("version", API_VERSION)
+        params = dict(params or {})
+        params.setdefault("version", API_VERSION)
 
         try:
             kwargs = {"headers": headers, "timeout": timeout, "params": params}
@@ -372,11 +371,18 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProvider(BeyondTrustPasswordSa
 
     @classmethod
     def _get_credential(cls, secret, config, session, request_id):
-        """Return the credential for an approved release request."""
+        """Return the credential for an approved release request, as a string.
+
+        Some BeyondTrust responses answer with a bare value rather than a JSON object, so an
+        all-digit password arrives as an `int` and a null as `None`. Coerce any non-null value to a
+        string so callers always receive text.
+        """
         payload = cls._payload(cls._request(secret, config, session, "GET", f"/credentials/{request_id}"))
         if isinstance(payload, dict):
-            return payload.get("Password") or payload.get("Credential")
-        return payload
+            value = payload.get("Password") or payload.get("Credential")
+        else:
+            value = payload
+        return None if value is None else str(value)
 
 
 class BeyondTrustPasswordSafeSecretsSafeSecretsProvider(BeyondTrustPasswordSafeSecretsProvider):
@@ -403,7 +409,10 @@ class BeyondTrustPasswordSafeSecretsSafeSecretsProvider(BeyondTrustPasswordSafeS
         folder_path = forms.CharField(
             required=False,
             max_length=200,
-            help_text="Secrets Safe folder path, for example 'IT/Platform'. Required unless 'secret_id' is set.",
+            help_text=(
+                "Secrets Safe folder path, for example 'IT/Platform'. Matched ignoring surrounding slashes "
+                "and case. Required unless 'secret_id' is set."
+            ),
         )
         title = forms.CharField(
             required=False,
@@ -433,6 +442,11 @@ class BeyondTrustPasswordSafeSecretsSafeSecretsProvider(BeyondTrustPasswordSafeS
         finally:
             cls._sign_out(secret, config, session, session_created)
 
+    @staticmethod
+    def _normalize_folder_path(path):
+        """Normalize a Secrets Safe folder path for comparison, ignoring surrounding slashes and case."""
+        return (path or "").strip("/").casefold()
+
     @classmethod
     def _find_secret(cls, secret, config, session, parameters):
         """Return the Secrets Safe entry, by ID or by folder path and title."""
@@ -446,8 +460,10 @@ class BeyondTrustPasswordSafeSecretsSafeSecretsProvider(BeyondTrustPasswordSafeS
                 secret, cls, f"Secrets Safe secret '{parameters['secret_id']}' not found."
             )
 
-        for entry in cls._list_secrets(secret, config, session, parameters["folder_path"], parameters["title"]):
-            if entry.get("FolderPath") == parameters["folder_path"] and entry.get("Title") == parameters["title"]:
+        folder_path = cls._normalize_folder_path(parameters["folder_path"])
+        title = parameters["title"]
+        for entry in cls._list_secrets(secret, config, session, parameters["folder_path"], title):
+            if cls._normalize_folder_path(entry.get("FolderPath")) == folder_path and entry.get("Title") == title:
                 return entry
 
         raise exceptions.SecretValueNotFoundError(

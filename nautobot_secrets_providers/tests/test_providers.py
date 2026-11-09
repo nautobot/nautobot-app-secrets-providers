@@ -1254,6 +1254,35 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProviderTestCase(TestCase):
         self.assertEqual(result, "s3cret-password")
 
     @requests_mock.Mocker()
+    def test_numeric_credential_coerced_to_string(self, mock):
+        """An all-digit credential returned as a JSON number is coerced to a string."""
+        self._mock_auth(mock, self.base_url)
+        self._mock_account(mock, self.base_url)
+        mock.post(f"{self.base_url}/requests", json=4211, status_code=201)
+        mock.get(f"{self.base_url}/credentials/4211", json=12345678)
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            result = self.provider.get_value_for_secret(self.secret)
+
+        self.assertEqual(result, "12345678")
+
+    @requests_mock.Mocker()
+    def test_version_query_param_sent_on_requests(self, mock):
+        """Every API call pins the version, including endpoints that pass no other parameters."""
+        self._mock_auth(mock, self.base_url)
+        self._mock_account(mock, self.base_url)
+        mock.post(f"{self.base_url}/requests", json=4211, status_code=201)
+        mock.get(f"{self.base_url}/credentials/4211", json="s3cret-password")
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            self.provider.get_value_for_secret(self.secret)
+
+        release = [call for call in mock.request_history if call.path.endswith("/requests")][0]
+        self.assertEqual(release.qs["version"], ["3.2"])
+        credential = [call for call in mock.request_history if "/credentials/" in call.path][0]
+        self.assertEqual(credential.qs["version"], ["3.2"])
+
+    @requests_mock.Mocker()
     def test_api_key_auth(self, mock):
         """An API key with a run-as user authenticates without an OAuth token and signs out afterwards."""
         config = {"beyondtrust_password_safe": {"base_url": self.base_url, "api_key": "fake-key", "run_as": "nautobot_svc"}}
@@ -1268,8 +1297,8 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProviderTestCase(TestCase):
 
         self.assertEqual(result, "s3cret-password")
         self.assertEqual(mock.request_history[0].headers["Authorization"], "PS-Auth key=fake-key; runas=nautobot_svc;")
-        self.assertTrue(mock.request_history[0].url.endswith("/Auth/SignAppIn"))
-        self.assertTrue(mock.request_history[-1].url.endswith("/Auth/Signout"))
+        self.assertTrue(mock.request_history[0].url.split("?")[0].endswith("/Auth/SignAppIn"))
+        self.assertTrue(mock.request_history[-1].url.split("?")[0].endswith("/Auth/Signout"))
 
     @requests_mock.Mocker()
     def test_oauth_run_as_header(self, mock):
@@ -1436,6 +1465,26 @@ class BeyondTrustPasswordSafeSecretsSafeSecretsProviderTestCase(TestCase):
         search = [call for call in mock.request_history if call.url.split("?")[0].endswith("/Secrets-Safe/Secrets")][0]
         for fragment in ("Path=IT%2FPlatform", "Title=GitLab+Service+Account", "Decrypt=true", "version=3.2"):
             self.assertIn(fragment, search.url)
+
+    @requests_mock.Mocker()
+    def test_folder_path_match_is_normalized(self, mock):
+        """A folder path that differs only by case or surrounding slashes still matches."""
+        self._mock_auth(mock, self.base_url)
+        mock.get(
+            f"{self.base_url}/Secrets-Safe/Secrets",
+            json=self._search([self._entry(FolderPath="it/platform/")]),
+        )
+
+        secret = Secret.objects.create(
+            name="gitlab-account-normalized",
+            provider=self.provider.slug,
+            parameters={"folder_path": "/IT/Platform", "title": "GitLab Service Account"},
+        )
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            result = self.provider.get_value_for_secret(secret)
+
+        self.assertEqual(result, "glpat-fake-token")
 
     @requests_mock.Mocker()
     def test_retrieve_by_secret_id(self, mock):
