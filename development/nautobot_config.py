@@ -167,7 +167,7 @@ PLUGINS_CONFIG = {
             "client_secret": os.getenv("BEYONDTRUST_PASSWORD_SAFE_CLIENT_SECRET"),
             "api_key": os.getenv("BEYONDTRUST_PASSWORD_SAFE_API_KEY"),
             "run_as": os.getenv("BEYONDTRUST_PASSWORD_SAFE_RUN_AS"),
-            "verify_ssl": is_truthy(os.getenv("BEYONDTRUST_PASSWORD_SAFE_VERIFY_SSL", "true")),
+            "verify_ssl": is_truthy(os.getenv("BEYONDTRUST_PASSWORD_SAFE_VERIFY_SSL") or "true"),
         },
     },
 }
