@@ -37,7 +37,11 @@ Two paths are supported; the API registration must be enabled for whichever you 
 
 These providers have been validated against Password Safe Cloud. The OAuth path sends the bearer token on
 every request and does not open a server-side session (no `Auth/SignAppIn` / `Auth/Signout`); the API-key
-path does sign in and out. On-prem Password Safe exposes the same API but has not been validated here.
+path does sign in and out.
+
+!!! note
+    On-prem Password Safe (BeyondInsight) exposes the same REST API and is expected to work, but it has
+    not been validated here and is **not currently a supported configuration**.
 
 ### Permissions (least privilege)
 
