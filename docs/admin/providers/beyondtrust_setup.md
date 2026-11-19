@@ -41,7 +41,7 @@ path does sign in and out.
 
 !!! note
     On-prem Password Safe (BeyondInsight) exposes the same REST API and is expected to work, but it has
-    not been validated here and is **not currently a supported configuration**.
+    not been explicitly validated here.
 
 ### Permissions (least privilege)
 
