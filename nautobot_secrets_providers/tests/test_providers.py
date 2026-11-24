@@ -1203,14 +1203,13 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProviderTestCase(TestCase):
                 "AccountId": 200,
                 "DurationMinutes": 15,
                 "Reason": "planned maintenance",
-                "ConflictOption": "reuse",
                 "RotateOnCheckin": True,
             },
         )
 
     @requests_mock.Mocker()
     def test_release_request_payload_default_no_rotation(self, mock):
-        """A read with no rotate_on_checkin parameter does not ask Password Safe to rotate."""
+        """A read with no rotate_on_checkin parameter does not rotate and reuses an open request."""
         self._mock_auth(mock, self.base_url)
         self._mock_account(mock, self.base_url)
         mock.post(f"{self.base_url}/requests", json=4211, status_code=201)
@@ -1220,7 +1219,9 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProviderTestCase(TestCase):
             self.provider.get_value_for_secret(self.secret)
 
         release = [call for call in mock.request_history if call.path.endswith("/requests")][0]
-        self.assertNotIn("RotateOnCheckin", release.json())
+        payload = release.json()
+        self.assertNotIn("RotateOnCheckin", payload)
+        self.assertEqual(payload["ConflictOption"], "reuse")
 
     @requests_mock.Mocker()
     def test_managed_account_lookup_uses_server_side_filter(self, mock):
@@ -1321,8 +1322,8 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProviderTestCase(TestCase):
         with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": config}):
             self.provider.get_value_for_secret(self.secret)
 
-        urls = [call.url for call in mock.request_history]
-        self.assertNotIn(f"{self.base_url}/Auth/SignAppIn", urls)
+        paths = [call.path.lower() for call in mock.request_history]
+        self.assertFalse(any(path.endswith(("/auth/signappin", "/auth/signout")) for path in paths))
         self.assertEqual(mock.request_history[1].headers["RunAs"], "nautobot_svc")
 
     @requests_mock.Mocker()
@@ -1338,21 +1339,19 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProviderTestCase(TestCase):
         check_in = [call for call in mock.request_history if call.method == "PUT"][0]
         self.assertEqual(check_in.json(), {"Reason": "done"})
 
-    def test_missing_config(self):
-        """Raise SecretProviderError if BeyondTrust is not configured."""
-        with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": {}}):
-            with self.assertRaises(exceptions.SecretProviderError):
-                self.provider.get_value_for_secret(self.secret)
-
-    def test_missing_credentials(self):
-        """Raise SecretProviderError if neither an OAuth client nor an API key is configured."""
-        with self.settings(
-            PLUGINS_CONFIG={"nautobot_secrets_providers": {"beyondtrust_password_safe": {"base_url": self.base_url}}}
-        ):
-            with self.assertRaises(exceptions.SecretProviderError) as err:
-                self.provider.get_value_for_secret(self.secret)
-
-        self.assertIn("client_id", str(err.exception))
+    def test_invalid_configuration_is_rejected(self):
+        """An incomplete BeyondTrust configuration raises SecretProviderError with a clear message."""
+        cases = {
+            "no config": ({}, "not configured"),
+            "no base_url": ({"beyondtrust_password_safe": {"client_id": "x", "client_secret": "y"}}, "base_url"),
+            "no credentials": ({"beyondtrust_password_safe": {"base_url": self.base_url}}, "client_id"),
+        }
+        for label, (config, expected) in cases.items():
+            with self.subTest(label):
+                with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": config}):
+                    with self.assertRaises(exceptions.SecretProviderError) as err:
+                        self.provider.get_value_for_secret(self.secret)
+                self.assertIn(expected, str(err.exception))
 
     @requests_mock.Mocker()
     def test_account_not_found(self, mock):
@@ -1397,6 +1396,95 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProviderTestCase(TestCase):
             request_id = self.provider.release(self.secret)
 
         self.assertEqual(request_id, 4211)
+
+    @requests_mock.Mocker()
+    def test_get_credential_reads_request_without_opening_another(self, mock):
+        """get_credential() reads the credential for an existing request and opens no new request."""
+        self._mock_auth(mock, self.base_url)
+        mock.get(f"{self.base_url}/credentials/4211", json="s3cret-password")
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            result = self.provider.get_credential(self.secret, 4211)
+
+        self.assertEqual(result, "s3cret-password")
+        self.assertFalse(any(call.path.endswith("/requests") for call in mock.request_history))
+
+    @requests_mock.Mocker()
+    def test_sign_out_failure_does_not_mask_value(self, mock):
+        """A failed sign-out after an API-key read does not stop the credential being returned."""
+        config = {
+            "beyondtrust_password_safe": {"base_url": self.base_url, "api_key": "fake-key", "run_as": "nautobot_svc"}
+        }
+        mock.post(f"{self.base_url}/Auth/SignAppIn", json={"UserId": 1})
+        mock.post(f"{self.base_url}/Auth/Signout", status_code=500)
+        self._mock_account(mock, self.base_url)
+        mock.post(f"{self.base_url}/requests", json=4211, status_code=201)
+        mock.get(f"{self.base_url}/credentials/4211", json="s3cret-password")
+
+        with self.settings(PLUGINS_CONFIG={"nautobot_secrets_providers": config}):
+            result = self.provider.get_value_for_secret(self.secret)
+
+        self.assertEqual(result, "s3cret-password")
+
+    @requests_mock.Mocker()
+    def test_invalid_managed_account_parameters_raise(self, mock):
+        """Bad managed-account parameters raise SecretParametersError."""
+        self._mock_auth(mock, self.base_url)
+        self._mock_account(mock, self.base_url)
+
+        cases = {
+            "missing account_name": {"system_name": "sw01.sitea"},
+            "non-numeric duration_minutes": {
+                "system_name": "sw01.sitea",
+                "account_name": "network_admin",
+                "duration_minutes": "abc",
+            },
+        }
+        for label, parameters in cases.items():
+            with self.subTest(label):
+                secret = Secret.objects.create(
+                    name=f"invalid-{label.replace(' ', '-')}",
+                    provider=self.provider.slug,
+                    parameters=parameters,
+                )
+                with self.settings(PLUGINS_CONFIG=self.plugin_config):
+                    with self.assertRaises(exceptions.SecretParametersError):
+                        self.provider.get_value_for_secret(secret)
+
+    @requests_mock.Mocker()
+    def test_account_name_match_is_case_insensitive(self, mock):
+        """A system or account name that differs only by case still matches."""
+        self._mock_auth(mock, self.base_url)
+        mock.get(
+            f"{self.base_url}/ManagedAccounts",
+            json=[{"SystemId": 100, "AccountId": 200, "SystemName": "SW01.SITEA", "AccountName": "Network_Admin"}],
+        )
+        mock.post(f"{self.base_url}/requests", json=4211, status_code=201)
+        mock.get(f"{self.base_url}/credentials/4211", json="s3cret-password")
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            result = self.provider.get_value_for_secret(self.secret)
+
+        self.assertEqual(result, "s3cret-password")
+
+    def test_non_json_responses_raise(self):
+        """A non-JSON API response raises a provider error instead of crashing."""
+        with self.subTest("token endpoint"):
+            with requests_mock.Mocker() as mock:
+                mock.post(f"{self.base_url}/Auth/connect/token", text="<html>Sign in</html>")
+                with self.settings(PLUGINS_CONFIG=self.plugin_config):
+                    with self.assertRaises(exceptions.SecretProviderError) as err:
+                        self.provider.get_value_for_secret(self.secret)
+                self.assertIn("base_url", str(err.exception))
+
+        with self.subTest("managed accounts"):
+            with requests_mock.Mocker() as mock:
+                self._mock_auth(mock, self.base_url)
+                mock.get(f"{self.base_url}/ManagedAccounts", text="not json")
+                with self.settings(PLUGINS_CONFIG=self.plugin_config):
+                    with self.assertRaises(exceptions.SecretProviderError) as err:
+                        self.provider.get_value_for_secret(self.secret)
+                self.assertIn("ManagedAccounts", str(err.exception))
 
 
 class BeyondTrustPasswordSafeSecretsSafeSecretsProviderTestCase(TestCase):
@@ -1681,3 +1769,29 @@ class BeyondTrustPasswordSafeSecretsSafeSecretsProviderTestCase(TestCase):
                 self.provider.get_value_for_secret(secret)
 
         self.assertIn("File secrets", str(err.exception))
+
+    @requests_mock.Mocker()
+    def test_title_match_is_case_insensitive(self, mock):
+        """A title that differs only by case still matches."""
+        self._mock_auth(mock, self.base_url)
+        mock.get(
+            f"{self.base_url}/Secrets-Safe/Secrets",
+            json=self._search([self._entry(Title="gitlab service account")]),
+        )
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            result = self.provider.get_value_for_secret(self.secret)
+
+        self.assertEqual(result, "glpat-fake-token")
+
+    @requests_mock.Mocker()
+    def test_secrets_safe_non_json_raises(self, mock):
+        """A non-JSON /Secrets-Safe/Secrets response raises a provider error instead of crashing."""
+        self._mock_auth(mock, self.base_url)
+        mock.get(f"{self.base_url}/Secrets-Safe/Secrets", text="not json")
+
+        with self.settings(PLUGINS_CONFIG=self.plugin_config):
+            with self.assertRaises(exceptions.SecretProviderError) as err:
+                self.provider.get_value_for_secret(self.secret)
+
+        self.assertIn("Secrets-Safe", str(err.exception))

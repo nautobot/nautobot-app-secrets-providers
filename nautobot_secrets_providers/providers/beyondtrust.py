@@ -95,6 +95,10 @@ class BeyondTrustPasswordSafeSecretsProvider(SecretsProvider):  # pylint: disabl
                 content_type="application/x-www-form-urlencoded",
             )
             payload = cls._payload(response)
+            if not isinstance(payload, dict):
+                raise exceptions.SecretProviderError(
+                    secret, cls, "BeyondTrust token endpoint did not return JSON. Check 'base_url'."
+                )
             token = payload.get("access_token") or payload.get("AccessToken")
             if not token:
                 raise exceptions.SecretProviderError(secret, cls, "BeyondTrust did not return an access token.")
@@ -249,8 +253,9 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProvider(BeyondTrustPasswordSa
     @classmethod
     def release(cls, secret, obj=None):
         """Create a credentials release request for the managed account and return its request ID."""
-        config, session, parameters, account, session_created = cls._prepare(secret, obj)
+        config, session, parameters, session_created = cls._prepare(secret, obj)
         try:
+            account = cls._find_account(secret, config, session, parameters["system_name"], parameters["account_name"])
             return cls._create_request(secret, config, session, account, parameters)
         finally:
             cls._sign_out(secret, config, session, session_created)
@@ -258,8 +263,9 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProvider(BeyondTrustPasswordSa
     @classmethod
     def get_value_for_secret(cls, secret, obj=None, **kwargs):
         """Return the credential released for the managed account described by the secret's parameters."""
-        config, session, parameters, account, session_created = cls._prepare(secret, obj)
+        config, session, parameters, session_created = cls._prepare(secret, obj)
         try:
+            account = cls._find_account(secret, config, session, parameters["system_name"], parameters["account_name"])
             request_id = cls._create_request(secret, config, session, account, parameters)
             credential = cls._get_credential(secret, config, session, request_id)
 
@@ -297,13 +303,36 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProvider(BeyondTrustPasswordSa
             cls._sign_out(secret, config, session, session_created)
 
     @classmethod
+    def get_credential(cls, secret, request_id):
+        """Return the credential for an existing release request, by request ID.
+
+        `release()` opens a request and returns its ID; this reads the credential for that request
+        without opening another one, so a rotation Job can read the credential and then call
+        `check_in()` on the same request to rotate the password after it has been used.
+        """
+        config = cls._get_config(secret)
+        session, session_created = cls._authenticate(secret, config)
+        try:
+            credential = cls._get_credential(secret, config, session, request_id)
+            if credential is None:
+                raise exceptions.SecretValueNotFoundError(
+                    secret, cls, f"No credential available for request '{request_id}'."
+                )
+            return credential
+        finally:
+            cls._sign_out(secret, config, session, session_created)
+
+    @classmethod
     def _prepare(cls, secret, obj):
-        """Resolve config, parameters, an authenticated session and the managed account."""
+        """Resolve config, parameters and an authenticated session.
+
+        The managed-account lookup is done by the caller inside its try/finally, so `_sign_out()`
+        still runs if the lookup fails.
+        """
         config = cls._get_config(secret)
         parameters = cls._get_parameters(secret, obj)
         session, session_created = cls._authenticate(secret, config)
-        account = cls._find_account(secret, config, session, parameters["system_name"], parameters["account_name"])
-        return config, session, parameters, account, session_created
+        return config, session, parameters, session_created
 
     @classmethod
     def _get_parameters(cls, secret, obj):
@@ -331,10 +360,20 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProvider(BeyondTrustPasswordSa
         # The filtered endpoint may answer with a single account object or a list of them.
         if isinstance(payload, dict):
             accounts = payload.get("Data") or payload.get("Results") or [payload]
-        else:
+        elif isinstance(payload, list):
             accounts = payload
+        else:
+            raise exceptions.SecretProviderError(
+                secret, cls, "BeyondTrust returned an unexpected response for /ManagedAccounts."
+            )
+        # Password Safe can store the names in a different case than the caller passes, so match on a
+        # casefolded comparison, as the server-side filter does.
+        system_name_cf = system_name.casefold()
+        account_name_cf = account_name.casefold()
         for account in accounts:
-            if account.get("SystemName") == system_name and account.get("AccountName") == account_name:
+            if (account.get("SystemName") or "").casefold() == system_name_cf and (
+                account.get("AccountName") or ""
+            ).casefold() == account_name_cf:
                 return account
 
         raise exceptions.SecretValueNotFoundError(
@@ -357,10 +396,15 @@ class BeyondTrustPasswordSafeManagedAccountSecretsProvider(BeyondTrustPasswordSa
             "AccountId": account.get("AccountId"),
             "DurationMinutes": duration_minutes,
             "Reason": parameters.get("reason") or "Nautobot secrets provider",
-            "ConflictOption": "reuse",
         }
         if str(parameters.get("rotate_on_checkin", "false")).lower() == "true":
+            # A rotation needs its own request. Reusing an already-open request (for example one left
+            # by an earlier plain read) would carry no RotateOnCheckin, so the later check-in would
+            # return 204 without rotating the password. Without ConflictOption, Password Safe returns
+            # a conflict (4091) when an open request exists, instead of reusing it silently.
             data["RotateOnCheckin"] = True
+        else:
+            data["ConflictOption"] = "reuse"
 
         response = cls._request(secret, config, session, "POST", "/requests", data=data, expected_status=(200, 201))
         payload = cls._payload(response)
@@ -465,8 +509,12 @@ class BeyondTrustPasswordSafeSecretsSafeSecretsProvider(BeyondTrustPasswordSafeS
 
         folder_path = cls._normalize_folder_path(parameters["folder_path"])
         title = parameters["title"]
+        title_cf = title.casefold()
         for entry in cls._list_secrets(secret, config, session, parameters["folder_path"], title):
-            if cls._normalize_folder_path(entry.get("FolderPath")) == folder_path and entry.get("Title") == title:
+            if (
+                cls._normalize_folder_path(entry.get("FolderPath")) == folder_path
+                and (entry.get("Title") or "").casefold() == title_cf
+            ):
                 return entry
 
         raise exceptions.SecretValueNotFoundError(
@@ -500,11 +548,23 @@ class BeyondTrustPasswordSafeSecretsSafeSecretsProvider(BeyondTrustPasswordSafeS
                     },
                 )
             )
-            page = payload.get("Data", []) if isinstance(payload, dict) else payload
-            results.extend(page)
-            if len(page) < page_size:
+            if isinstance(payload, dict):
+                page = payload.get("Data", [])
+                total_count = payload.get("TotalCount")
+            elif isinstance(payload, list):
+                page = payload
+                total_count = None
+            else:
+                raise exceptions.SecretProviderError(
+                    secret, cls, "BeyondTrust returned an unexpected response for /Secrets-Safe/Secrets."
+                )
+
+            if not page:
                 return results
-            offset += page_size
+            results.extend(page)
+            offset += len(page)
+            if total_count is not None and offset >= total_count:
+                return results
 
     @classmethod
     def _extract_value(cls, secret, entry):
