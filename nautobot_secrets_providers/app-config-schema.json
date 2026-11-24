@@ -90,6 +90,41 @@
                 }
             },
             "required": ["base_url"]
+        },
+        "beyondtrust_password_safe": {
+            "type": "object",
+            "properties": {
+                "base_url": {
+                    "type": "string"
+                },
+                "client_id": {
+                    "type": "string"
+                },
+                "client_secret": {
+                    "type": "string"
+                },
+                "api_key": {
+                    "type": "string"
+                },
+                "run_as": {
+                    "type": "string"
+                },
+                "timeout": {
+                    "type": "integer",
+                    "default": 30,
+                    "minimum": 1
+                },
+                "verify_ssl": {
+                    "type": "boolean",
+                    "default": true
+                },
+                "page_size": {
+                    "type": "integer",
+                    "default": 1000,
+                    "minimum": 1
+                }
+            },
+            "required": ["base_url"]
         }
     }
 }
