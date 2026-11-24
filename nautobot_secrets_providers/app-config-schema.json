@@ -111,7 +111,8 @@
                 },
                 "timeout": {
                     "type": "integer",
-                    "default": 30
+                    "default": 30,
+                    "minimum": 1
                 },
                 "verify_ssl": {
                     "type": "boolean",
@@ -119,7 +120,8 @@
                 },
                 "page_size": {
                     "type": "integer",
-                    "default": 1000
+                    "default": 1000,
+                    "minimum": 1
                 }
             },
             "required": ["base_url"]
