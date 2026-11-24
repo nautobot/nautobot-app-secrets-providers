@@ -163,11 +163,11 @@ class RotateBeyondTrustManagedAccount(Job):
         # RotateOnCheckin is set when the request is created, so decide it up front.
         secret.parameters = {**secret.parameters, "rotate_on_checkin": "true" if rotate else "false"}
 
-        request_id = BT.release(secret, obj=device)                                       # open the request
-        password = group.get_secret_value(AT.TYPE_GENERIC, ST.TYPE_PASSWORD, obj=device)  # reuses it (ConflictOption: reuse)
+        request_id = BT.release(secret, obj=device)                       # open one request
+        password = BT.get_credential(secret, request_id)                  # read the credential for that request
         self.logger.info("Retrieved the credential (%d chars) for %s.", len(password), device.name)
         # ...use `password` against the device...
-        BT.check_in(secret, request_id, reason="rotation job")                            # check in -> rotate if configured + reachable
+        BT.check_in(secret, request_id, reason="rotation job")            # check in -> rotate if configured + reachable
 
 
 register_jobs(RotateBeyondTrustManagedAccount)
@@ -175,6 +175,15 @@ register_jobs(RotateBeyondTrustManagedAccount)
 
 Passing `obj=device` is what lets a Jinja parameter such as `system_name = {{ obj.name }}` resolve per
 device, so one Secret serves many devices.
+
+!!! note
+    When `rotate_on_checkin` is `true`, the release request is **not** reused. If an open request
+    already exists for the same account — for example from a recent plain read still inside its
+    `duration_minutes` window — Password Safe rejects the new request with a conflict (`4091`,
+    "Conflicting request exists") and the Job fails. This is deliberate: reusing that open request
+    would ignore `RotateOnCheckin`, so the check-in would return success without rotating the password.
+    Keep `duration_minutes` short, and do not start a rotation Job while a plain read of the same
+    account is still open.
 
 Rotation on check-in only actually changes the password when **both** hold:
 
